@@ -89,6 +89,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "theme-color", content: "#0A0A0A" },
     ],
     links: [
       {
@@ -120,15 +121,11 @@ function RootShell({ children }: { children: ReactNode }) {
   const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || "";
 
   return (
-    <html lang="en">
+    <html lang="id">
       <head>
         <HeadContent />
         {siteKey && (
-          <script
-            src={`https://www.google.com/recaptcha/api.js?render=${siteKey}`}
-            async
-            defer
-          />
+          <script src={`https://www.google.com/recaptcha/api.js?render=${siteKey}`} async defer />
         )}
       </head>
       <body>

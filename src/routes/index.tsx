@@ -20,7 +20,17 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Link-in-bio + micro-catalog + WhatsApp checkout. Open source.",
       },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://tokolink.app" },
+      { property: "og:image", content: "https://tokolink.app/og-image.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Tokolink — Storefront instan untuk UMKM" },
+      {
+        name: "twitter:description",
+        content: "Bikin landing-page toko + katalog produk dengan checkout WhatsApp dalam 5 menit.",
+      },
     ],
+    links: [{ rel: "canonical", href: "https://tokolink.app" }],
   }),
   component: Landing,
 });
@@ -35,6 +45,23 @@ const fadeUp = {
 function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          name: "Tokolink",
+          description:
+            "Storefront instan untuk UMKM dengan integrasi link-in-bio dan checkout WhatsApp.",
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "All",
+          url: "https://tokolink.app",
+          offers: {
+            "@type": "Offer",
+            price: "0",
+            priceCurrency: "IDR",
+          },
+        })}
+      </script>
       <MarketingNav />
 
       {/* Hero */}

@@ -27,7 +27,10 @@ export const Route = createFileRoute("/dashboard")({
       return { tenant: null };
     }
   },
-  head: () => ({ meta: [{ title: "Dashboard — Tokolink" }] }),
+  head: () => ({
+    meta: [{ title: "Dashboard — Tokolink" }],
+    links: [{ rel: "canonical", href: "https://tokolink.app/dashboard" }],
+  }),
   component: DashboardLayout,
 });
 
@@ -69,7 +72,9 @@ function DashboardLayout() {
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
-        <p className="text-sm font-medium text-muted-foreground animate-pulse font-medium">Memuat...</p>
+        <p className="text-sm font-medium text-muted-foreground animate-pulse font-medium">
+          Memuat...
+        </p>
       </div>
     );
   }

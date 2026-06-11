@@ -5,7 +5,10 @@ import { useAuth } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Masuk — Tokolink" }] }),
+  head: () => ({
+    meta: [{ title: "Masuk — Tokolink" }],
+    links: [{ rel: "canonical", href: "https://tokolink.app/auth" }],
+  }),
   component: AuthPage,
 });
 
@@ -92,7 +95,8 @@ function AuthPage() {
             transition={{ duration: 0.7 }}
             className="font-display text-5xl font-medium tracking-tight text-balance text-white"
           >
-            "Bikin toko itu <em className="font-light text-accent">harusnya</em> semudah upload foto IG."
+            "Bikin toko itu <em className="font-light text-accent">harusnya</em> semudah upload foto
+            IG."
           </motion.h2>
           <p className="mt-6 text-sm text-background/60">— Manifesto Tokolink</p>
         </div>

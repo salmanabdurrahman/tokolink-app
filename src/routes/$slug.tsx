@@ -19,12 +19,28 @@ export const Route = createFileRoute("/$slug")({
       throw notFound();
     }
   },
-  head: ({ params }) => ({
-    meta: [
-      { title: `${params.slug} — Tokolink` },
-      { name: "description", content: `Storefront ${params.slug} via Tokolink.` },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const tenant = loaderData?.tenant;
+    return {
+      meta: [
+        { title: tenant ? `${tenant.name} — Tokolink` : "Toko — Tokolink" },
+        {
+          name: "description",
+          content: tenant?.tagline || "Kunjungi toko kami di Tokolink.",
+        },
+        { property: "og:title", content: tenant ? `${tenant.name} — Tokolink` : "Toko — Tokolink" },
+        {
+          property: "og:description",
+          content: tenant?.tagline || "Kunjungi toko kami di Tokolink.",
+        },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: `https://tokolink.app/${tenant?.slug || ""}` },
+        { property: "og:image", content: tenant?.avatar || "" },
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+      links: [{ rel: "canonical", href: `https://tokolink.app/${tenant?.slug || ""}` }],
+    };
+  },
   component: Storefront,
   notFoundComponent: () => (
     <div className="grid min-h-screen place-items-center px-6 text-center">
@@ -43,6 +59,34 @@ function Storefront() {
 
   return (
     <div className="min-h-screen bg-background pb-32">
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          name: tenant.name,
+          description: tenant.tagline,
+          image: tenant.avatar,
+          telephone: tenant.whatsapp,
+          url: `https://tokolink.app/${tenant.slug}`,
+          priceRange: "$$",
+          itemListElement: tenant.products.map((p, idx) => ({
+            "@type": "ListItem",
+            position: idx + 1,
+            item: {
+              "@type": "Product",
+              name: p.name,
+              description: p.description,
+              image: p.image,
+              offers: {
+                "@type": "Offer",
+                price: p.basePrice,
+                priceCurrency: "IDR",
+                availability: "https://schema.org/InStock",
+              },
+            },
+          })),
+        })}
+      </script>
       {/* Header */}
       <header className="px-6 pt-12">
         <div className="mx-auto max-w-md text-center">

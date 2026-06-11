@@ -5,7 +5,10 @@ import { useAuth } from "@/lib/store";
 import { createTenant } from "@/server/tenant.functions";
 
 export const Route = createFileRoute("/onboarding")({
-  head: () => ({ meta: [{ title: "Onboarding — Tokolink" }] }),
+  head: () => ({
+    meta: [{ title: "Onboarding — Tokolink" }],
+    links: [{ rel: "canonical", href: "https://tokolink.app/onboarding" }],
+  }),
   component: Onboarding,
 });
 
