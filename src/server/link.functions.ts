@@ -51,7 +51,7 @@ export const updateLink = createServerFn({ method: "POST" })
     z.object({
       id: z.string().uuid(),
       data: updateLinkSchema,
-    })
+    }),
   )
   .handler(async ({ data: { id, data }, context }) => {
     const tenantId = context.tenant?.id;

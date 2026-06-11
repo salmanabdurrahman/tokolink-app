@@ -222,10 +222,7 @@ function ProductForm({
               />
             </Field>
             <Field label="Gambar Produk">
-              <ImageUpload
-                value={image}
-                onChange={(url) => setImage(url)}
-              />
+              <ImageUpload value={image} onChange={(url) => setImage(url)} />
             </Field>
 
             {/* Variant groups builder section */}

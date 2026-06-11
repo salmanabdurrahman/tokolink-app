@@ -9,7 +9,7 @@ export const uploadImage = createServerFn({ method: "POST" })
     z.object({
       name: z.string().min(1),
       base64: z.string().min(1),
-    })
+    }),
   )
   .handler(async ({ data, context }) => {
     // 1. Get base64 content

@@ -82,7 +82,7 @@ export const updateProduct = createServerFn({ method: "POST" })
     z.object({
       id: z.string().uuid(),
       data: updateProductSchema,
-    })
+    }),
   )
   .handler(async ({ data: { id, data }, context }) => {
     const tenantId = context.tenant?.id;

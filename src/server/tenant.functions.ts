@@ -104,7 +104,9 @@ export const createTenant = createServerFn({ method: "POST" })
         slug: data.slug,
         name: data.name,
         tagline: data.tagline || "",
-        avatar: data.avatar || `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(data.name)}&backgroundColor=D4FF3A&textColor=0A0A0A`,
+        avatar:
+          data.avatar ||
+          `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(data.name)}&backgroundColor=D4FF3A&textColor=0A0A0A`,
         whatsapp: data.whatsapp || "",
         userId,
       },

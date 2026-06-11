@@ -7,12 +7,7 @@ function isValidMagicBytes(header: Uint8Array, mimeType: string): boolean {
     return header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
   }
   if (mimeType === "image/png") {
-    return (
-      header[0] === 0x89 &&
-      header[1] === 0x50 &&
-      header[2] === 0x4e &&
-      header[3] === 0x47
-    );
+    return header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4e && header[3] === 0x47;
   }
   if (mimeType === "image/gif") {
     return header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46;
@@ -83,7 +78,7 @@ export async function compressToWebP(file: File, quality = 0.8): Promise<Blob> {
           }
         },
         "image/webp",
-        quality
+        quality,
       );
     };
     img.onerror = () => {

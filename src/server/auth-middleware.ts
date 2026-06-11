@@ -8,40 +8,38 @@ function parseCookie(cookieString: string, name: string): string | null {
   return null;
 }
 
-export const authMiddleware = createMiddleware().server(
-  async ({ next, request }) => {
-    const cookieHeader = request.headers.get("cookie") ?? "";
-    const token = parseCookie(cookieHeader, "sb-access-token");
+export const authMiddleware = createMiddleware().server(async ({ next, request }) => {
+  const cookieHeader = request.headers.get("cookie") ?? "";
+  const token = parseCookie(cookieHeader, "sb-access-token");
 
-    if (!token) {
-      throw new Error("Unauthorized: No session token found");
-    }
+  if (!token) {
+    throw new Error("Unauthorized: No session token found");
+  }
 
-    const {
-      data: { user: supaUser },
-      error,
-    } = await supabaseAdmin.auth.getUser(token);
+  const {
+    data: { user: supaUser },
+    error,
+  } = await supabaseAdmin.auth.getUser(token);
 
-    if (error || !supaUser) {
-      throw new Error("Unauthorized: Invalid session");
-    }
+  if (error || !supaUser) {
+    throw new Error("Unauthorized: Invalid session");
+  }
 
-    // Find user in Prisma database
-    const user = await prisma.user.findUnique({
-      where: { supabaseId: supaUser.id },
-      include: { tenant: true },
-    });
+  // Find user in Prisma database
+  const user = await prisma.user.findUnique({
+    where: { supabaseId: supaUser.id },
+    include: { tenant: true },
+  });
 
-    if (!user) {
-      throw new Error("Unauthorized: User not found in database");
-    }
+  if (!user) {
+    throw new Error("Unauthorized: User not found in database");
+  }
 
-    // Pass user and their tenant to function context
-    return await next({
-      context: {
-        user,
-        tenant: user.tenant,
-      },
-    });
-  },
-);
+  // Pass user and their tenant to function context
+  return await next({
+    context: {
+      user,
+      tenant: user.tenant,
+    },
+  });
+});

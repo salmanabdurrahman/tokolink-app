@@ -40,7 +40,8 @@ async function main() {
       slug: "kopi-senja",
       name: "Kopi Senja",
       tagline: "Specialty coffee roastery — diseduh dari Bandung.",
-      avatar: "https://api.dicebear.com/9.x/initials/svg?seed=Kopi%20Senja&backgroundColor=D4FF3A&textColor=0A0A0A",
+      avatar:
+        "https://api.dicebear.com/9.x/initials/svg?seed=Kopi%20Senja&backgroundColor=D4FF3A&textColor=0A0A0A",
       whatsapp: "6281234567890",
       userId: user.id,
     },
