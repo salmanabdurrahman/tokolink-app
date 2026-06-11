@@ -48,7 +48,8 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
       setStatus("");
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Gagal mengunggah gambar");
+      const { getErrorMessage } = await import("@/lib/utils");
+      setError(getErrorMessage(err) || "Gagal mengunggah gambar");
     } finally {
       setLoading(false);
     }

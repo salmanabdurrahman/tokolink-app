@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
+import { getErrorMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -68,7 +69,7 @@ function AuthPage() {
         if (signInError) throw signInError;
       }
     } catch (err: any) {
-      setError(err.message || "Terjadi kesalahan saat melakukan autentikasi");
+      setError(getErrorMessage(err) || "Terjadi kesalahan saat melakukan autentikasi");
     } finally {
       setLoading(false);
     }
@@ -94,7 +95,7 @@ function AuthPage() {
         if (signInError) throw signInError;
       }
     } catch (err: any) {
-      setError(err.message || "Kode verifikasi salah.");
+      setError(getErrorMessage(err) || "Kode verifikasi salah.");
     } finally {
       setLoading(false);
     }
@@ -117,7 +118,7 @@ function AuthPage() {
         setCode("");
       }
     } catch (err: any) {
-      setError(err.message || "Gagal mengirim ulang kode.");
+      setError(getErrorMessage(err) || "Gagal mengirim ulang kode.");
     } finally {
       setLoading(false);
     }
@@ -136,7 +137,7 @@ function AuthPage() {
       });
       if (googleError) throw googleError;
     } catch (err: any) {
-      setError(err.message || "Gagal masuk menggunakan Google");
+      setError(getErrorMessage(err) || "Gagal masuk menggunakan Google");
       setLoading(false);
     }
   };

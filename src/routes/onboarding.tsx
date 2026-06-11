@@ -53,10 +53,12 @@ function Onboarding() {
       const recaptchaToken = await getRecaptchaToken("onboarding");
 
       const tenant = await createTenant({
-        slug: cleanSlug,
-        name,
-        tagline,
-        recaptchaToken,
+        data: {
+          slug: cleanSlug,
+          name,
+          tagline,
+          recaptchaToken,
+        },
       });
 
       // Update the user profile in store with the new tenant info
@@ -67,7 +69,8 @@ function Onboarding() {
 
       navigate({ to: "/dashboard" });
     } catch (err: any) {
-      setError(err.message || "Gagal membuat toko. Silakan coba lagi.");
+      const { getErrorMessage } = await import("@/lib/utils");
+      setError(getErrorMessage(err) || "Gagal membuat toko. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
