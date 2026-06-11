@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "../db";
 import { supabaseAdmin } from "../lib/supabase.server";
 import { verifyRecaptcha } from "./recaptcha";
-import { sendVerificationEmail } from "./ses";
+import { sendVerificationEmail, sendWelcomeEmail } from "./email";
 import crypto from "crypto";
 import { z } from "zod";
 
@@ -262,6 +262,11 @@ export const verifySignUpCode = createServerFn({ method: "POST" })
     // Cleanup OTP code
     await prisma.verificationCode.delete({
       where: { email },
+    });
+
+    // Send welcome email asynchronously to avoid blocking the client response
+    sendWelcomeEmail(email, user.name || email).catch((err) => {
+      console.error("Failed to send welcome email:", err);
     });
 
     return { success: true, message: "Email berhasil diverifikasi." };
