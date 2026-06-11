@@ -16,16 +16,28 @@ import {
   Store,
 } from "lucide-react";
 
+import { getMyTenant } from "@/server/tenant.functions";
+
 export const Route = createFileRoute("/dashboard")({
+  loader: async () => {
+    try {
+      const tenant = await getMyTenant({});
+      return { tenant };
+    } catch {
+      return { tenant: null };
+    }
+  },
   head: () => ({ meta: [{ title: "Dashboard — Tokolink" }] }),
   component: DashboardLayout,
 });
 
 function DashboardLayout() {
+  const { tenant: loadedTenant } = Route.useLoaderData();
   const user = useAuth((s) => s.user);
   const authLoading = useAuth((s) => s.isLoading);
   const signOut = useAuth((s) => s.signOut);
   const tenant = useTenant((s) => s.tenant);
+  const setTenant = useTenant((s) => s.setTenant);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,8 +45,21 @@ function DashboardLayout() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !user) navigate({ to: "/auth" });
+    if (!authLoading) {
+      if (!user) {
+        navigate({ to: "/auth" });
+      } else if (!user.tenant) {
+        navigate({ to: "/onboarding" });
+      }
+    }
   }, [user, authLoading, navigate]);
+
+  // Sync loader data to Zustand store
+  useEffect(() => {
+    if (loadedTenant) {
+      setTenant(loadedTenant);
+    }
+  }, [loadedTenant, setTenant]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -139,14 +164,14 @@ function DashboardLayout() {
         {/* Store Slug Info */}
         {(!isCollapsed || isMobile) && (
           <div className="px-3 py-2 text-xs text-muted-foreground truncate">
-            Toko: <span className="font-semibold text-foreground">{tenant.slug}</span>
+            Toko: <span className="font-semibold text-foreground">{tenant?.slug || ""}</span>
           </div>
         )}
 
         {/* View Store */}
         <Link
           to="/$slug"
-          params={{ slug: tenant.slug }}
+          params={{ slug: tenant?.slug || "" }}
           target="_blank"
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40 transition duration-200"
         >
@@ -251,12 +276,12 @@ function DashboardLayout() {
             </button>
             <span className="font-display font-medium text-base tracking-tight">
               tokolink<span className="text-muted-foreground">/</span>
-              {tenant.slug}
+              {tenant?.slug || ""}
             </span>
           </div>
           <Link
             to="/$slug"
-            params={{ slug: tenant.slug }}
+            params={{ slug: tenant?.slug || "" }}
             className="rounded-full border border-border px-4 py-2 text-xs font-medium hover:bg-surface transition"
           >
             Toko ↗

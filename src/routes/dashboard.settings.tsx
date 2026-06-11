@@ -8,14 +8,25 @@ export const Route = createFileRoute("/dashboard/settings")({
   component: SettingsPage,
 });
 
+import { useEffect } from "react";
+
 function SettingsPage() {
   const tenant = useTenant((s) => s.tenant);
-  const setTenant = useTenant((s) => s.setTenant);
+  const updateSettings = useTenant((s) => s.updateSettings);
 
-  const [name, setName] = useState(tenant.name);
-  const [tagline, setTagline] = useState(tenant.tagline);
-  const [whatsapp, setWhatsapp] = useState(tenant.whatsapp);
-  const [avatar, setAvatar] = useState(tenant.avatar);
+  const [name, setName] = useState(tenant?.name ?? "");
+  const [tagline, setTagline] = useState(tenant?.tagline ?? "");
+  const [whatsapp, setWhatsapp] = useState(tenant?.whatsapp ?? "");
+  const [avatar, setAvatar] = useState(tenant?.avatar ?? "");
+
+  useEffect(() => {
+    if (tenant) {
+      setName(tenant.name);
+      setTagline(tenant.tagline);
+      setWhatsapp(tenant.whatsapp);
+      setAvatar(tenant.avatar);
+    }
+  }, [tenant]);
 
   return (
     <div className="max-w-2xl space-y-10">
@@ -25,10 +36,14 @@ function SettingsPage() {
       </div>
 
       <form
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
-          setTenant({ name, tagline, whatsapp, avatar });
-          toast.success("Pengaturan toko berhasil disimpan");
+          try {
+            await updateSettings({ name, tagline, whatsapp, avatar });
+            toast.success("Pengaturan toko berhasil disimpan");
+          } catch (err: any) {
+            toast.error(err.message || "Gagal menyimpan pengaturan");
+          }
         }}
         className="space-y-6"
       >

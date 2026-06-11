@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTenant } from "@/lib/store";
 import type { Product, ProductVariantGroup } from "@/lib/types";
-import { formatIDR } from "@/lib/mock-data";
+import { formatIDR } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/image-upload";
@@ -13,12 +13,22 @@ export const Route = createFileRoute("/dashboard/products")({
 });
 
 function ProductsPage() {
-  const products = useTenant((s) => s.tenant.products);
+  const tenant = useTenant((s) => s.tenant);
   const add = useTenant((s) => s.addProduct);
   const remove = useTenant((s) => s.removeProduct);
   const [editing, setEditing] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+
+  if (!tenant) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-6 w-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const products = tenant.products;
 
   return (
     <div className="space-y-10">

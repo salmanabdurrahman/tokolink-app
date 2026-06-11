@@ -8,13 +8,23 @@ export const Route = createFileRoute("/dashboard/links")({
 });
 
 function LinksPage() {
-  const links = useTenant((s) => s.tenant.links);
+  const tenant = useTenant((s) => s.tenant);
   const add = useTenant((s) => s.addLink);
   const update = useTenant((s) => s.updateLink);
   const remove = useTenant((s) => s.removeLink);
 
   const [label, setLabel] = useState("");
   const [url, setUrl] = useState("");
+
+  if (!tenant) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-6 w-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const links = tenant.links;
 
   return (
     <div className="space-y-10">

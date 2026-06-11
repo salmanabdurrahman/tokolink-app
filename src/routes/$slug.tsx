@@ -1,13 +1,24 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
-import { buildWhatsAppUrl, useCart, useTenant } from "@/lib/store";
-import { formatIDR } from "@/lib/mock-data";
+import { buildWhatsAppUrl, useCart } from "@/lib/store";
+import { formatIDR } from "@/lib/utils";
 import type { Product, ProductVariantOption } from "@/lib/types";
 import { toast } from "sonner";
 import { FallbackImage } from "@/components/fallback-image";
 
+import { getTenant } from "@/server/tenant.functions";
+
 export const Route = createFileRoute("/$slug")({
+  loader: async ({ params }) => {
+    try {
+      const tenant = await getTenant({ data: params.slug });
+      if (!tenant) throw notFound();
+      return { tenant };
+    } catch {
+      throw notFound();
+    }
+  },
   head: ({ params }) => ({
     meta: [
       { title: `${params.slug} — Tokolink` },
@@ -26,12 +37,7 @@ export const Route = createFileRoute("/$slug")({
 });
 
 function Storefront() {
-  const { slug } = Route.useParams();
-  const tenant = useTenant((s) => s.tenant);
-
-  if (tenant.slug !== slug) {
-    throw notFound();
-  }
+  const { tenant } = Route.useLoaderData();
 
   const [selecting, setSelecting] = useState<Product | null>(null);
 

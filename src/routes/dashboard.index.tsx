@@ -8,6 +8,14 @@ export const Route = createFileRoute("/dashboard/")({
 function Overview() {
   const tenant = useTenant((s) => s.tenant);
 
+  if (!tenant) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-6 w-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   const stats = [
     { label: "Produk aktif", value: tenant.products.length },
     { label: "Tautan", value: tenant.links.length },

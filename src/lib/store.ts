@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CartItem, LinkItem, Product, Tenant } from "./types";
-import { demoTenant } from "./mock-data";
 
 // ---------- Auth ----------
 type AuthState = {
@@ -24,60 +23,102 @@ export const useAuth = create<AuthState>((set) => ({
   },
 }));
 
-// ---------- Tenant (mock) ----------
+import { updateTenant } from "../server/tenant.functions";
+import { createProduct, updateProduct, deleteProduct } from "../server/product.functions";
+import { addLink, updateLink, deleteLink } from "../server/link.functions";
+
 type TenantState = {
-  tenant: Tenant;
-  setTenant: (t: Partial<Tenant>) => void;
-  addLink: (l: Omit<LinkItem, "id">) => void;
-  updateLink: (id: string, l: Partial<LinkItem>) => void;
-  removeLink: (id: string) => void;
-  addProduct: (p: Omit<Product, "id">) => void;
-  updateProduct: (id: string, p: Partial<Product>) => void;
-  removeProduct: (id: string) => void;
+  tenant: Tenant | null;
+  setTenant: (t: Tenant | null) => void;
+  updateSettings: (t: Partial<Tenant>) => Promise<void>;
+  addLink: (l: Omit<LinkItem, "id">) => Promise<void>;
+  updateLink: (id: string, l: Partial<LinkItem>) => Promise<void>;
+  removeLink: (id: string) => Promise<void>;
+  addProduct: (p: Omit<Product, "id">) => Promise<void>;
+  updateProduct: (id: string, p: Partial<Product>) => Promise<void>;
+  removeProduct: (id: string) => Promise<void>;
 };
 
-export const useTenant = create<TenantState>()(
-  persist(
-    (set) => ({
-      tenant: demoTenant,
-      setTenant: (t) => set((s) => ({ tenant: { ...s.tenant, ...t } })),
-      addLink: (l) =>
-        set((s) => ({
-          tenant: { ...s.tenant, links: [...s.tenant.links, { ...l, id: crypto.randomUUID() }] },
-        })),
-      updateLink: (id, l) =>
-        set((s) => ({
-          tenant: {
-            ...s.tenant,
-            links: s.tenant.links.map((x) => (x.id === id ? { ...x, ...l } : x)),
-          },
-        })),
-      removeLink: (id) =>
-        set((s) => ({
-          tenant: { ...s.tenant, links: s.tenant.links.filter((x) => x.id !== id) },
-        })),
-      addProduct: (p) =>
-        set((s) => ({
-          tenant: {
-            ...s.tenant,
-            products: [...s.tenant.products, { ...p, id: crypto.randomUUID() }],
-          },
-        })),
-      updateProduct: (id, p) =>
-        set((s) => ({
-          tenant: {
-            ...s.tenant,
-            products: s.tenant.products.map((x) => (x.id === id ? { ...x, ...p } : x)),
-          },
-        })),
-      removeProduct: (id) =>
-        set((s) => ({
-          tenant: { ...s.tenant, products: s.tenant.products.filter((x) => x.id !== id) },
-        })),
-    }),
-    { name: "tokolink-tenant" },
-  ),
-);
+export const useTenant = create<TenantState>((set) => ({
+  tenant: null,
+  setTenant: (tenant) => set({ tenant }),
+  updateSettings: async (t) => {
+    const updated = await updateTenant({ data: t });
+    set((s) => ({ tenant: s.tenant ? { ...s.tenant, ...updated } : (updated as any) }));
+  },
+  addLink: async (l) => {
+    const newLink = await addLink({ data: l });
+    set((s) => {
+      if (!s.tenant) return {};
+      return {
+        tenant: {
+          ...s.tenant,
+          links: [...s.tenant.links, newLink],
+        },
+      };
+    });
+  },
+  updateLink: async (id, l) => {
+    const updated = await updateLink({ data: { id, data: l } });
+    set((s) => {
+      if (!s.tenant) return {};
+      return {
+        tenant: {
+          ...s.tenant,
+          links: s.tenant.links.map((x) => (x.id === id ? updated : x)),
+        },
+      };
+    });
+  },
+  removeLink: async (id) => {
+    await deleteLink({ data: id });
+    set((s) => {
+      if (!s.tenant) return {};
+      return {
+        tenant: {
+          ...s.tenant,
+          links: s.tenant.links.filter((x) => x.id !== id),
+        },
+      };
+    });
+  },
+  addProduct: async (p) => {
+    const newProduct = await createProduct({ data: p });
+    set((s) => {
+      if (!s.tenant) return {};
+      return {
+        tenant: {
+          ...s.tenant,
+          products: [...s.tenant.products, newProduct as any],
+        },
+      };
+    });
+  },
+  updateProduct: async (id, p) => {
+    const updated = await updateProduct({ data: { id, data: p } });
+    set((s) => {
+      if (!s.tenant) return {};
+      return {
+        tenant: {
+          ...s.tenant,
+          products: s.tenant.products.map((x) => (x.id === id ? (updated as any) : x)),
+        },
+      };
+    });
+  },
+  removeProduct: async (id) => {
+    await deleteProduct({ data: id });
+    set((s) => {
+      if (!s.tenant) return {};
+      return {
+        tenant: {
+          ...s.tenant,
+          products: s.tenant.products.filter((x) => x.id !== id),
+        },
+      };
+    });
+  },
+}));
 
 // ---------- Cart (per session, not persisted) ----------
 type CartState = {
