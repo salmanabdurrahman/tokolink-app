@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
@@ -7,8 +7,95 @@ datasource db {
   provider = "postgresql"
 }
 
-model Todo {
-  id        Int      @id @default(autoincrement())
-  title     String
-  createdAt DateTime @default(now())
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String   @unique
+  name          String?
+  avatarUrl     String?  @map("avatar_url")
+  provider      String   @default("email")       // "email" | "google"
+  supabaseId    String   @unique @map("supabase_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tenant        Tenant?
+
+  @@map("users")
+}
+
+model Tenant {
+  id        String   @id @default(uuid()) @db.Uuid
+  slug      String   @unique
+  name      String
+  tagline   String   @default("")
+  avatar    String   @default("")
+  whatsapp  String   @default("")
+  userId    String   @unique @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products  Product[]
+  links     Link[]
+
+  @@index([slug])
+  @@map("tenants")
+}
+
+model Product {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  description String   @default("")
+  basePrice   Int      @map("base_price")
+  image       String   @default("")
+  sortOrder   Int      @default(0) @map("sort_order")
+  tenantId    String   @map("tenant_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant        Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  variantGroups ProductVariantGroup[]
+
+  @@index([tenantId])
+  @@map("products")
+}
+
+model ProductVariantGroup {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String                           // e.g. "Ukuran", "Warna"
+  sortOrder Int      @default(0) @map("sort_order")
+  productId String   @map("product_id") @db.Uuid
+
+  product   Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  options   ProductVariantOption[]
+
+  @@index([productId])
+  @@map("product_variant_groups")
+}
+
+model ProductVariantOption {
+  id         String @id @default(uuid()) @db.Uuid
+  name       String
+  priceDelta Int    @default(0) @map("price_delta")
+  sortOrder  Int    @default(0) @map("sort_order")
+  groupId    String @map("group_id") @db.Uuid
+
+  group ProductVariantGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@map("product_variant_options")
+}
+
+model Link {
+  id        String   @id @default(uuid()) @db.Uuid
+  label     String
+  url       String
+  icon      String?
+  sortOrder Int      @default(0) @map("sort_order")
+  tenantId  String   @map("tenant_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("links")
 }
