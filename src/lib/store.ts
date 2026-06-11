@@ -3,23 +3,26 @@ import { persist } from "zustand/middleware";
 import type { CartItem, LinkItem, Product, Tenant } from "./types";
 import { demoTenant } from "./mock-data";
 
-// ---------- Auth (mock) ----------
+// ---------- Auth ----------
 type AuthState = {
-  user: { email: string; name: string } | null;
-  signIn: (email: string) => void;
-  signOut: () => void;
+  user: any | null;
+  isLoading: boolean;
+  setUser: (user: any) => void;
+  setLoading: (loading: boolean) => void;
+  signOut: () => Promise<void>;
 };
 
-export const useAuth = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      signIn: (email) => set({ user: { email, name: email.split("@")[0] } }),
-      signOut: () => set({ user: null }),
-    }),
-    { name: "tokolink-auth" },
-  ),
-);
+export const useAuth = create<AuthState>((set) => ({
+  user: null,
+  isLoading: true,
+  setUser: (user) => set({ user }),
+  setLoading: (isLoading) => set({ isLoading }),
+  signOut: async () => {
+    const { supabase } = await import("./supabase");
+    await supabase.auth.signOut();
+    set({ user: null });
+  },
+}));
 
 // ---------- Tenant (mock) ----------
 type TenantState = {

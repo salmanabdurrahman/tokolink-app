@@ -1,4 +1,5 @@
-import { PrismaClient } from "../src/generated/prisma/client.js";
+import * as prismaPkg from "../src/generated/prisma/index.js";
+const { PrismaClient } = prismaPkg;
 import { PrismaPg } from "@prisma/adapter-pg";
 
 // In a real database environment, database drivers are passed via PrismaPg adapter

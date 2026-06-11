@@ -19,6 +19,7 @@ dist-ssr
 .env
 __unconfig*
 todos.json
+src/generated
 
 # Editor directories and files
 .vscode/*

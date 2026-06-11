@@ -131,8 +131,11 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+import { useSession } from "../hooks/use-session";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useSession();
 
   return (
     <QueryClientProvider client={queryClient}>

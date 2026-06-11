@@ -23,6 +23,7 @@ export const Route = createFileRoute("/dashboard")({
 
 function DashboardLayout() {
   const user = useAuth((s) => s.user);
+  const authLoading = useAuth((s) => s.isLoading);
   const signOut = useAuth((s) => s.signOut);
   const tenant = useTenant((s) => s.tenant);
   const navigate = useNavigate();
@@ -32,13 +33,25 @@ function DashboardLayout() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
-    if (!user) navigate({ to: "/auth" });
-  }, [user, navigate]);
+    if (!authLoading && !user) navigate({ to: "/auth" });
+  }, [user, authLoading, navigate]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
     setIsMobileOpen(false);
   }, [location.pathname]);
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+        <p className="text-sm font-medium text-muted-foreground animate-pulse font-medium">Memuat...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const tabs = [
     { to: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
