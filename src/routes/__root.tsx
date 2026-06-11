@@ -75,10 +75,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Tokolink - Buat Toko Online WhatsApp UMKM" },
-      { name: "description", content: "Buat link toko online WhatsApp Anda sendiri dalam hitungan detik. Kelola produk, varian, dan terima pesanan teratur via chat WhatsApp." },
+      {
+        name: "description",
+        content:
+          "Buat link toko online WhatsApp Anda sendiri dalam hitungan detik. Kelola produk, varian, dan terima pesanan teratur via chat WhatsApp.",
+      },
       { name: "author", content: "Tokolink" },
       { property: "og:title", content: "Tokolink - Buat Toko Online WhatsApp UMKM" },
-      { property: "og:description", content: "Buat link toko online WhatsApp Anda sendiri dalam hitungan detik. Kelola produk, varian, dan terima pesanan teratur via chat WhatsApp." },
+      {
+        property: "og:description",
+        content:
+          "Buat link toko online WhatsApp Anda sendiri dalam hitungan detik. Kelola produk, varian, dan terima pesanan teratur via chat WhatsApp.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
