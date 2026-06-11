@@ -46,10 +46,14 @@ function Onboarding() {
     setError("");
 
     try {
+      const { getRecaptchaToken } = await import("@/lib/recaptcha");
+      const recaptchaToken = await getRecaptchaToken("onboarding");
+
       const tenant = await createTenant({
         slug: cleanSlug,
         name,
         tagline,
+        recaptchaToken,
       });
 
       // Update the user profile in store with the new tenant info

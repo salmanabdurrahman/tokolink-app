@@ -74,6 +74,15 @@ export const createTenant = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const userId = context.user.id;
 
+    // Verify reCAPTCHA
+    if (data.recaptchaToken) {
+      const { verifyRecaptcha } = await import("./recaptcha");
+      const isValid = await verifyRecaptcha(data.recaptchaToken, "onboarding");
+      if (!isValid) {
+        throw new Error("Verifikasi reCAPTCHA gagal. Harap coba lagi.");
+      }
+    }
+
     // Check if user already has a tenant
     const existingUserTenant = await prisma.tenant.findUnique({
       where: { userId },
