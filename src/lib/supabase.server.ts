@@ -7,6 +7,22 @@ if (!supabaseUrl) {
   console.warn("Warning: Supabase URL is not defined on the server side.");
 }
 
+// Mock admin auth interface to prevent crashes when unconfigured
+const dummyAdminAuth = {
+  admin: {
+    createUser: async () => ({
+      data: { user: null },
+      error: new Error("Supabase is not configured."),
+    }),
+    updateUserById: async () => ({
+      data: { user: null },
+      error: new Error("Supabase is not configured."),
+    }),
+    deleteUser: async () => ({ error: new Error("Supabase is not configured.") }),
+  },
+  getUser: async () => ({ data: { user: null }, error: new Error("Supabase is not configured.") }),
+};
+
 export const supabaseAdmin = supabaseUrl
   ? createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
@@ -14,4 +30,6 @@ export const supabaseAdmin = supabaseUrl
         autoRefreshToken: false,
       },
     })
-  : (null as any);
+  : ({
+      auth: dummyAdminAuth,
+    } as any);
