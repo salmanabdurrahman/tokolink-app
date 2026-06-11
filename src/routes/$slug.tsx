@@ -5,6 +5,7 @@ import { buildWhatsAppUrl, useCart, useTenant } from "@/lib/store";
 import { formatIDR } from "@/lib/mock-data";
 import type { Product, ProductVariantOption } from "@/lib/types";
 import { toast } from "sonner";
+import { FallbackImage } from "@/components/fallback-image";
 
 export const Route = createFileRoute("/$slug")({
   head: ({ params }) => ({
@@ -39,14 +40,19 @@ function Storefront() {
       {/* Header */}
       <header className="px-6 pt-12">
         <div className="mx-auto max-w-md text-center">
-          <motion.img
+          <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5 }}
-            src={tenant.avatar}
-            alt={tenant.name}
-            className="mx-auto h-20 w-20 rounded-full border-4 border-card object-cover shadow-sm"
-          />
+            className="mx-auto h-20 w-20 rounded-full border-4 border-card overflow-hidden shadow-sm"
+          >
+            <FallbackImage
+              src={tenant.avatar}
+              alt={tenant.name}
+              fallbackText={tenant.name}
+              className="h-full w-full object-cover"
+            />
+          </motion.div>
           <motion.h1
             initial={{ y: 12, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -149,8 +155,13 @@ function ProductCard({
       transition={{ duration: 0.4, delay }}
       className="overflow-hidden rounded-2xl border border-border bg-card flex flex-col justify-between"
     >
-      <div className="aspect-square overflow-hidden bg-secondary">
-        <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+      <div className="aspect-square overflow-hidden bg-secondary relative">
+        <FallbackImage
+          src={product.image}
+          alt={product.name}
+          fallbackText={product.name}
+          className="h-full w-full object-cover"
+        />
       </div>
       <div className="p-3 flex-1 flex flex-col justify-between">
         <div>
@@ -230,9 +241,10 @@ function VariantSheet({ product, onClose }: { product: Product; onClose: () => v
       >
         <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-border shrink-0" />
         <div className="flex gap-4 shrink-0">
-          <img
+          <FallbackImage
             src={product.image}
             alt={product.name}
+            fallbackText={product.name}
             className="h-20 w-20 rounded-xl object-cover"
           />
           <div className="flex-1">
@@ -355,7 +367,12 @@ function FloatingCart({ storeName, phone }: { storeName: string; phone: string }
               <ul className="mt-4 divide-y divide-border overflow-y-auto flex-1 pr-1 hide-scrollbar">
                 {items.map((i) => (
                   <li key={i.key} className="flex items-center gap-3 py-3">
-                    <img src={i.image} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                    <FallbackImage
+                      src={i.image}
+                      alt={i.productName}
+                      fallbackText={i.productName}
+                      className="h-14 w-14 rounded-lg object-cover"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">{i.productName}</div>
                       {i.variantName && (

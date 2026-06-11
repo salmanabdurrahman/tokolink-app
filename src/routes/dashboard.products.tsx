@@ -5,6 +5,8 @@ import type { Product, ProductVariantGroup } from "@/lib/types";
 import { formatIDR } from "@/lib/mock-data";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { ImageUpload } from "@/components/image-upload";
+import { FallbackImage } from "@/components/fallback-image";
 
 export const Route = createFileRoute("/dashboard/products")({
   component: ProductsPage,
@@ -43,10 +45,11 @@ function ProductsPage() {
             className="group overflow-hidden rounded-2xl border border-border bg-card flex flex-col justify-between"
           >
             <div>
-              <div className="aspect-square overflow-hidden bg-secondary">
-                <img
+              <div className="aspect-square overflow-hidden bg-secondary relative">
+                <FallbackImage
                   src={p.image}
                   alt={p.name}
+                  fallbackText={p.name}
                   className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                 />
               </div>
@@ -208,12 +211,10 @@ function ProductForm({
                 className="input"
               />
             </Field>
-            <Field label="URL gambar">
-              <input
+            <Field label="Gambar Produk">
+              <ImageUpload
                 value={image}
-                onChange={(e) => setImage(e.target.value)}
-                placeholder="https://..."
-                className="input"
+                onChange={(url) => setImage(url)}
               />
             </Field>
 

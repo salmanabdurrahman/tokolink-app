@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTenant } from "@/lib/store";
 import { toast } from "sonner";
+import { ImageUpload } from "@/components/image-upload";
 
 export const Route = createFileRoute("/dashboard/settings")({
   component: SettingsPage,
@@ -45,8 +46,8 @@ function SettingsPage() {
             className="input"
           />
         </Field>
-        <Field label="URL Avatar / Logo">
-          <input value={avatar} onChange={(e) => setAvatar(e.target.value)} className="input" />
+        <Field label="Avatar / Logo Toko">
+          <ImageUpload value={avatar} onChange={(url) => setAvatar(url)} />
         </Field>
 
         <div className="flex items-center gap-3">
