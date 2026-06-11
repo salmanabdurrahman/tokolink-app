@@ -154,7 +154,8 @@ function AuthPage() {
             transition={{ duration: 0.7 }}
             className="font-display text-5xl font-medium tracking-tight text-balance text-white"
           >
-            "Bikin toko itu <em className="font-light text-accent">harusnya</em> semudah upload foto IG."
+            "Bikin toko itu <em className="font-light text-accent">harusnya</em> semudah upload foto
+            IG."
           </motion.h2>
           <p className="mt-6 text-sm text-background/60">— Manifesto Tokolink</p>
         </div>
@@ -173,7 +174,11 @@ function AuthPage() {
           </Link>
 
           <h1 className="font-display text-4xl font-medium tracking-tight">
-            {mode === "otp" ? "Verifikasi email." : mode === "signup" ? "Bikin akun." : "Selamat datang."}
+            {mode === "otp"
+              ? "Verifikasi email."
+              : mode === "signup"
+                ? "Bikin akun."
+                : "Selamat datang."}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {mode === "otp"
@@ -210,7 +215,8 @@ function AuthPage() {
                   className="mt-2 w-full border-0 border-b border-border bg-transparent py-3 text-lg font-mono tracking-widest focus:border-foreground focus:outline-none disabled:opacity-50 text-center"
                 />
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Kami telah mengirimkan kode verifikasi 6 digit ke <span className="text-foreground">{email}</span>.
+                  Kami telah mengirimkan kode verifikasi 6 digit ke{" "}
+                  <span className="text-foreground">{email}</span>.
                 </p>
               </div>
 

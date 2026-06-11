@@ -14,5 +14,4 @@ export const supabaseAdmin = supabaseUrl
         autoRefreshToken: false,
       },
     })
-  : null as any;
-
+  : (null as any);

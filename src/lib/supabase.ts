@@ -8,7 +8,4 @@ if (!supabaseUrl) {
 }
 
 // Fallback to empty string for createClient, or a dummy client if URL is empty to prevent boot crash
-export const supabase = supabaseUrl 
-  ? createClient(supabaseUrl, supabaseAnonKey) 
-  : null as any;
-
+export const supabase = supabaseUrl ? createClient(supabaseUrl, supabaseAnonKey) : (null as any);
