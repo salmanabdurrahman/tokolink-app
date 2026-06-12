@@ -142,7 +142,7 @@
 
   .grecaptcha-badge {
     visibility: hidden !important;
-  }   
+  }
 
   ::selection {
     background: var(--lime);

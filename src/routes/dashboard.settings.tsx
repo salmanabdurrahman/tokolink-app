@@ -48,17 +48,21 @@ function SettingsPage() {
         className="space-y-6"
       >
         <Field label="Nama toko">
-          <input value={name} onChange={(e) => setName(e.target.value)} className="input" />
+          <input value={name} onChange={(e) => setName(e.target.value)} className="input w-full" />
         </Field>
         <Field label="Tagline">
-          <input value={tagline} onChange={(e) => setTagline(e.target.value)} className="input" />
+          <input
+            value={tagline}
+            onChange={(e) => setTagline(e.target.value)}
+            className="input w-full"
+          />
         </Field>
         <Field label="Nomor WhatsApp (628...)">
           <input
             value={whatsapp}
             onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ""))}
             placeholder="6281234567890"
-            className="input"
+            className="input w-full"
           />
         </Field>
         <Field label="Avatar / Logo Toko">
@@ -73,7 +77,7 @@ function SettingsPage() {
       </form>
 
       <style>{`
-        .input { width: 100%; border-radius: 10px; border: 1px solid var(--border); background: var(--background); padding: 12px 14px; font-size: 14px; outline: none; }
+        .input { border-radius: 10px; border: 1px solid var(--border); background: var(--background); padding: 12px 14px; font-size: 14px; outline: none; }
         .input:focus { border-color: var(--foreground); }
       `}</style>
     </div>

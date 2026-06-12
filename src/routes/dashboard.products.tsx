@@ -201,7 +201,7 @@ function ProductForm({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="input"
+                className="input w-full"
               />
             </Field>
             <Field label="Deskripsi">
@@ -209,7 +209,7 @@ function ProductForm({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
-                className="input"
+                className="input w-full"
               />
             </Field>
             <Field label="Harga dasar (Rp)">
@@ -218,7 +218,7 @@ function ProductForm({
                 value={basePrice}
                 onChange={(e) => setBasePrice(+e.target.value)}
                 required
-                className="input"
+                className="input w-full"
               />
             </Field>
             <Field label="Gambar Produk">
@@ -270,7 +270,7 @@ function ProductForm({
                             }}
                             placeholder="Contoh: Ukuran, Warna, Gilingan"
                             required
-                            className="input"
+                            className="input w-full"
                           />
                         </Field>
                       </div>
@@ -366,7 +366,7 @@ function ProductForm({
       </motion.div>
 
       <style>{`
-        .input { width: 100%; border-radius: 10px; border: 1px solid var(--border); background: var(--background); padding: 10px 14px; font-size: 14px; outline: none; }
+        .input { border-radius: 10px; border: 1px solid var(--border); background: var(--background); padding: 10px 14px; font-size: 14px; outline: none; }
         .input:focus { border-color: var(--foreground); }
       `}</style>
     </div>
