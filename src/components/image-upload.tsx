@@ -39,8 +39,10 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
       // 4. Upload to Server
       setStatus("Mengunggah gambar ke CDN...");
       const result = await uploadImage({
-        name: file.name.endsWith(".webp") ? file.name : `${file.name.split(".")[0]}.webp`,
-        base64,
+        data: {
+          name: file.name.endsWith(".webp") ? file.name : `${file.name.split(".")[0]}.webp`,
+          base64,
+        },
       });
 
       // 5. Done
@@ -96,6 +98,15 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
 
   return (
     <div className={`space-y-4 w-full ${className}`}>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        onChange={handleFileChange}
+        className="hidden"
+        disabled={loading}
+      />
+
       {/* Upload Zone */}
       <div
         onDragEnter={handleDrag}
@@ -109,15 +120,6 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
             : "border-border hover:border-foreground/40 hover:bg-muted/10"
         } ${loading ? "pointer-events-none opacity-80" : ""}`}
       >
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
-          onChange={handleFileChange}
-          className="hidden"
-          disabled={loading}
-        />
-
         {value ? (
           <div className="flex flex-col items-center gap-3 w-full">
             <img
