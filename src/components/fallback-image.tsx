@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ImageIcon } from "lucide-react";
 
 interface FallbackImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -17,11 +17,27 @@ export function FallbackImage({
 }: FallbackImageProps) {
   const [isError, setIsError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
-  // Reset states if src changes
+  // Reset states if src changes and check for cached images
   useEffect(() => {
-    setIsError(!src);
+    if (!src) {
+      setIsError(true);
+      setIsLoaded(false);
+      return;
+    }
+
+    setIsError(false);
     setIsLoaded(false);
+
+    // If the image is already loaded (e.g. from browser cache)
+    if (imgRef.current?.complete) {
+      if (imgRef.current.naturalWidth === 0) {
+        setIsError(true);
+      } else {
+        setIsLoaded(true);
+      }
+    }
   }, [src]);
 
   const getInitials = (text?: string) => {
@@ -52,6 +68,7 @@ export function FallbackImage({
 
   return (
     <img
+      ref={imgRef}
       src={src}
       alt={alt}
       onLoad={() => setIsLoaded(true)}
