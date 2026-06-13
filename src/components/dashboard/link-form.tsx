@@ -1,0 +1,44 @@
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+
+interface LinkFormProps {
+  onSave: (data: { label: string; url: string }) => void;
+}
+
+export function LinkForm({ onSave }: LinkFormProps) {
+  const [label, setLabel] = useState("");
+  const [url, setUrl] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!label || !url) return;
+    onSave({ label, url });
+    setLabel("");
+    setUrl("");
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="grid grid-cols-1 gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-[1fr_2fr_auto] items-center"
+    >
+      <Input
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+        placeholder="Label (Instagram)"
+        required
+      />
+      <Input
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        placeholder="https://..."
+        required
+        type="url"
+      />
+      <Button type="submit" size="md" className="rounded-lg py-3">
+        + Tambah
+      </Button>
+    </form>
+  );
+}

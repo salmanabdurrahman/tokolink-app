@@ -2,12 +2,13 @@ import { useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/store";
 import { syncSession } from "../server/auth.functions";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 export function useSession() {
   const { user, setUser, setLoading } = useAuth();
 
   useEffect(() => {
-    async function handleSession(session: any) {
+    async function handleSession(session: Session | null) {
       if (session) {
         // Set the session cookie for TanStack Start Server Functions
         // session.expires_in is in seconds, max-age expects seconds
@@ -32,14 +33,14 @@ export function useSession() {
     }
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      handleSession(session);
+    supabase.auth.getSession().then(({ data }: any) => {
+      handleSession(data.session);
     });
 
     // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
       handleSession(session);
     });
 

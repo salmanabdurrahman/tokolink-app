@@ -1,7 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { useTenant } from "@/lib/store";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/layout/page-header";
+import { LinkForm } from "@/components/dashboard/link-form";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/dashboard/links")({
   component: LinksPage,
@@ -13,55 +17,26 @@ function LinksPage() {
   const update = useTenant((s) => s.updateLink);
   const remove = useTenant((s) => s.removeLink);
 
-  const [label, setLabel] = useState("");
-  const [url, setUrl] = useState("");
-
   if (!tenant) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-6 w-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        <Spinner size="md" />
       </div>
     );
   }
 
   const links = tenant.links;
 
-  return (
-    <div className="space-y-10">
-      <div className="flex items-end justify-between">
-        <div>
-          <span className="text-xs uppercase tracking-widest text-muted-foreground">Manajemen</span>
-          <h1 className="font-display mt-2 text-4xl font-medium tracking-tight">Tautan</h1>
-        </div>
-      </div>
+  const handleSave = (data: { label: string; url: string }) => {
+    add(data);
+    toast.success(`Tautan "${data.label}" berhasil ditambahkan`);
+  };
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!label || !url) return;
-          add({ label, url });
-          toast.success(`Tautan "${label}" berhasil ditambahkan`);
-          setLabel("");
-          setUrl("");
-        }}
-        className="grid grid-cols-1 gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-[1fr_2fr_auto]"
-      >
-        <input
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          placeholder="Label (Instagram)"
-          className="rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-foreground focus:outline-none"
-        />
-        <input
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://..."
-          className="rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-foreground focus:outline-none"
-        />
-        <button className="rounded-lg bg-foreground px-5 py-3 text-sm font-medium text-background hover:bg-foreground/90 transition">
-          + Tambah
-        </button>
-      </form>
+  return (
+    <div className="space-y-10 bg-background text-foreground animate-fade-in">
+      <PageHeader label="Manajemen" title="Tautan" />
+
+      <LinkForm onSave={handleSave} />
 
       <ul className="divide-y divide-border border-y border-border">
         {links.length === 0 && (
@@ -72,25 +47,27 @@ function LinksPage() {
             key={l.id}
             className="grid grid-cols-1 items-center gap-3 py-4 sm:grid-cols-[1fr_2fr_auto]"
           >
-            <input
+            <Input
               value={l.label}
               onChange={(e) => update(l.id, { label: e.target.value })}
-              className="bg-transparent text-sm focus:outline-none"
+              className="bg-transparent border-none px-0 py-1 rounded-none focus:border-b focus:border-foreground"
             />
-            <input
+            <Input
               value={l.url}
               onChange={(e) => update(l.id, { url: e.target.value })}
-              className="bg-transparent text-sm text-muted-foreground focus:outline-none focus:text-foreground"
+              className="bg-transparent border-none px-0 py-1 rounded-none text-muted-foreground focus:text-foreground focus:border-b focus:border-foreground"
             />
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 remove(l.id);
                 toast.success(`Tautan "${l.label}" berhasil dihapus`);
               }}
-              className="text-xs text-muted-foreground hover:text-destructive transition"
+              className="text-xs text-muted-foreground hover:text-destructive shrink-0"
             >
               Hapus
-            </button>
+            </Button>
           </li>
         ))}
       </ul>

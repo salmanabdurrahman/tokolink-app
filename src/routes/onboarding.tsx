@@ -2,7 +2,13 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/store";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { createTenant } from "@/server/tenant.functions";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -13,8 +19,7 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 function Onboarding() {
-  const user = useAuth((s) => s.user);
-  const authLoading = useAuth((s) => s.isLoading);
+  const { isLoading: authLoading, user } = useAuthGuard({ requireTenant: false });
   const setUser = useAuth((s) => s.setUser);
 
   const [slug, setSlug] = useState("");
@@ -24,14 +29,10 @@ function Onboarding() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Guard: Redirect if not logged in, or if already has a tenant
+  // Guard: Redirect if already has a tenant
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate({ to: "/auth" });
-      } else if (user.tenant) {
-        navigate({ to: "/dashboard" });
-      }
+    if (!authLoading && user && user.tenant) {
+      navigate({ to: "/dashboard" });
     }
   }, [user, authLoading, navigate]);
 
@@ -79,13 +80,13 @@ function Onboarding() {
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
-        <p className="text-sm font-medium text-muted-foreground animate-pulse">Memuat...</p>
+        <Spinner size="md" />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center px-6 py-16">
+    <div className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center px-6 py-16 bg-background text-foreground">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
         <span className="text-xs uppercase tracking-widest text-muted-foreground">
           Langkah 1 dari 1
@@ -108,19 +109,18 @@ function Onboarding() {
         )}
 
         <form onSubmit={submit} className="mt-12 space-y-8">
-          <div>
-            <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              URL Toko
-            </label>
-            <div className="mt-2 flex items-center border-b border-border focus-within:border-foreground">
-              <span className="font-display text-lg text-muted-foreground">tokolink.app/</span>
-              <input
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="slug-input">URL Toko</Label>
+            <div className="flex items-center border-b border-border focus-within:border-foreground transition">
+              <span className="font-display text-lg text-muted-foreground pl-1 shrink-0">tokolink.app/</span>
+              <Input
+                id="slug-input"
                 required
                 disabled={loading}
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder="nama-toko-kamu"
-                className="font-display flex-1 bg-transparent py-3 text-lg focus:outline-none disabled:opacity-50"
+                className="font-display flex-1 bg-transparent border-none py-3 text-lg focus:border-none focus:outline-none shadow-none"
               />
             </div>
             {cleanSlug && (
@@ -130,40 +130,32 @@ function Onboarding() {
             )}
           </div>
 
-          <div>
-            <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Nama Toko
-            </label>
-            <input
+          <Field label="Nama Toko">
+            <Input
               required
               disabled={loading}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Kopi Senja"
-              className="mt-2 w-full border-0 border-b border-border bg-transparent py-3 text-base focus:border-foreground focus:outline-none disabled:opacity-50"
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Tagline (opsional)
-            </label>
-            <input
+          <Field label="Tagline (opsional)">
+            <Input
               disabled={loading}
               value={tagline}
               onChange={(e) => setTagline(e.target.value)}
               placeholder="Specialty coffee dari Bandung"
-              className="mt-2 w-full border-0 border-b border-border bg-transparent py-3 text-base focus:border-foreground focus:outline-none disabled:opacity-50"
             />
-          </div>
+          </Field>
 
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3.5 text-sm font-medium text-background transition hover:bg-foreground/90 disabled:opacity-50 cursor-pointer select-none"
+            className="inline-flex items-center gap-2"
           >
             {loading ? "Membuat toko..." : "Lanjut ke dashboard →"}
-          </button>
+          </Button>
         </form>
       </motion.div>
     </div>

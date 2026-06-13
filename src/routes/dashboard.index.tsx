@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTenant } from "@/lib/store";
+import { PageHeader } from "@/components/layout/page-header";
+import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/dashboard/")({
   component: Overview,
@@ -11,7 +13,7 @@ function Overview() {
   if (!tenant) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-6 w-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        <Spinner size="md" />
       </div>
     );
   }
@@ -23,14 +25,19 @@ function Overview() {
   ];
 
   return (
-    <div className="space-y-12">
-      <div>
-        <span className="text-xs uppercase tracking-widest text-muted-foreground">Overview</span>
-        <h1 className="font-display mt-2 text-5xl font-medium tracking-tight">
-          Halo, {tenant.name}.
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          URL toko-mu: <span className="text-foreground">tokolink.app/{tenant.slug}</span>
+    <div className="space-y-12 bg-background text-foreground animate-fade-in">
+      <div className="space-y-4">
+        <PageHeader label="Overview" title={`Halo, ${tenant.name}.`} />
+        <p className="text-sm text-muted-foreground">
+          URL toko-mu:{" "}
+          <a
+            href={`https://tokolink.app/${tenant.slug}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-foreground font-semibold hover:underline"
+          >
+            tokolink.app/{tenant.slug} ↗
+          </a>
         </p>
       </div>
 

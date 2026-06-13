@@ -1,152 +1,55 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { useAuth } from "@/lib/store";
-import { supabase } from "@/lib/supabase";
-import { getErrorMessage } from "@/lib/utils";
+import { useAuthForm } from "@/hooks/use-auth-form";
+import { TokolinkLogo } from "@/components/brand/logo";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
-    meta: [{ title: "Masuk — Tokolink" }],
+    meta: [
+      { title: "Masuk — Tokolink" },
+      { property: "og:title", content: "Masuk — Tokolink" },
+      {
+        property: "og:description",
+        content: "Masuk ke Tokolink untuk mengelola toko online UMKM Anda.",
+      },
+      { property: "og:image", content: "https://tokolink.app/og-auth.png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://tokolink.app/og-auth.png" },
+    ],
     links: [{ rel: "canonical", href: "https://tokolink.app/auth" }],
   }),
   component: AuthPage,
 });
 
 function AuthPage() {
-  const [mode, setMode] = useState<"signin" | "signup" | "otp">("signup");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [cooldown, setCooldown] = useState(0);
-
-  const user = useAuth((s) => s.user);
-  const navigate = useNavigate();
-
-  // Redirect if user is already logged in
-  useEffect(() => {
-    if (user) {
-      if (user.tenant) {
-        navigate({ to: "/dashboard" });
-      } else {
-        navigate({ to: "/onboarding" });
-      }
-    }
-  }, [user, navigate]);
-
-  // Cooldown countdown timer
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [cooldown]);
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) return;
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const { getRecaptchaToken } = await import("@/lib/recaptcha");
-      const recaptchaToken = await getRecaptchaToken(mode === "signup" ? "signup" : "login");
-
-      if (mode === "signup") {
-        const { registerUser } = await import("@/server/auth.functions");
-        const res = await registerUser({ data: { email, password, recaptchaToken } });
-        if (res.success) {
-          setMode("otp");
-          setCooldown(60);
-        }
-      } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (signInError) throw signInError;
-      }
-    } catch (err: any) {
-      setError(getErrorMessage(err) || "Terjadi kesalahan saat melakukan autentikasi");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!code || code.length !== 6) return;
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const { verifySignUpCode } = await import("@/server/auth.functions");
-      const res = await verifySignUpCode({ data: { email, code } });
-
-      if (res.success) {
-        // Auto-login using saved credentials
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (signInError) throw signInError;
-      }
-    } catch (err: any) {
-      setError(getErrorMessage(err) || "Kode verifikasi salah.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResendCode = async () => {
-    if (cooldown > 0) return;
-    setLoading(true);
-    setError("");
-
-    try {
-      const { getRecaptchaToken } = await import("@/lib/recaptcha");
-      const recaptchaToken = await getRecaptchaToken("onboarding");
-
-      const { resendSignUpCode } = await import("@/server/auth.functions");
-      const res = await resendSignUpCode({ data: { email, recaptchaToken } });
-
-      if (res.success) {
-        setCooldown(60);
-        setCode("");
-      }
-    } catch (err: any) {
-      setError(getErrorMessage(err) || "Gagal mengirim ulang kode.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const { error: googleError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: window.location.origin + "/dashboard",
-        },
-      });
-      if (googleError) throw googleError;
-    } catch (err: any) {
-      setError(getErrorMessage(err) || "Gagal masuk menggunakan Google");
-      setLoading(false);
-    }
-  };
+  const {
+    mode,
+    setMode,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    code,
+    setCode,
+    loading,
+    error,
+    cooldown,
+    submitCredentials,
+    verifyCode,
+    resendCode,
+    signInWithGoogle,
+  } = useAuthForm();
 
   return (
-    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
+    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-background text-foreground">
       <div className="hidden flex-col justify-between bg-foreground p-12 text-background lg:flex">
-        <Link to="/" className="font-display text-lg font-medium">
-          tokolink<span className="text-background/40">/</span>
+        <Link to="/" aria-label="Tokolink — Kembali ke beranda" className="flex items-center">
+          <TokolinkLogo size={28} showWordmark />
         </Link>
         <div>
           <motion.h2
@@ -155,23 +58,26 @@ function AuthPage() {
             transition={{ duration: 0.7 }}
             className="font-display text-5xl font-medium tracking-tight text-balance text-white"
           >
-            "Bikin toko itu <em className="font-light text-accent">harusnya</em> semudah upload foto
-            IG."
+            "Bikin toko itu <em className="font-light text-accent">harusnya</em> semudah upload foto IG."
           </motion.h2>
           <p className="mt-6 text-sm text-background/60">— Manifesto Tokolink</p>
         </div>
         <div className="text-xs text-background/40">MIT · Open Source · v1.0</div>
       </div>
 
-      <div className="flex items-center justify-center bg-background p-8">
+      <div className="flex items-center justify-center p-8">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="w-full max-w-sm"
         >
-          <Link to="/" className="font-display mb-12 inline-block text-lg font-medium lg:hidden">
-            tokolink<span className="text-foreground/40">/</span>
+          <Link
+            to="/"
+            aria-label="Tokolink — Kembali ke beranda"
+            className="mb-12 inline-block lg:hidden"
+          >
+            <TokolinkLogo size={28} showWordmark />
           </Link>
 
           <h1 className="font-display text-4xl font-medium tracking-tight">
@@ -200,12 +106,11 @@ function AuthPage() {
           )}
 
           {mode === "otp" ? (
-            <form onSubmit={handleVerifyCode} className="mt-8 space-y-4">
-              <div>
-                <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                  Kode Verifikasi
-                </label>
-                <input
+            <form onSubmit={verifyCode} className="mt-8 space-y-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="code-input">Kode Verifikasi</Label>
+                <Input
+                  id="code-input"
                   type="text"
                   maxLength={6}
                   required
@@ -213,7 +118,7 @@ function AuthPage() {
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ""))}
                   placeholder="123456"
-                  className="mt-2 w-full border-0 border-b border-border bg-transparent py-3 text-lg font-mono tracking-widest focus:border-foreground focus:outline-none disabled:opacity-50 text-center"
+                  className="text-center font-mono tracking-widest text-lg"
                 />
                 <p className="mt-2 text-xs text-muted-foreground">
                   Kami telah mengirimkan kode verifikasi 6 digit ke{" "}
@@ -221,27 +126,27 @@ function AuthPage() {
                 </p>
               </div>
 
-              <button
+              <Button
                 type="submit"
                 disabled={loading || code.length !== 6}
-                className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-foreground px-6 py-3.5 text-sm font-medium text-background transition hover:bg-foreground/90 disabled:opacity-50 select-none cursor-pointer"
+                className="mt-8 w-full"
               >
                 {loading ? "Memverifikasi..." : "Verifikasi Email"} →
-              </button>
+              </Button>
 
               <div className="flex justify-between items-center mt-6">
                 <button
                   type="button"
                   onClick={() => setMode("signup")}
-                  className="text-xs text-muted-foreground hover:text-foreground transition underline underline-offset-4"
+                  className="text-xs text-muted-foreground hover:text-foreground transition underline underline-offset-4 cursor-pointer"
                 >
                   Kembali
                 </button>
                 <button
                   type="button"
-                  onClick={handleResendCode}
+                  onClick={resendCode}
                   disabled={loading || cooldown > 0}
-                  className="text-xs font-medium text-foreground hover:opacity-85 disabled:opacity-40 transition underline underline-offset-4"
+                  className="text-xs font-medium text-foreground hover:opacity-85 disabled:opacity-40 transition underline underline-offset-4 cursor-pointer"
                 >
                   {cooldown > 0 ? `Kirim ulang (${cooldown}s)` : "Kirim ulang kode"}
                 </button>
@@ -249,43 +154,39 @@ function AuthPage() {
             </form>
           ) : (
             <>
-              <form onSubmit={onSubmit} className="mt-8 space-y-4">
-                <div>
-                  <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                    Email
-                  </label>
-                  <input
+              <form onSubmit={submitCredentials} className="mt-8 space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="email-input">Email</Label>
+                  <Input
+                    id="email-input"
                     type="email"
                     required
                     disabled={loading}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="kamu@umkm.com"
-                    className="mt-2 w-full border-0 border-b border-border bg-transparent py-3 text-base placeholder:text-muted-foreground/50 focus:border-foreground focus:outline-none disabled:opacity-50"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                    Password
-                  </label>
-                  <input
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="password-input">Password</Label>
+                  <Input
+                    id="password-input"
                     type="password"
                     required
                     disabled={loading}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="mt-2 w-full border-0 border-b border-border bg-transparent py-3 text-base placeholder:text-muted-foreground/50 focus:border-foreground focus:outline-none disabled:opacity-50"
                   />
                 </div>
 
-                <button
+                <Button
                   type="submit"
                   disabled={loading}
-                  className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-foreground px-6 py-3.5 text-sm font-medium text-background transition hover:bg-foreground/90 disabled:opacity-50 select-none cursor-pointer"
+                  className="mt-8 w-full"
                 >
                   {loading ? "Memproses..." : mode === "signup" ? "Bikin akun" : "Masuk"} →
-                </button>
+                </Button>
               </form>
 
               <div className="relative my-6">
@@ -297,11 +198,12 @@ function AuthPage() {
                 </div>
               </div>
 
-              <button
+              <Button
                 type="button"
-                onClick={handleGoogleSignIn}
+                variant="outline"
+                onClick={signInWithGoogle}
                 disabled={loading}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-6 py-3.5 text-sm font-medium text-foreground transition hover:bg-muted/40 disabled:opacity-50 select-none cursor-pointer"
+                className="w-full"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24">
                   <path
@@ -322,13 +224,13 @@ function AuthPage() {
                   />
                 </svg>
                 Masuk dengan Google
-              </button>
+              </Button>
 
               <p className="mt-6 text-sm text-muted-foreground">
                 {mode === "signup" ? "Sudah punya akun?" : "Belum punya akun?"}{" "}
                 <button
                   onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-                  className="text-foreground underline underline-offset-4"
+                  className="text-foreground underline underline-offset-4 cursor-pointer"
                 >
                   {mode === "signup" ? "Masuk" : "Daftar"}
                 </button>

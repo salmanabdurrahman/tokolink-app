@@ -13,7 +13,7 @@ function parseCookie(cookieString: string, name: string): string | null {
 }
 
 // Check active session and return User profile + Tenant if exists
-export const getSessionUser = createServerFn({ method: "GET" }).handler(async ({ request }) => {
+export const getSessionUser = createServerFn({ method: "GET" }).handler(async ({ request }: any) => {
   const cookieHeader = request.headers.get("cookie") ?? "";
   const token = parseCookie(cookieHeader, "sb-access-token");
   if (!token) return null;
@@ -46,7 +46,7 @@ export const syncSession = createServerFn({ method: "POST" })
       })
       .optional(),
   )
-  .handler(async ({ data, request }) => {
+  .handler(async ({ data, request }: any) => {
     const cookieHeader = request.headers.get("cookie") ?? "";
     const token = parseCookie(cookieHeader, "sb-access-token");
     if (!token) {

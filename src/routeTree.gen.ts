@@ -19,6 +19,7 @@ import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardProductsRouteImport } from './routes/dashboard.products'
 import { Route as DashboardLinksRouteImport } from './routes/dashboard.links'
+import { Route as ApiOgSlugRouteImport } from './routes/api.og.$slug'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -70,6 +71,11 @@ const DashboardLinksRoute = DashboardLinksRouteImport.update({
   path: '/links',
   getParentRoute: () => DashboardRoute,
 } as any)
+const ApiOgSlugRoute = ApiOgSlugRouteImport.update({
+  id: '/api/og/$slug',
+  path: '/api/og/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/api/og/$slug': typeof ApiOgSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/api/og/$slug': typeof ApiOgSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/api/og/$slug': typeof ApiOgSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/sitemap/xml'
     | '/dashboard/'
+    | '/api/og/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/sitemap/xml'
     | '/dashboard'
+    | '/api/og/$slug'
   id:
     | '__root__'
     | '/'
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/sitemap/xml'
     | '/dashboard/'
+    | '/api/og/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
   SitemapXmlRoute: typeof SitemapXmlRoute
+  ApiOgSlugRoute: typeof ApiOgSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -226,6 +239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLinksRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/og/$slug': {
+      id: '/api/og/$slug'
+      path: '/api/og/$slug'
+      fullPath: '/api/og/$slug'
+      preLoaderRoute: typeof ApiOgSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -254,6 +274,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
   SitemapXmlRoute: SitemapXmlRoute,
+  ApiOgSlugRoute: ApiOgSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -2,7 +2,7 @@ export type LinkItem = {
   id: string;
   label: string;
   url: string;
-  icon?: string;
+  icon?: string | null;
 };
 
 export type ProductVariantOption = {

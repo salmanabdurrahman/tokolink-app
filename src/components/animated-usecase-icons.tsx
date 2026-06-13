@@ -1,8 +1,8 @@
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 
 // 1. CoffeeIcon (F&B) - Animates rising steam and a slight cup scale
 export function CoffeeIcon() {
-  const steamVariants = {
+  const steamVariants: Variants = {
     rest: { y: 0, opacity: 0.3, pathLength: 0.8 },
     hover: {
       y: [-2, -8, -12],
@@ -16,7 +16,7 @@ export function CoffeeIcon() {
     },
   };
 
-  const cupVariants = {
+  const cupVariants: Variants = {
     rest: { scale: 1 },
     hover: {
       scale: 1.05,
@@ -59,7 +59,7 @@ export function CoffeeIcon() {
 
 // 2. ShirtIcon (Fashion) - Hanger sways and sparkle effects
 export function ShirtIcon() {
-  const hangerVariants = {
+  const hangerVariants: Variants = {
     rest: { rotate: 0 },
     hover: {
       rotate: [-6, 6, -6, 4, -4, 0],
@@ -70,7 +70,7 @@ export function ShirtIcon() {
     },
   };
 
-  const sparkleVariants = {
+  const sparkleVariants: Variants = {
     rest: { scale: 0, opacity: 0 },
     hover: {
       scale: [0, 1.2, 0],
@@ -118,7 +118,7 @@ export function ShirtIcon() {
 
 // 3. PackageIcon (Reseller) - Lid opens up using a snappy spring
 export function PackageIcon() {
-  const lidVariants = {
+  const lidVariants: Variants = {
     rest: { y: 0, rotate: 0 },
     hover: {
       y: -4,
@@ -131,7 +131,7 @@ export function PackageIcon() {
     },
   };
 
-  const boxVariants = {
+  const boxVariants: Variants = {
     rest: { scale: 1 },
     hover: {
       scale: [1, 0.96, 1.02, 1],
@@ -163,7 +163,7 @@ export function PackageIcon() {
 
 // 4. JasaIcon (Jasa) - Brush tilts and draws a path
 export function JasaIcon() {
-  const brushVariants = {
+  const brushVariants: Variants = {
     rest: { rotate: 0, x: 0, y: 0 },
     hover: {
       rotate: [0, -10, 15, -5, 0],
@@ -176,7 +176,7 @@ export function JasaIcon() {
     },
   };
 
-  const lineVariants = {
+  const lineVariants: Variants = {
     rest: { pathLength: 0, opacity: 0 },
     hover: {
       pathLength: 1,

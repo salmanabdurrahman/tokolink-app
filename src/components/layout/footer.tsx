@@ -19,17 +19,11 @@ export function Footer() {
           >
             GitHub ↗
           </a>
-          <a href="#" className="text-muted-foreground hover:text-foreground">
-            Dokumentasi
-          </a>
-          <a href="#" className="text-muted-foreground hover:text-foreground">
-            Komunitas
-          </a>
         </div>
       </div>
       <div className="border-t border-border">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 text-xs text-muted-foreground">
-          <span>© 2026 Tokolink. MIT License.</span>
+          <span>© 2026 Tokolink.</span>
           <span>Made with ❤ for Indonesian SMBs</span>
         </div>
       </div>
