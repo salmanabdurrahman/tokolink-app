@@ -166,22 +166,16 @@ export function buildWhatsAppUrl(
   note?: string,
 ) {
   const lines = [
-    `*🛒 PESANAN BARU - ${storeName.toUpperCase()}*`,
-    `----------------------------------------`,
-    `Halo ${storeName}, saya ingin memesan produk berikut:`,
-    "",
-    ...items.map((i, idx) => {
+    `Halo *${storeName}*, saya mau order pesanan berikut ya:\n`,
+    ...items.map((i) => {
       const priceFormatted = (i.unitPrice * i.qty).toLocaleString("id-ID");
-      const unitPriceFormatted = i.unitPrice.toLocaleString("id-ID");
-      const variantText = i.variantName ? `\n   └─ _Pilihan: ${i.variantName}_` : "";
-      return `*${idx + 1}. ${i.productName}* (${i.qty}x)${variantText}\n   Harga: Rp${unitPriceFormatted} → *Rp${priceFormatted}*`;
+      const variantText = i.variantName ? ` (${i.variantName})` : "";
+      return `▪ ${i.qty}x ${i.productName}${variantText}\n  Rp${priceFormatted}`;
     }),
     "",
-    `----------------------------------------`,
-    note ? `*📝 Catatan Tambahan:*\n"${note}"\n` : "",
-    `*💵 Total Pembayaran: Rp${total.toLocaleString("id-ID")}*`,
-    `----------------------------------------`,
-    `Mohon konfirmasi ketersediaan stok & metode pembayaran. Terima kasih! 🙏`,
+    note ? `*Catatan:*\n${note}\n` : "",
+    `*Total Pesanan: Rp${total.toLocaleString("id-ID")}*\n`,
+    `Mohon info instruksi pembayarannya ya. Terima kasih! 🙏`,
   ].filter(Boolean);
 
   const text = encodeURIComponent(lines.join("\n"));

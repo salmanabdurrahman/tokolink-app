@@ -1,214 +1,168 @@
-Welcome to your new TanStack Start app!
+<div align="center">
+  <img src="public/favicon.svg" alt="Tokolink OSS Logo" width="120" height="120" />
+  
+  # Tokolink
+  **Platform All-in-One Link-in-Bio & Katalog UMKM Indonesia**
 
-# Getting Started
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+[![React 19](https://img.shields.io/badge/React-19.0-61DAFB?style=flat&logo=react)](https://react.dev/)
+[![TanStack Start](https://img.shields.io/badge/TanStack-Start-FF4154?style=flat)](https://tanstack.com/start)
+[![Supabase](https://img.shields.io/badge/Supabase-Auth-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
+[![Prisma ORM](https://img.shields.io/badge/Prisma-ORM-2D3748?style=flat&logo=prisma)](https://www.prisma.io/)
 
-To run this application:
+</div>
+
+<br />
+
+**Tokolink** adalah platform Software-as-a-Service (SaaS) multi-tenant bersumber terbuka (Open Source) yang dirancang khusus untuk mempermudah digitalisasi Usaha Mikro, Kecil, dan Menengah (UMKM) di Indonesia. Platform ini menggabungkan kemudahan kartu nama digital (_link-in-bio_) dengan katalog produk interaktif, yang secara otomatis menerjemahkan keranjang pesanan pelanggan menjadi format pesan WhatsApp yang rapi dan terstruktur.
+
+---
+
+## Daftar Isi
+
+- [Fitur Utama](#-fitur-utama)
+- [Arsitektur & Teknologi](#-arsitektur--teknologi)
+- [Prasyarat Sistem](#-prasyarat-sistem)
+- [Instalasi & Konfigurasi Lokal](#-instalasi--konfigurasi-lokal)
+- [Struktur Repositori](#-struktur-repositori)
+- [Deployment Produksi](#-deployment-produksi)
+- [Keamanan (Security Hardening)](#-keamanan-security-hardening)
+- [Kontribusi](#-kontribusi)
+- [Lisensi](#-lisensi)
+
+---
+
+## Fitur Utama
+
+- **Instan Deploy & Onboarding:** Buat website toko fungsional (`tokolink.app/slug-toko`) dalam waktu singkat dengan alur onboarding yang intuitif.
+- **Hybrid Mobile-First Layout:** Tampilan storefront minimalis berbasis _continuous scroll_ yang menggabungkan link eksternal (sosial media) dan grid katalog produk dalam satu halaman.
+- **WhatsApp Order Generator:** Keranjang belanja _client-side_ terintegrasi yang menghitung total harga beserta pilihan varian, lalu mengonversinya menjadi format pesan WhatsApp terstruktur untuk memproses pemesanan.
+- **Dasbor & Manajemen Produk:** Kelola toko secara mandiri, atur data produk, harga dasar, deskripsi, foto produk, serta kelola varian dinamis (seperti pilihan ukuran atau warna) beserta selisih harga (_price delta_).
+
+---
+
+## Arsitektur & Teknologi
+
+Tokolink dibangun menggunakan ekosistem modern berbasis JavaScript/TypeScript berkemampuan tinggi:
+
+- **Frontend:** React 19, TanStack Start (Vite + Vinxi compiler), Zustand (state management), Framer Motion (micro-animations), Tailwind CSS V4.
+- **Routing & SSR:** TanStack Router (file-based type-safe routing) dengan Server-Side Rendering (SSR).
+- **Backend Logic:** TanStack Start Server Functions (RPC endpoints) diproteksi dengan Same-Origin CSRF middleware.
+- **Database & ORM:** PostgreSQL dengan Prisma ORM untuk query relasional yang aman dan cepat.
+- **Layanan Pihak Ketiga:**
+  - **Supabase Auth**: Manajemen sesi login (Email OTP, Google OAuth).
+  - **Vercel Blob**: Penyimpanan media/gambar produk dan avatar toko secara awan.
+  - **Resend**: Layanan pengiriman email verifikasi OTP dan selamat datang.
+  - **Google reCAPTCHA v3**: Proteksi formulir pendaftaran dan onboarding dari spam bot.
+
+---
+
+## Prerequisites
+
+Sebelum memulai instalasi, pastikan sistem lokal Anda telah terpasang:
+
+- [Bun Runtime](https://bun.sh/) (Sangat direkomendasikan untuk performa build cepat) atau Node.js v18+
+- Akun database PostgreSQL (atau database Supabase)
+- Kredensial API untuk Supabase, Resend, Vercel Blob, dan reCAPTCHA
+
+---
+
+## Instalasi & Konfigurasi Lokal
+
+Ikuti langkah-langkah berikut untuk menjalankan proyek di komputer lokal Anda:
+
+### 1. Kloning Repositori
+
+```bash
+git clone https://github.com/MastayY/tokolink-app
+cd tokolink
+```
+
+### 2. Pasang Dependensi
 
 ```bash
 bun install
-bun --bun run dev
+# atau
+npm install
 ```
 
-# Building For Production
+### 3. Konfigurasi Environment Variables
 
-To build this application for production:
+Salin template konfigurasi dan isi nilai variabel sesuai dengan akun layanan Anda:
 
 ```bash
-bun --bun run build
+cp .env.example .env
 ```
 
-## Testing
+Sesuaikan isi `.env` dengan kredensial PostgreSQL, Supabase, Vercel Blob, reCAPTCHA, dan Resend Anda.
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+### 4. Sinkronisasi Skema Database
+
+Generate Prisma client dan jalankan migrasi database ke PostgreSQL:
 
 ```bash
-bun --bun run test
+bun run db:generate
+bun run db:push
 ```
 
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `bun install @tailwindcss/vite tailwindcss -D`
-
-## Linting & Formatting
-
-This project uses [eslint](https://eslint.org/) and [prettier](https://prettier.io/) for linting and formatting. Eslint is configured using [tanstack/eslint-config](https://tanstack.com/config/latest/docs/eslint). The following scripts are available:
+### 5. Jalankan Server Pengembangan
 
 ```bash
-bun --bun run lint
-bun --bun run format
-bun --bun run check
+bun run dev
+# atau
+npm run dev
 ```
 
-## Deploy with Nitro
+Buka peramban (browser) dan akses aplikasi di alamat `http://localhost:3000`.
 
-This project uses Nitro as a generic server adapter, so it can run on any Node-compatible host.
+---
 
-```bash
-npm run build
-node dist/server/index.mjs
+## Struktur Repositori
+
+```text
+tokolink/
+├── prisma/               # Skema database Prisma & file seeding
+├── public/               # File statis (logo, favicon, font lokal, OG assets)
+├── src/
+│   ├── components/       # Komponen UI presentasional (UI primitives & layout)
+│   ├── hooks/            # Custom React hooks (auth form, session sync)
+│   ├── lib/              # Konfigurasi klien, data stores, skema Zod, & utilitas
+│   ├── routes/           # Routing halaman & API endpoints (TanStack Router)
+│   ├── server/           # TanStack Start Server Functions & middleware
+│   ├── styles.css        # Entrypoint css global Tailwind CSS
+│   ├── start.ts          # Konfigurasi middleware TanStack Start (CSRF & Error)
+│   └── server.ts         # Entrypoint server runtime (Vinxi/Nitro)
+├── .env.example          # Template konfigurasi environment variables
+└── README.md             # Dokumentasi proyek
 ```
 
-The build output is a self-contained Node server. To deploy, push the `dist/` directory to your host (Render, Fly.io, your own VPS, etc.) and run the server command above.
+---
 
-For host-specific presets (Vercel, Netlify, Cloudflare, AWS Lambda, etc.) and tuning, see https://v3.nitro.build/deploy.
+## Keamanan (Security Hardening)
 
-## Routing
+Platform ini mengimplementasikan best-practice keamanan modern untuk menjaga data pengguna dan performa server:
 
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
+- **Perlindungan CSRF:** Setiap RPC request ke server functions diproteksi secara otomatis melalui middleware CSRF bawaan TanStack Start.
+- **Pencegahan SSRF:** Modul pembuatan OG Image membatasi tautan eksternal gambar hanya dari host yang terpercaya (`*.vercel-storage.com`, `api.dicebear.com`, `tokolink.app`). Permintaan ke local network/loopback IP diblokir di lingkungan produksi.
+- **Validasi Tipe & Skema:** Seluruh parameter input dari client divalidasi ketat menggunakan pustaka **Zod** sebelum dieksekusi di database.
+- **Verifikasi Magic Bytes Gambar:** Server-side upload memverifikasi struktur biner gambar (PNG, JPG, GIF, WEBP) untuk menghindari manipulasi berkas biner berbahaya.
+- **Proteksi Brute-Force OTP:** Sistem verifikasi kode OTP membatasi percobaan salah maksimal 5 kali sebelum berkas OTP otomatis dihapus dari database.
 
-### Adding A Route
+---
 
-To add a new route to your application just add a new file in the `./src/routes` directory.
+## Kontribusi
 
-TanStack will automatically generate the content of the route file for you.
+Kontribusi dari seluruh developer sangat diapresiasi!
 
-Now that you have two routes you can use a `Link` component to navigate between them.
+1. Lakukan _Fork_ repositori ini.
+2. Buat branch fitur baru (`git checkout -b feature/NamaFitur`).
+3. Lakukan commit perubahan (`git commit -m 'feat: menambahkan fitur X'`).
+4. Push ke branch Anda (`git push origin feature/NamaFitur`).
+5. Ajukan _Pull Request_ (PR).
 
-### Adding Links
+---
 
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
+## Lisensi
 
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "My App" },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-});
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from "@tanstack/react-start";
-
-const getServerTime = createServerFn({
-  method: "GET",
-}).handler(async () => {
-  return new Date().toISOString();
-});
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState("");
-
-  useEffect(() => {
-    getServerTime().then(setTime);
-  }, []);
-
-  return <div>Server time: {time}</div>;
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from "@tanstack/react-router";
-import { json } from "@tanstack/react-start";
-
-export const Route = createFileRoute("/api/hello")({
-  server: {
-    handlers: {
-      GET: () => json({ message: "Hello, World!" }),
-    },
-  },
-});
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from "@tanstack/react-router";
-
-export const Route = createFileRoute("/people")({
-  loader: async () => {
-    const response = await fetch("https://swapi.dev/api/people");
-    return response.json();
-  },
-  component: PeopleComponent,
-});
-
-function PeopleComponent() {
-  const data = Route.useLoaderData();
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  );
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+Proyek ini dirilis di bawah lisensi **MIT License**. Anda bebas menggunakan, memodifikasi, dan mendistribusikannya baik secara komersial maupun privat. Rincian lebih lengkap terdapat pada berkas `LICENSE`.
