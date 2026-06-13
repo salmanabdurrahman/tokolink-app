@@ -12,9 +12,7 @@ export function FaqSection() {
     <section id="faq" className="border-t border-border px-6 py-32">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-16 md:grid-cols-[1fr_2fr]">
         <motion.div {...fadeUp}>
-          <span className="text-xs uppercase tracking-widest text-muted-foreground">
-            04 — FAQ
-          </span>
+          <span className="text-xs uppercase tracking-widest text-muted-foreground">04 — FAQ</span>
           <h2 className="font-display mt-3 text-4xl font-medium tracking-tight sm:text-5xl">
             Hal yang sering ditanya.
           </h2>

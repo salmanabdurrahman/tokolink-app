@@ -6,6 +6,10 @@ export async function verifyRecaptcha(token: string, expectedAction: string): Pr
   }
 
   if (token === "disabled" || token === "not-loaded" || token === "failed") {
+    if (process.env.NODE_ENV === "production") {
+      console.error("reCAPTCHA bypass token rejected in production environment.");
+      return false;
+    }
     console.warn(`reCAPTCHA server verification bypassed because client token status is: ${token}`);
     return true;
   }

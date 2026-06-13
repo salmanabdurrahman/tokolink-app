@@ -76,9 +76,7 @@ export function VariantSheet({ product, onClose }: VariantSheetProps) {
                 return (
                   <button
                     key={option.id}
-                    onClick={() =>
-                      setSelectedOptions((prev) => ({ ...prev, [group.id]: option }))
-                    }
+                    onClick={() => setSelectedOptions((prev) => ({ ...prev, [group.id]: option }))}
                     className={`rounded-full border px-4 py-2 text-sm font-medium transition active:scale-[0.97] cursor-pointer ${
                       isSelected
                         ? "border-foreground bg-foreground text-background"
@@ -98,11 +96,7 @@ export function VariantSheet({ product, onClose }: VariantSheetProps) {
           </div>
         ))}
       </div>
-      <Button
-        onClick={handleAdd}
-        disabled={!allSelected}
-        className="mt-6 w-full shrink-0 py-3.5"
-      >
+      <Button onClick={handleAdd} disabled={!allSelected} className="mt-6 w-full shrink-0 py-3.5">
         Tambah ke keranjang — {formatIDR(price)}
       </Button>
     </Sheet>

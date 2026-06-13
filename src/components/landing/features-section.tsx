@@ -61,9 +61,7 @@ export function FeaturesSection() {
                   ↗
                 </motion.span>
               </div>
-              <h3 className="font-display mt-12 text-2xl font-medium tracking-tight">
-                {f.title}
-              </h3>
+              <h3 className="font-display mt-12 text-2xl font-medium tracking-tight">{f.title}</h3>
               <p className="mt-3 text-sm text-muted-foreground">{f.copy}</p>
             </motion.div>
           ))}

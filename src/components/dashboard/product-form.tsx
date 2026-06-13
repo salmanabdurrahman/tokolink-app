@@ -65,11 +65,7 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
             className="space-y-5"
           >
             <Field label="Nama">
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+              <Input value={name} onChange={(e) => setName(e.target.value)} required />
             </Field>
             <Field label="Deskripsi">
               <Textarea
@@ -219,10 +215,7 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
               </div>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full shrink-0 py-3.5"
-            >
+            <Button type="submit" className="w-full shrink-0 py-3.5">
               {initial ? "Simpan perubahan" : "Tambah produk"}
             </Button>
           </form>

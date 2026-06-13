@@ -13,28 +13,30 @@ function parseCookie(cookieString: string, name: string): string | null {
 }
 
 // Check active session and return User profile + Tenant if exists
-export const getSessionUser = createServerFn({ method: "GET" }).handler(async ({ request }: any) => {
-  const cookieHeader = request.headers.get("cookie") ?? "";
-  const token = parseCookie(cookieHeader, "sb-access-token");
-  if (!token) return null;
+export const getSessionUser = createServerFn({ method: "GET" }).handler(
+  async ({ request }: any) => {
+    const cookieHeader = request.headers.get("cookie") ?? "";
+    const token = parseCookie(cookieHeader, "sb-access-token");
+    if (!token) return null;
 
-  try {
-    const {
-      data: { user: supaUser },
-      error,
-    } = await supabaseAdmin.auth.getUser(token);
-    if (error || !supaUser) return null;
+    try {
+      const {
+        data: { user: supaUser },
+        error,
+      } = await supabaseAdmin.auth.getUser(token);
+      if (error || !supaUser) return null;
 
-    const user = await prisma.user.findUnique({
-      where: { supabaseId: supaUser.id },
-      include: { tenant: true },
-    });
-    return user;
-  } catch (e) {
-    console.error("Error fetching session user:", e);
-    return null;
-  }
-});
+      const user = await prisma.user.findUnique({
+        where: { supabaseId: supaUser.id },
+        include: { tenant: true },
+      });
+      return user;
+    } catch (e) {
+      console.error("Error fetching session user:", e);
+      return null;
+    }
+  },
+);
 
 // Synchronize Supabase user with local Prisma database
 export const syncSession = createServerFn({ method: "POST" })

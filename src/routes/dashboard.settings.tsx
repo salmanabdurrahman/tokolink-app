@@ -65,9 +65,7 @@ function SettingsPage() {
         </Field>
 
         <div className="flex items-center gap-3">
-          <Button type="submit">
-            Simpan perubahan
-          </Button>
+          <Button type="submit">Simpan perubahan</Button>
         </div>
       </form>
     </div>

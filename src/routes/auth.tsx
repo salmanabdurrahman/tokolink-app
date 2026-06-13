@@ -58,7 +58,8 @@ function AuthPage() {
             transition={{ duration: 0.7 }}
             className="font-display text-5xl font-medium tracking-tight text-balance text-white"
           >
-            "Bikin toko itu <em className="font-light text-accent">harusnya</em> semudah upload foto IG."
+            "Bikin toko itu <em className="font-light text-accent">harusnya</em> semudah upload foto
+            IG."
           </motion.h2>
           <p className="mt-6 text-sm text-background/60">— Manifesto Tokolink</p>
         </div>
@@ -126,11 +127,7 @@ function AuthPage() {
                 </p>
               </div>
 
-              <Button
-                type="submit"
-                disabled={loading || code.length !== 6}
-                className="mt-8 w-full"
-              >
+              <Button type="submit" disabled={loading || code.length !== 6} className="mt-8 w-full">
                 {loading ? "Memverifikasi..." : "Verifikasi Email"} →
               </Button>
 
@@ -180,11 +177,7 @@ function AuthPage() {
                   />
                 </div>
 
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="mt-8 w-full"
-                >
+                <Button type="submit" disabled={loading} className="mt-8 w-full">
                   {loading ? "Memproses..." : mode === "signup" ? "Bikin akun" : "Masuk"} →
                 </Button>
               </form>

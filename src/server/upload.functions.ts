@@ -3,6 +3,38 @@ import { put } from "@vercel/blob";
 import { authMiddleware } from "./auth-middleware";
 import { z } from "zod";
 
+export function isValidImageBuffer(buffer: Buffer): boolean {
+  if (buffer.length < 4) return false;
+
+  // PNG: 89 50 4E 47
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+    return true;
+  }
+
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return true;
+  }
+
+  // GIF: 47 49 46 38 ("GIF8")
+  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38) {
+    return true;
+  }
+
+  // WEBP: RIFF (52 49 46 46) and WEBP (57 45 42 50) at offset 8
+  if (buffer.length >= 12) {
+    const isRiff =
+      buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46;
+    const isWebp =
+      buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50;
+    if (isRiff && isWebp) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export const uploadImage = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
@@ -17,6 +49,12 @@ export const uploadImage = createServerFn({ method: "POST" })
     const buffer = Buffer.from(base64Data, "base64");
 
     // 2. Server-side validation (Defense-in-depth)
+    if (!isValidImageBuffer(buffer)) {
+      throw new Error(
+        "Format berkas tidak didukung. Hanya gambar (PNG, JPG, WEBP, GIF) yang diperbolehkan.",
+      );
+    }
+
     if (buffer.length > 5 * 1024 * 1024) {
       throw new Error("Ukuran gambar melebihi batas 5MB");
     }

@@ -69,9 +69,7 @@ export function FloatingCart({ storeName, phone }: FloatingCartProps) {
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">{i.productName}</div>
                 {i.variantName && (
-                  <div className="text-xs text-muted-foreground truncate">
-                    {i.variantName}
-                  </div>
+                  <div className="text-xs text-muted-foreground truncate">{i.variantName}</div>
                 )}
                 <div className="text-xs text-muted-foreground">{formatIDR(i.unitPrice)}</div>
               </div>
@@ -111,11 +109,7 @@ export function FloatingCart({ storeName, phone }: FloatingCartProps) {
           <span className="font-display text-2xl font-medium">{formatIDR(totalPrice)}</span>
         </div>
 
-        <Button
-          onClick={checkout}
-          variant="accent"
-          className="mt-4 w-full shrink-0 py-4"
-        >
+        <Button onClick={checkout} variant="accent" className="mt-4 w-full shrink-0 py-4">
           Checkout via WhatsApp →
         </Button>
         <button

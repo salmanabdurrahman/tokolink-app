@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { prisma } from "../db";
+import fs from "node:fs";
+import path from "node:path";
 
 const SITE_URL = "https://tokolink.app";
 const FALLBACK_OG = `${SITE_URL}/og-main.png`;
@@ -9,17 +11,28 @@ let cachedFont: ArrayBuffer | null = null;
 
 async function getFont(): Promise<ArrayBuffer | null> {
   if (cachedFont) return cachedFont;
+
+  // 1. Try to read from local file first (fast, reliable, offline)
+  try {
+    const fontPath = path.join(process.cwd(), "public", "SpaceGrotesk-Bold.ttf");
+    if (fs.existsSync(fontPath)) {
+      const buffer = fs.readFileSync(fontPath);
+      cachedFont = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+      return cachedFont;
+    }
+  } catch (err) {
+    console.warn("[OG] Failed to load local font, falling back to network fetch:", err);
+  }
+
+  // 2. Fall back to Google Fonts API
   try {
     // 1. Fetch the CSS stylesheet from Google Fonts API with a Chrome User-Agent to get modern formats (woff/woff2)
-    const cssRes = await fetch(
-      "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700",
-      {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
-        },
-      }
-    );
+    const cssRes = await fetch("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700", {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
+      },
+    });
     if (!cssRes.ok) throw new Error(`CSS fetch status ${cssRes.status}`);
     const cssText = await cssRes.text();
 
@@ -39,16 +52,39 @@ async function getFont(): Promise<ArrayBuffer | null> {
   }
 }
 
+export function isSafeImageUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return false;
+
+    const hostname = parsed.hostname;
+
+    // Allow trusted CDNs and official site domains
+    if (hostname.endsWith(".public.blob.vercel-storage.com")) return true;
+    if (hostname === "api.dicebear.com") return true;
+    if (hostname === "tokolink.app") return true;
+
+    // Allow local development endpoints ONLY when not in production
+    if (process.env.NODE_ENV !== "production") {
+      if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.startsWith("192.168.")) {
+        return true;
+      }
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 // Satori only supports PNG and JPEG formats. WebP and complex SVGs trigger crashes.
 function isSupportedImage(url: string | null | undefined): boolean {
   if (!url) return false;
+  if (!isSafeImageUrl(url)) return false;
   try {
     const cleanUrl = url.split("?")[0].toLowerCase();
-    return (
-      cleanUrl.endsWith(".png") ||
-      cleanUrl.endsWith(".jpg") ||
-      cleanUrl.endsWith(".jpeg")
-    );
+    return cleanUrl.endsWith(".png") || cleanUrl.endsWith(".jpg") || cleanUrl.endsWith(".jpeg");
   } catch {
     return false;
   }

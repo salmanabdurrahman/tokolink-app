@@ -40,9 +40,11 @@ export function useSession() {
     // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
-      handleSession(session);
-    });
+    } = supabase.auth.onAuthStateChange(
+      async (_event: AuthChangeEvent, session: Session | null) => {
+        handleSession(session);
+      },
+    );
 
     return () => {
       subscription.unsubscribe();

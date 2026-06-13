@@ -112,7 +112,9 @@ function Onboarding() {
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="slug-input">URL Toko</Label>
             <div className="flex items-center border-b border-border focus-within:border-foreground transition">
-              <span className="font-display text-lg text-muted-foreground pl-1 shrink-0">tokolink.app/</span>
+              <span className="font-display text-lg text-muted-foreground pl-1 shrink-0">
+                tokolink.app/
+              </span>
               <Input
                 id="slug-input"
                 required
@@ -149,11 +151,7 @@ function Onboarding() {
             />
           </Field>
 
-          <Button
-            type="submit"
-            disabled={loading}
-            className="inline-flex items-center gap-2"
-          >
+          <Button type="submit" disabled={loading} className="inline-flex items-center gap-2">
             {loading ? "Membuat toko..." : "Lanjut ke dashboard →"}
           </Button>
         </form>

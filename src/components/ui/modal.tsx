@@ -26,7 +26,10 @@ export function Modal({ open, onClose, children, className }: ModalProps) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 350, damping: 25 }}
-            className={cn("relative z-10 w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-2xl", className)}
+            className={cn(
+              "relative z-10 w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-2xl",
+              className,
+            )}
           >
             {children}
           </motion.div>
