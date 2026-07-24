@@ -1,8 +1,9 @@
 <div align="center">
   <img src="public/favicon.svg" alt="Tokolink OSS Logo" width="120" height="120" />
-  
-  # Tokolink
-  **Platform All-in-One Link-in-Bio & Katalog UMKM Indonesia**
+
+# Tokolink
+
+**Open-source link-in-bio storefront and WhatsApp catalog platform for Indonesian MSMEs**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
@@ -13,167 +14,295 @@
 
 </div>
 
-<br />
+## Overview
 
-**Tokolink** adalah platform Software-as-a-Service (SaaS) multi-tenant bersumber terbuka (Open Source) yang dirancang khusus untuk mempermudah digitalisasi Usaha Mikro, Kecil, dan Menengah (UMKM) di Indonesia. Platform ini menggabungkan kemudahan kartu nama digital (_link-in-bio_) dengan katalog produk interaktif, yang secara otomatis menerjemahkan keranjang pesanan pelanggan menjadi format pesan WhatsApp yang rapi dan terstruktur.
+**Tokolink** is a multi-tenant Software-as-a-Service platform for Indonesian micro, small, and medium businesses (UMKM/MSMEs). It combines a link-in-bio landing page, product catalog, variant-based cart, and WhatsApp checkout into one lightweight storefront.
 
----
+Each merchant gets a public storefront at `tokolink-v2.vercel.app/{store-slug}`. Customers can browse links and products, choose variants, add items to a client-side cart, then send a clean, structured order message directly to the merchant's WhatsApp number.
 
-## Daftar Isi
+## Table of Contents
 
-- [Fitur Utama](#-fitur-utama)
-- [Arsitektur & Teknologi](#-arsitektur--teknologi)
-- [Prasyarat Sistem](#-prasyarat-sistem)
-- [Instalasi & Konfigurasi Lokal](#-instalasi--konfigurasi-lokal)
-- [Struktur Repositori](#-struktur-repositori)
-- [Deployment Produksi](#-deployment-produksi)
-- [Keamanan (Security Hardening)](#-keamanan-security-hardening)
-- [Kontribusi](#-kontribusi)
-- [Lisensi](#-lisensi)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [How It Works](#how-it-works)
+- [Project Patterns](#project-patterns)
+- [Prerequisites](#prerequisites)
+- [Local Setup](#local-setup)
+- [Environment Variables](#environment-variables)
+- [Available Scripts](#available-scripts)
+- [Repository Structure](#repository-structure)
+- [Testing](#testing)
+- [Security](#security)
+- [Deployment](#deployment)
+- [Contributing](#contributing)
+- [License](#license)
 
----
+## Features
 
-## Fitur Utama
+- **Instant storefront onboarding** — create a store slug, profile, avatar, tagline, and WhatsApp contact.
+- **Link-in-bio + product catalog** — combine external links and product cards in one mobile-first public page.
+- **Variant-aware catalog** — model product options such as size, color, grind type, or add-ons with price deltas.
+- **Client-side cart** — keep checkout fast without forcing customers into account creation.
+- **WhatsApp order generator** — convert cart items, variants, quantities, notes, and total price into a structured `wa.me` message.
+- **Merchant dashboard** — manage store settings, links, products, images, and product variants.
+- **SEO and social previews** — route-level metadata, canonical URLs, JSON-LD, and dynamic OG images.
+- **Open-source foundation** — built with modern TypeScript, React, TanStack Start, Prisma, and Supabase Auth.
 
-- **Instan Deploy & Onboarding:** Buat website toko fungsional (`tokolink-v2.vercel.app/slug-toko`) dalam waktu singkat dengan alur onboarding yang intuitif.
-- **Hybrid Mobile-First Layout:** Tampilan storefront minimalis berbasis _continuous scroll_ yang menggabungkan link eksternal (sosial media) dan grid katalog produk dalam satu halaman.
-- **WhatsApp Order Generator:** Keranjang belanja _client-side_ terintegrasi yang menghitung total harga beserta pilihan varian, lalu mengonversinya menjadi format pesan WhatsApp terstruktur untuk memproses pemesanan.
-- **Dasbor & Manajemen Produk:** Kelola toko secara mandiri, atur data produk, harga dasar, deskripsi, foto produk, serta kelola varian dinamis (seperti pilihan ukuran atau warna) beserta selisih harga (_price delta_).
+## Tech Stack
 
----
+| Area           | Tools                                                                             |
+| -------------- | --------------------------------------------------------------------------------- |
+| Runtime/build  | Bun, Vite, Vinxi, Nitro preset for Vercel                                         |
+| App framework  | React 19, TanStack Start, TanStack Router                                         |
+| Data fetching  | TanStack Router loaders, TanStack Start Server Functions, TanStack Query provider |
+| State          | Zustand stores for auth, tenant data, and cart state                              |
+| Styling        | Tailwind CSS v4, CSS variables, custom Tokolink design tokens                     |
+| UI             | Local UI primitives, `cn()` class merging, Lucide icons, Sonner toasts            |
+| Motion         | Framer Motion for small, purposeful transitions                                   |
+| Database       | PostgreSQL with Prisma ORM                                                        |
+| Auth           | Supabase Auth with email OTP and Google OAuth support                             |
+| Media          | Vercel Blob uploads with server-side image validation                             |
+| Email          | Resend verification and welcome emails                                            |
+| Bot protection | Google reCAPTCHA v3                                                               |
+| Tests          | Vitest, Testing Library, jsdom, V8 coverage                                       |
 
-## Arsitektur & Teknologi
+## How It Works
 
-Tokolink dibangun menggunakan ekosistem modern berbasis JavaScript/TypeScript berkemampuan tinggi:
+1. Merchant signs up and authenticates through Supabase.
+2. `useSession()` syncs Supabase session data into the Prisma-backed user record.
+3. Merchant completes onboarding and creates one tenant/store.
+4. Dashboard routes load tenant data and store it in Zustand.
+5. Protected Server Functions validate input with Zod, enforce auth middleware, and check tenant ownership before writes.
+6. Public storefront route loads tenant data by slug and renders links, products, variants, and cart UI.
+7. Checkout builds a localized WhatsApp order URL with item lines and total IDR price.
 
-- **Frontend:** React 19, TanStack Start (Vite + Vinxi compiler), Zustand (state management), Framer Motion (micro-animations), Tailwind CSS V4.
-- **Routing & SSR:** TanStack Router (file-based type-safe routing) dengan Server-Side Rendering (SSR).
-- **Backend Logic:** TanStack Start Server Functions (RPC endpoints) diproteksi dengan Same-Origin CSRF middleware.
-- **Database & ORM:** PostgreSQL dengan Prisma ORM untuk query relasional yang aman dan cepat.
-- **Layanan Pihak Ketiga:**
-  - **Supabase Auth**: Manajemen sesi login (Email OTP, Google OAuth).
-  - **Vercel Blob**: Penyimpanan media/gambar produk dan avatar toko secara awan.
-  - **Resend**: Layanan pengiriman email verifikasi OTP dan selamat datang.
-  - **Google reCAPTCHA v3**: Proteksi formulir pendaftaran dan onboarding dari spam bot.
+## Project Patterns
 
----
+Tokolink uses consistent patterns across routing, server logic, data access, state, tests, and UI. New work should follow these patterns instead of inventing parallel structures.
+
+### Routing
+
+- Routes live in `src/routes` and use TanStack Router file-based routing.
+- Pages use `createFileRoute(...)`.
+- Route metadata belongs in each route's `head` function.
+- Data needed before render belongs in route loaders when possible.
+- `src/routeTree.gen.ts` is generated and should not be manually edited.
+
+### Server logic
+
+- Server actions live in `src/server/*.functions.ts`.
+- Use `createServerFn({ method })` for RPC-style server functions.
+- Validate all incoming data with Zod schemas from `src/lib/schemas.ts` or local route-specific schemas.
+- Protected mutations must use `authMiddleware`.
+- Tenant-scoped writes must verify ownership with `tenantId` before update/delete.
+- Multi-step relational updates should use Prisma transactions.
+
+### State
+
+- Shared client state lives in `src/lib/store.ts`.
+- Keep auth, tenant, and cart responsibilities separated.
+- Store actions call Server Functions and update local state immutably.
+- Derived cart behavior stays in store helpers such as `totalQty()`, `totalPrice()`, and `buildWhatsAppUrl()`.
+
+### UI and styling
+
+- Reuse local primitives from `src/components/ui` before adding new controls.
+- Use `cn()` from `src/lib/utils.ts` for conditional Tailwind classes.
+- Use design tokens from `src/styles.css`: `background`, `foreground`, `surface`, `card`, `muted`, `border`, `accent`, `destructive`, and related semantic colors.
+- Keep visual style aligned with the current brand: warm mono palette, black foreground, lime accent, rounded cards/buttons, subtle borders, mobile-first spacing, and display typography.
+- Prefer small purposeful motion with Framer Motion where existing screens already use it.
+- Preserve Indonesian user-facing copy unless a feature explicitly targets another locale.
 
 ## Prerequisites
 
-Sebelum memulai instalasi, pastikan sistem lokal Anda telah terpasang:
+- [Bun](https://bun.sh/) recommended, or Node.js 18+
+- PostgreSQL database, or Supabase PostgreSQL project
+- Supabase Auth project
+- Vercel Blob token
+- Resend API key
+- Google reCAPTCHA v3 keys
 
-- [Bun Runtime](https://bun.sh/) (Sangat direkomendasikan untuk performa build cepat) atau Node.js v18+
-- Akun database PostgreSQL (atau database Supabase)
-- Kredensial API untuk Supabase, Resend, Vercel Blob, dan reCAPTCHA
+## Local Setup
 
----
-
-## Instalasi & Konfigurasi Lokal
-
-Ikuti langkah-langkah berikut untuk menjalankan proyek di komputer lokal Anda:
-
-### 1. Kloning Repositori
+### 1. Clone repository
 
 ```bash
 git clone https://github.com/MastayY/tokolink-app
-cd tokolink
+cd tokolink-app
 ```
 
-### 2. Pasang Dependensi
+### 2. Install dependencies
 
 ```bash
 bun install
-# atau
+```
+
+Alternative:
+
+```bash
 npm install
 ```
 
-### 3. Konfigurasi Environment Variables
-
-Salin template konfigurasi dan isi nilai variabel sesuai dengan akun layanan Anda:
+### 3. Configure environment
 
 ```bash
 cp .env.example .env
 ```
 
-Sesuaikan isi `.env` dengan kredensial PostgreSQL, Supabase, Vercel Blob, reCAPTCHA, dan Resend Anda.
+Fill `.env` with local database, Supabase, Vercel Blob, Resend, and reCAPTCHA credentials.
 
-### 4. Sinkronisasi Skema Database
-
-Generate Prisma client dan jalankan migrasi database ke PostgreSQL:
+### 4. Prepare database
 
 ```bash
 bun run db:generate
 bun run db:push
 ```
 
-### 5. Jalankan Server Pengembangan
+Use migrations during schema development when needed:
+
+```bash
+bun run db:migrate
+```
+
+### 5. Start development server
 
 ```bash
 bun run dev
-# atau
-npm run dev
 ```
 
-Buka peramban (browser) dan akses aplikasi di alamat `http://localhost:3000`.
+Open `http://localhost:3000`.
 
-### 6. Jalankan Quality Check Lokal
+## Environment Variables
+
+| Variable                    | Purpose                                        |
+| --------------------------- | ---------------------------------------------- |
+| `DATABASE_URL`              | Runtime PostgreSQL connection URL              |
+| `DIRECT_URL`                | Direct PostgreSQL URL for Prisma CLI workflows |
+| `VITE_SUPABASE_URL`         | Public Supabase project URL for browser client |
+| `VITE_SUPABASE_ANON_KEY`    | Public Supabase anon key for browser client    |
+| `SUPABASE_URL`              | Server-side Supabase project URL               |
+| `SUPABASE_ANON_KEY`         | Server-side Supabase anon key                  |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side Supabase admin key; keep secret    |
+| `BLOB_READ_WRITE_TOKEN`     | Vercel Blob upload token; keep secret          |
+| `VITE_RECAPTCHA_SITE_KEY`   | Public reCAPTCHA site key                      |
+| `RECAPTCHA_SECRET_KEY`      | Server-side reCAPTCHA secret key; keep secret  |
+| `RESEND_API_KEY`            | Resend API key; keep secret                    |
+| `RESEND_SENDER_EMAIL`       | Verified sender identity for email delivery    |
+
+Never commit real `.env` files or production credentials.
+
+## Available Scripts
+
+| Script                  | Description                           |
+| ----------------------- | ------------------------------------- |
+| `bun run dev`           | Start Vite development server         |
+| `bun run build`         | Build production app                  |
+| `bun run build:dev`     | Build in development mode             |
+| `bun run preview`       | Preview built app                     |
+| `bun run lint`          | Run ESLint and Prettier rule checks   |
+| `bun run typecheck`     | Run TypeScript typecheck without emit |
+| `bun run test`          | Run Vitest once                       |
+| `bun run test:watch`    | Run Vitest in watch mode              |
+| `bun run test:coverage` | Run Vitest with coverage              |
+| `bun run format`        | Format repository with Prettier       |
+| `bun run db:generate`   | Generate Prisma client                |
+| `bun run db:push`       | Push Prisma schema to database        |
+| `bun run db:migrate`    | Create/apply local Prisma migration   |
+| `bun run db:studio`     | Open Prisma Studio                    |
+| `bun run db:seed`       | Run database seed script              |
+
+## Repository Structure
+
+```text
+tokolink-app/
+├── prisma/                  # Prisma schema and database model definitions
+├── public/                  # Static assets, favicon, manifest, OG assets
+├── src/
+│   ├── components/          # UI components grouped by feature/surface
+│   │   ├── dashboard/       # Dashboard-specific components
+│   │   ├── landing/         # Marketing landing-page sections
+│   │   ├── layout/          # Shared layout/navigation components
+│   │   ├── motion/          # Reusable motion helpers
+│   │   ├── storefront/      # Public storefront components
+│   │   └── ui/              # Local UI primitives
+│   ├── hooks/               # Client hooks for auth/session/device behavior
+│   ├── lib/                 # Utilities, schemas, stores, Supabase clients, OG helpers
+│   ├── routes/              # TanStack Router file routes and API routes
+│   ├── server/              # Server Functions, auth middleware, email, upload, recaptcha
+│   ├── test/                # Test setup and reusable factories
+│   ├── db.ts                # Prisma client singleton
+│   ├── router.tsx           # Router setup
+│   ├── server.ts            # Server entrypoint
+│   ├── start.ts             # TanStack Start middleware setup
+│   └── styles.css           # Tailwind CSS v4 entrypoint and design tokens
+├── components.json          # shadcn-style alias and UI config
+├── eslint.config.js         # ESLint + Prettier config
+├── vite.config.ts           # Vite/TanStack Start/Nitro config
+└── vitest.config.ts         # Vitest config
+```
+
+## Testing
+
+Run quality checks before opening a pull request:
 
 ```bash
 bun run typecheck
 bun run lint
 bun run test
+```
+
+Run coverage when changing server logic, data access, validation, or store behavior:
+
+```bash
 bun run test:coverage
 ```
 
-Test menggunakan Vitest, Testing Library, dan jsdom. Setup global berada di `src/test/setup.ts`, sedangkan factory data reusable berada di `src/test/factories.ts`.
+Testing conventions:
 
----
+- Tests live near source files as `*.test.ts` / `*.test.tsx`.
+- Shared factories live in `src/test/factories.ts`.
+- Global test setup lives in `src/test/setup.ts`.
+- Mock Prisma and external services for server-function tests.
+- Cover ownership guards, validation failures, transactions, and cart/order formatting.
 
-## Struktur Repositori
+## Security
 
-```text
-tokolink/
-├── prisma/               # Skema database Prisma & file seeding
-├── public/               # File statis (logo, favicon, font lokal, OG assets)
-├── src/
-│   ├── components/       # Komponen UI presentasional (UI primitives & layout)
-│   ├── hooks/            # Custom React hooks (auth form, session sync)
-│   ├── lib/              # Konfigurasi klien, data stores, skema Zod, & utilitas
-│   ├── routes/           # Routing halaman & API endpoints (TanStack Router)
-│   ├── server/           # TanStack Start Server Functions & middleware
-│   ├── styles.css        # Entrypoint css global Tailwind CSS
-│   ├── start.ts          # Konfigurasi middleware TanStack Start (CSRF & Error)
-│   └── server.ts         # Entrypoint server runtime (Vinxi/Nitro)
-├── .env.example          # Template konfigurasi environment variables
-└── README.md             # Dokumentasi proyek
-```
+Tokolink includes several hardening patterns:
 
----
+- **CSRF protection** through TanStack Start middleware.
+- **Supabase token verification** in auth middleware before protected mutations.
+- **Tenant ownership checks** before updating or deleting tenant-scoped products and links.
+- **Zod validation** for incoming Server Function input.
+- **reCAPTCHA checks** for signup and verification flows.
+- **OTP brute-force protection** with attempt limits and expiry handling.
+- **Image upload validation** with magic-byte checks and 5MB limit.
+- **OG image SSRF guard** with an allowlist and production loopback/local-network blocking.
+- **Secret hygiene** through `.env.example` templates and local `.env` usage.
 
-## Keamanan (Security Hardening)
+## Deployment
 
-Platform ini mengimplementasikan best-practice keamanan modern untuk menjaga data pengguna dan performa server:
+The app is configured for Vercel through Nitro's `vercel` preset.
 
-- **Perlindungan CSRF:** Setiap RPC request ke server functions diproteksi secara otomatis melalui middleware CSRF bawaan TanStack Start.
-- **Pencegahan SSRF:** Modul pembuatan OG Image membatasi tautan eksternal gambar hanya dari host yang terpercaya (`*.vercel-storage.com`, `api.dicebear.com`, `tokolink-v2.vercel.app`). Permintaan ke local network/loopback IP diblokir di lingkungan produksi.
-- **Validasi Tipe & Skema:** Seluruh parameter input dari client divalidasi ketat menggunakan pustaka **Zod** sebelum dieksekusi di database.
-- **Verifikasi Magic Bytes Gambar:** Server-side upload memverifikasi struktur biner gambar (PNG, JPG, GIF, WEBP) untuk menghindari manipulasi berkas biner berbahaya.
-- **Proteksi Brute-Force OTP:** Sistem verifikasi kode OTP membatasi percobaan salah maksimal 5 kali sebelum berkas OTP otomatis dihapus dari database.
+Before deploying:
 
----
+1. Set all required environment variables in Vercel.
+2. Configure PostgreSQL/Supabase database connectivity.
+3. Generate/push Prisma schema or apply migrations.
+4. Configure Supabase Auth redirect URLs and providers.
+5. Configure Vercel Blob, Resend sender identity, and reCAPTCHA domain allowlist.
+6. Run `bun run build` locally or in CI.
 
-## Kontribusi
+## Contributing
 
-Kontribusi dari seluruh developer sangat diapresiasi!
+Contributions are welcome.
 
-1. Lakukan _Fork_ repositori ini.
-2. Buat branch fitur baru (`git checkout -b feature/NamaFitur`).
-3. Lakukan commit perubahan (`git commit -m 'feat: menambahkan fitur X'`).
-4. Push ke branch Anda (`git push origin feature/NamaFitur`).
-5. Ajukan _Pull Request_ (PR).
+1. Fork the repository.
+2. Create a feature branch.
+3. Follow existing code, logic, and UI patterns.
+4. Add or update tests when behavior changes.
+5. Run `bun run typecheck`, `bun run lint`, and `bun run test`.
+6. Open a pull request with a clear summary and verification notes.
 
----
+## License
 
-## Lisensi
-
-Proyek ini dirilis di bawah lisensi **MIT License**. Anda bebas menggunakan, memodifikasi, dan mendistribusikannya baik secara komersial maupun privat. Rincian lebih lengkap terdapat pada berkas `LICENSE`.
+Tokolink is released under the [MIT License](LICENSE). You may use, modify, and distribute it for private or commercial purposes under the license terms.
