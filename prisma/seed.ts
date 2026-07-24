@@ -1,5 +1,4 @@
-import * as prismaPkg from "../src/generated/prisma/index.js";
-const { PrismaClient } = prismaPkg;
+import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({
@@ -11,6 +10,12 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("🌱 Seeding Tokolink database...");
 
+  await prisma.ledgerEntry.deleteMany();
+  await prisma.payment.deleteMany();
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.withdrawalRequest.deleteMany();
+  await prisma.customer.deleteMany();
   await prisma.link.deleteMany();
   await prisma.productVariantOption.deleteMany();
   await prisma.productVariantGroup.deleteMany();
@@ -38,6 +43,15 @@ async function main() {
       avatar:
         "https://api.dicebear.com/9.x/initials/svg?seed=Kopi%20Senja&backgroundColor=D4FF3A&textColor=0A0A0A",
       whatsapp: "6281234567890",
+      originName: "Kopi Senja HQ",
+      originPhone: "6281234567890",
+      originAddress: "Jl. Braga No. 10",
+      originProvince: "Jawa Barat",
+      originCity: "Bandung",
+      originDistrict: "Sumur Bandung",
+      originPostalCode: "40111",
+      rajaOngkirOriginId: "23",
+      rajaOngkirOriginLabel: "Sumur Bandung, Kota Bandung, Jawa Barat 40111",
       userId: user.id,
     },
   });
@@ -79,6 +93,7 @@ async function main() {
       description: "Single origin, medium roast, notes of caramel & citrus.",
       basePrice: 85000,
       image: "https://images.unsplash.com/photo-1559525839-d9acfd4ed4cf?w=800&q=80",
+      weightGram: 200,
       sortOrder: 0,
       tenantId: tenant.id,
       variantGroups: {
@@ -116,6 +131,7 @@ async function main() {
       description: "Bold, earthy, perfect for espresso.",
       basePrice: 65000,
       image: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&q=80",
+      weightGram: 250,
       sortOrder: 1,
       tenantId: tenant.id,
       variantGroups: {
@@ -141,6 +157,7 @@ async function main() {
       description: "Stainless steel, 350ml, etched logo.",
       basePrice: 145000,
       image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=800&q=80",
+      weightGram: 350,
       sortOrder: 2,
       tenantId: tenant.id,
       variantGroups: {
@@ -176,12 +193,121 @@ async function main() {
       description: "300ml, ready-to-drink, brewed 18 jam.",
       basePrice: 35000,
       image: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=800&q=80",
+      weightGram: 300,
       sortOrder: 3,
       tenantId: tenant.id,
     },
   });
 
   console.log("☕ Seeded products with variants.");
+
+  const customer = await prisma.customer.create({
+    data: {
+      tenantId: tenant.id,
+      name: "Ayu Lestari",
+      email: "ayu@example.com",
+      whatsapp: "6281299988877",
+      address: "Jl. Melati No. 7",
+      province: "Jawa Barat",
+      city: "Bandung",
+      district: "Coblong",
+      postalCode: "40132",
+      rajaOngkirDestinationId: "24",
+      rajaOngkirDestinationLabel: "Coblong, Kota Bandung, Jawa Barat 40132",
+    },
+  });
+
+  const order = await prisma.order.create({
+    data: {
+      orderNumber: "TKL-DEMO-0001",
+      tenantId: tenant.id,
+      customerId: customer.id,
+      customerName: customer.name,
+      customerEmail: customer.email,
+      customerWhatsapp: customer.whatsapp,
+      customerAddress: customer.address,
+      customerProvince: customer.province,
+      customerCity: customer.city,
+      customerDistrict: customer.district,
+      customerPostalCode: customer.postalCode,
+      rajaOngkirDestinationId: customer.rajaOngkirDestinationId,
+      rajaOngkirDestinationLabel: customer.rajaOngkirDestinationLabel,
+      subtotal: 85000,
+      shippingCost: 12000,
+      platformFee: 1275,
+      total: 97000,
+      status: "PAID",
+      courier: "jne",
+      shippingService: "REG",
+      shippingEtd: "2-3 hari",
+      shippingWeightGram: 200,
+      paidAt: new Date("2025-01-02T10:00:00.000Z"),
+      items: {
+        create: [
+          {
+            productId: p1.id,
+            productName: p1.name,
+            productImage: p1.image,
+            variantName: "100g / Biji Kopi",
+            variantSnapshot: [
+              { groupName: "Ukuran", optionName: "100g", priceDelta: 0 },
+              { groupName: "Jenis Gilingan", optionName: "Biji Kopi", priceDelta: 0 },
+            ],
+            qty: 1,
+            unitPrice: 85000,
+            totalPrice: 85000,
+            weightGram: 200,
+            totalWeightGram: 200,
+          },
+        ],
+      },
+      payment: {
+        create: {
+          provider: "PAKASIR",
+          pakasirOrderId: "TKL-DEMO-0001",
+          amount: 97000,
+          status: "PAID",
+          method: "qris",
+          paidAt: new Date("2025-01-02T10:00:00.000Z"),
+          rawPayload: { demo: true, status: "paid" },
+        },
+      },
+    },
+  });
+
+  await prisma.ledgerEntry.createMany({
+    data: [
+      {
+        tenantId: tenant.id,
+        orderId: order.id,
+        type: "CREDIT",
+        amount: 85000,
+        availableAt: new Date("2025-01-04T10:00:00.000Z"),
+        status: "PENDING",
+        note: "Demo order product subtotal",
+      },
+      {
+        tenantId: tenant.id,
+        orderId: order.id,
+        type: "FEE",
+        amount: -1275,
+        availableAt: new Date("2025-01-04T10:00:00.000Z"),
+        status: "PENDING",
+        note: "Platform fee 1.5%",
+      },
+    ],
+  });
+
+  await prisma.withdrawalRequest.create({
+    data: {
+      tenantId: tenant.id,
+      amount: 50000,
+      status: "REQUESTED",
+      note: "Demo withdrawal request",
+    },
+  });
+
+  console.log("🛒 Seeded demo customer, order, payment, ledger, and withdrawal.");
   console.log("✅ Database seeding complete!");
 }
 

@@ -23,6 +23,7 @@ export type Product = {
   description: string;
   basePrice: number;
   image: string;
+  weightGram?: number;
   variantGroups?: ProductVariantGroup[];
 };
 

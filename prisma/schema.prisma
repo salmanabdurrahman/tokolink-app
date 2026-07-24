@@ -6,19 +6,75 @@ datasource db {
   provider = "postgresql"
 }
 
+enum OrderStatus {
+  PENDING_PAYMENT @map("pending_payment")
+  PAID            @map("paid")
+  SHIPPED         @map("shipped")
+  COMPLETED       @map("completed")
+  CANCELED        @map("canceled")
+  REFUNDED        @map("refunded")
+  DISPUTED        @map("disputed")
+
+  @@map("order_status")
+}
+
+enum PaymentProvider {
+  PAKASIR @map("pakasir")
+
+  @@map("payment_provider")
+}
+
+enum PaymentStatus {
+  PENDING  @map("pending")
+  PAID     @map("paid")
+  FAILED   @map("failed")
+  EXPIRED  @map("expired")
+  CANCELED @map("canceled")
+
+  @@map("payment_status")
+}
+
+enum LedgerEntryType {
+  CREDIT     @map("credit")
+  FEE        @map("fee")
+  WITHDRAWAL @map("withdrawal")
+  ADJUSTMENT @map("adjustment")
+
+  @@map("ledger_entry_type")
+}
+
+enum LedgerEntryStatus {
+  PENDING   @map("pending")
+  AVAILABLE @map("available")
+  SETTLED   @map("settled")
+  CANCELED  @map("canceled")
+
+  @@map("ledger_entry_status")
+}
+
+enum WithdrawalStatus {
+  REQUESTED  @map("requested")
+  PROCESSING @map("processing")
+  PAID       @map("paid")
+  REJECTED   @map("rejected")
+
+  @@map("withdrawal_status")
+}
+
 model User {
   id            String    @id @default(uuid()) @db.Uuid
   email         String    @unique
   name          String?
   avatarUrl     String?   @map("avatar_url")
-  provider      String    @default("email")       // "email" | "google"
+  provider      String    @default("email") // "email" | "google"
   supabaseId    String    @unique @map("supabase_id")
   emailVerified DateTime? @map("email_verified")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  tenant        Tenant?
+  tenant Tenant?
 
+  @@index([createdAt])
   @@map("users")
 }
 
@@ -70,12 +126,28 @@ model Tenant {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products  Product[]
-  links     Link[]
-  media     Media[]
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  originName            String   @default("") @map("origin_name")
+  originPhone           String   @default("") @map("origin_phone")
+  originAddress         String   @default("") @map("origin_address")
+  originProvince        String   @default("") @map("origin_province")
+  originCity            String   @default("") @map("origin_city")
+  originDistrict        String   @default("") @map("origin_district")
+  originPostalCode      String   @default("") @map("origin_postal_code")
+  rajaOngkirOriginId    String   @default("") @map("rajaongkir_origin_id")
+  rajaOngkirOriginLabel String   @default("") @map("rajaongkir_origin_label")
+  allowedCouriers       String[] @default(["jne", "jnt", "sicepat", "anteraja", "pos", "tiki", "ninja"]) @map("allowed_couriers")
+
+  products           Product[]
+  links              Link[]
+  media              Media[]
+  customers          Customer[]
+  orders             Order[]
+  ledgerEntries      LedgerEntry[]
+  withdrawalRequests WithdrawalRequest[]
 
   @@index([slug])
+  @@index([createdAt])
   @@map("tenants")
 }
 
@@ -85,16 +157,19 @@ model Product {
   description String   @default("")
   basePrice   Int      @map("base_price")
   image       String   @default("")
+  weightGram  Int      @default(1) @map("weight_gram")
   sortOrder   Int      @default(0) @map("sort_order")
   tenantId    String   @map("tenant_id") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  tenant        Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant        Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   variantGroups ProductVariantGroup[]
   media         Media[]
+  orderItems    OrderItem[]
 
-  @@index([tenantId])
+  @@index([tenantId, sortOrder])
+  @@index([tenantId, createdAt])
   @@map("products")
 }
 
@@ -119,13 +194,13 @@ model Media {
 }
 
 model ProductVariantGroup {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String                           // e.g. "Ukuran", "Warna"
-  sortOrder Int      @default(0) @map("sort_order")
-  productId String   @map("product_id") @db.Uuid
+  id        String @id @default(uuid()) @db.Uuid
+  name      String // e.g. "Ukuran", "Warna"
+  sortOrder Int    @default(0) @map("sort_order")
+  productId String @map("product_id") @db.Uuid
 
-  product   Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
-  options   ProductVariantOption[]
+  product Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  options ProductVariantOption[]
 
   @@index([productId])
   @@map("product_variant_groups")
@@ -155,6 +230,153 @@ model Link {
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
+  @@index([tenantId, sortOrder])
+  @@index([tenantId, createdAt])
   @@map("links")
+}
+
+model Customer {
+  id                         String   @id @default(uuid()) @db.Uuid
+  tenantId                   String   @map("tenant_id") @db.Uuid
+  name                       String
+  email                      String   @default("")
+  whatsapp                   String
+  address                    String   @default("")
+  province                   String   @default("")
+  city                       String   @default("")
+  district                   String   @default("")
+  postalCode                 String   @default("") @map("postal_code")
+  rajaOngkirDestinationId    String   @default("") @map("rajaongkir_destination_id")
+  rajaOngkirDestinationLabel String   @default("") @map("rajaongkir_destination_label")
+  createdAt                  DateTime @default(now()) @map("created_at")
+  updatedAt                  DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([tenantId, whatsapp])
+  @@index([tenantId, createdAt])
+  @@map("customers")
+}
+
+model Order {
+  id                         String      @id @default(uuid()) @db.Uuid
+  orderNumber                String      @unique @map("order_number")
+  tenantId                   String      @map("tenant_id") @db.Uuid
+  customerId                 String?     @map("customer_id") @db.Uuid
+  customerName               String      @map("customer_name")
+  customerEmail              String      @default("") @map("customer_email")
+  customerWhatsapp           String      @map("customer_whatsapp")
+  customerAddress            String      @default("") @map("customer_address")
+  customerProvince           String      @default("") @map("customer_province")
+  customerCity               String      @default("") @map("customer_city")
+  customerDistrict           String      @default("") @map("customer_district")
+  customerPostalCode         String      @default("") @map("customer_postal_code")
+  rajaOngkirDestinationId    String      @default("") @map("rajaongkir_destination_id")
+  rajaOngkirDestinationLabel String      @default("") @map("rajaongkir_destination_label")
+  subtotal                   Int
+  shippingCost               Int         @default(0) @map("shipping_cost")
+  platformFee                Int         @default(0) @map("platform_fee")
+  total                      Int
+  status                     OrderStatus @default(PENDING_PAYMENT)
+  courier                    String      @default("")
+  shippingService            String      @default("") @map("shipping_service")
+  shippingEtd                String      @default("") @map("shipping_etd")
+  shippingWeightGram         Int         @default(0) @map("shipping_weight_gram")
+  trackingNumber             String      @default("") @map("tracking_number")
+  shippedAt                  DateTime?   @map("shipped_at")
+  paidAt                     DateTime?   @map("paid_at")
+  canceledAt                 DateTime?   @map("canceled_at")
+  completedAt                DateTime?   @map("completed_at")
+  createdAt                  DateTime    @default(now()) @map("created_at")
+  updatedAt                  DateTime    @updatedAt @map("updated_at")
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer      Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items         OrderItem[]
+  payment       Payment?
+  ledgerEntries LedgerEntry[]
+
+  @@index([tenantId, status, createdAt])
+  @@index([tenantId, createdAt])
+  @@index([customerId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id              String  @id @default(uuid()) @db.Uuid
+  orderId         String  @map("order_id") @db.Uuid
+  productId       String? @map("product_id") @db.Uuid
+  productName     String  @map("product_name")
+  productImage    String  @default("") @map("product_image")
+  variantName     String  @default("") @map("variant_name")
+  variantSnapshot Json?   @map("variant_snapshot")
+  qty             Int
+  unitPrice       Int     @map("unit_price")
+  totalPrice      Int     @map("total_price")
+  weightGram      Int     @default(1) @map("weight_gram")
+  totalWeightGram Int     @default(1) @map("total_weight_gram")
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model Payment {
+  id             String          @id @default(uuid()) @db.Uuid
+  orderId        String          @unique @map("order_id") @db.Uuid
+  provider       PaymentProvider @default(PAKASIR)
+  pakasirOrderId String          @unique @map("pakasir_order_id")
+  amount         Int
+  status         PaymentStatus   @default(PENDING)
+  method         String          @default("")
+  paidAt         DateTime?       @map("paid_at")
+  rawPayload     Json?           @map("raw_payload")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@map("payments")
+}
+
+model LedgerEntry {
+  id          String            @id @default(uuid()) @db.Uuid
+  tenantId    String            @map("tenant_id") @db.Uuid
+  orderId     String?           @map("order_id") @db.Uuid
+  type        LedgerEntryType
+  amount      Int
+  availableAt DateTime?         @map("available_at")
+  status      LedgerEntryStatus @default(PENDING)
+  note        String            @default("")
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  order  Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status, availableAt])
+  @@index([tenantId, createdAt])
+  @@index([orderId])
+  @@map("ledger_entries")
+}
+
+model WithdrawalRequest {
+  id          String           @id @default(uuid()) @db.Uuid
+  tenantId    String           @map("tenant_id") @db.Uuid
+  amount      Int
+  status      WithdrawalStatus @default(REQUESTED)
+  requestedAt DateTime         @default(now()) @map("requested_at")
+  processedAt DateTime?        @map("processed_at")
+  note        String           @default("")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status, requestedAt])
+  @@map("withdrawal_requests")
 }

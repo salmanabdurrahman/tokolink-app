@@ -61,6 +61,7 @@ export function makeProduct(overrides: Partial<Product> = {}): Product {
     description: "Deskripsi produk test",
     basePrice: 25000,
     image: "https://example.com/product.webp",
+    weightGram: 250,
     variantGroups: [makeVariantGroup()],
     ...overrides,
   };

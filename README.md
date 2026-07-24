@@ -42,6 +42,7 @@ Each merchant gets a public storefront at `tokolink-v2.vercel.app/{store-slug}`.
 - **Instant storefront onboarding** — create a store slug, profile, avatar, tagline, and WhatsApp contact.
 - **Link-in-bio + product catalog** — combine external links and product cards in one mobile-first public page.
 - **Variant-aware catalog** — model product options such as size, color, grind type, or add-ons with price deltas.
+- **Commerce-ready data model** — store customers, orders, order item snapshots, Pakasir payment records, shipping fields, ledger entries, and withdrawal requests.
 - **Client-side cart** — keep checkout fast without forcing customers into account creation.
 - **WhatsApp order generator** — convert cart items, variants, quantities, notes, and total price into a structured `wa.me` message.
 - **Merchant dashboard** — manage store settings, links, products, images, and product variants.
@@ -158,12 +159,26 @@ bun run db:generate
 bun run db:push
 ```
 
-Schema updates add auth abuse and media metadata tables. Run `bun run db:push` locally after pulling schema changes.
+Schema updates add auth abuse, media metadata, commerce order/payment/ledger tables, tenant shipping settings, and product weight. Run `bun run db:push` locally after pulling schema changes.
 
-Use migrations during schema development when needed:
+Database workflow:
+
+- `DATABASE_URL` is used by the runtime Prisma adapter. Use pooled URLs here when your provider requires pooling.
+- `DIRECT_URL` is used by Prisma CLI through `prisma.config.ts` for direct generate/migrate/push/seed workflows.
+- Use `bun run db:push` for disposable local prototyping.
+- Use `bun run db:migrate` when schema changes should be captured as a durable migration.
+- Use deploy-time Prisma migrate commands against `DIRECT_URL`; never run destructive reset against production.
+
+Create/apply a local migration when needed:
 
 ```bash
 bun run db:migrate
+```
+
+Reload deterministic demo data after schema changes:
+
+```bash
+bun run db:seed
 ```
 
 ### 5. Start development server
@@ -176,27 +191,27 @@ Open `http://localhost:3000`.
 
 ## Environment Variables
 
-| Variable                      | Purpose                                               |
-| ----------------------------- | ----------------------------------------------------- |
-| `DATABASE_URL`                | Runtime PostgreSQL connection URL                     |
-| `DIRECT_URL`                  | Direct PostgreSQL URL for Prisma CLI workflows        |
-| `VITE_SUPABASE_URL`           | Public Supabase project URL for browser client        |
-| `VITE_SUPABASE_ANON_KEY`      | Public Supabase anon key for browser client           |
-| `SUPABASE_URL`                | Server-side Supabase project URL                      |
-| `SUPABASE_ANON_KEY`           | Server-side Supabase anon key                         |
-| `SUPABASE_SERVICE_ROLE_KEY`   | Server-side Supabase admin key; keep secret           |
-| `OTP_HASH_SECRET`             | Server-side HMAC secret for OTP hashes; keep secret   |
-| `BLOB_READ_WRITE_TOKEN`       | Legacy Vercel Blob token for rollback/migration only  |
-| `R2_ACCOUNT_ID`               | Cloudflare account ID for R2 S3-compatible endpoint   |
-| `R2_ACCESS_KEY_ID`            | R2 access key ID; keep secret                         |
-| `R2_SECRET_ACCESS_KEY`        | R2 secret access key; keep secret                     |
-| `R2_BUCKET`                   | R2 bucket name for public media uploads               |
-| `R2_PUBLIC_BASE_URL`          | Public R2 custom domain/base URL for uploaded media   |
-| `VITE_TURNSTILE_SITE_KEY`     | Public Cloudflare Turnstile site key                  |
-| `TURNSTILE_SECRET_KEY`        | Server-side Turnstile secret key; keep secret         |
-| `TURNSTILE_ALLOWED_HOSTNAMES` | Optional comma-separated Turnstile hostname allowlist |
-| `RESEND_API_KEY`              | Resend API key; keep secret                           |
-| `RESEND_SENDER_EMAIL`         | Verified sender identity for email delivery           |
+| Variable                      | Purpose                                                                   |
+| ----------------------------- | ------------------------------------------------------------------------- |
+| `DATABASE_URL`                | Runtime PostgreSQL connection URL                                         |
+| `DIRECT_URL`                  | Direct PostgreSQL URL for Prisma CLI generate/migrate/push/seed workflows |
+| `VITE_SUPABASE_URL`           | Public Supabase project URL for browser client                            |
+| `VITE_SUPABASE_ANON_KEY`      | Public Supabase anon key for browser client                               |
+| `SUPABASE_URL`                | Server-side Supabase project URL                                          |
+| `SUPABASE_ANON_KEY`           | Server-side Supabase anon key                                             |
+| `SUPABASE_SERVICE_ROLE_KEY`   | Server-side Supabase admin key; keep secret                               |
+| `OTP_HASH_SECRET`             | Server-side HMAC secret for OTP hashes; keep secret                       |
+| `BLOB_READ_WRITE_TOKEN`       | Legacy Vercel Blob token for rollback/migration only                      |
+| `R2_ACCOUNT_ID`               | Cloudflare account ID for R2 S3-compatible endpoint                       |
+| `R2_ACCESS_KEY_ID`            | R2 access key ID; keep secret                                             |
+| `R2_SECRET_ACCESS_KEY`        | R2 secret access key; keep secret                                         |
+| `R2_BUCKET`                   | R2 bucket name for public media uploads                                   |
+| `R2_PUBLIC_BASE_URL`          | Public R2 custom domain/base URL for uploaded media                       |
+| `VITE_TURNSTILE_SITE_KEY`     | Public Cloudflare Turnstile site key                                      |
+| `TURNSTILE_SECRET_KEY`        | Server-side Turnstile secret key; keep secret                             |
+| `TURNSTILE_ALLOWED_HOSTNAMES` | Optional comma-separated Turnstile hostname allowlist                     |
+| `RESEND_API_KEY`              | Resend API key; keep secret                                               |
+| `RESEND_SENDER_EMAIL`         | Verified sender identity for email delivery                               |
 
 Never commit real `.env` files or production credentials.
 
