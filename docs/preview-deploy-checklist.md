@@ -10,6 +10,9 @@ Use this checklist before merging or promoting a preview deploy.
 
 ## Runtime checks
 
+- Vercel install uses `bun install --frozen-lockfile` and build emits `.vercel/output`.
+- Security headers exist on production responses: HSTS, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`.
+- API responses include `Cache-Control: no-store`; static `/assets/*` responses remain `public, max-age=31536000, immutable`.
 - `/api/health` returns `200` with DB, env, and storage configured.
 - `/sitemap.xml` includes landing page and public tenant pages.
 - `/robots.txt` points to current sitemap URL.

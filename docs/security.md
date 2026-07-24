@@ -62,6 +62,14 @@ Security controls are layered across middleware, Server Functions, validation, p
 - Requested/processing withdrawals reduce available balance to prevent double withdrawal.
 - Payout processing is manual for MVP.
 
+## Production deployment headers
+
+- Vercel uses reproducible Bun installs with `bun install --frozen-lockfile`.
+- Global response headers enforce HSTS, `nosniff`, frame denial, strict referrer policy, and disabled browser permissions for camera, microphone, geolocation, and payment.
+- API routes are marked `Cache-Control: no-store` to avoid caching auth, tenant, checkout, webhook, or health responses at the edge.
+- Static Vite assets under `/assets/*` stay immutable cached for one year.
+- CSP is intentionally not set in `vercel.json` until script/style hashes or nonces are audited for TanStack Start/Vite production output.
+
 ## Secrets and CI
 
 - Real `.env` files must not be committed.
