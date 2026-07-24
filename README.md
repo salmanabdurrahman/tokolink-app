@@ -120,6 +120,7 @@ Tokolink uses consistent patterns across routing, server logic, data access, sta
 - PostgreSQL database, or Supabase PostgreSQL project
 - Supabase Auth project
 - Cloudflare R2 bucket and API token
+- RajaOngkir API key for domestic destination search and shipping cost
 - Resend API key
 - Cloudflare Turnstile keys
 
@@ -150,7 +151,7 @@ npm install
 cp .env.example .env
 ```
 
-Fill `.env` with local database, Supabase, Cloudflare R2, Resend, and Turnstile credentials.
+Fill `.env` with local database, Supabase, Cloudflare R2, RajaOngkir, Resend, and Turnstile credentials.
 
 ### 4. Prepare database
 
@@ -191,31 +192,33 @@ Open `http://localhost:3000`.
 
 ## Environment Variables
 
-| Variable                      | Purpose                                                                   |
-| ----------------------------- | ------------------------------------------------------------------------- |
-| `DATABASE_URL`                | Runtime PostgreSQL connection URL                                         |
-| `DIRECT_URL`                  | Direct PostgreSQL URL for Prisma CLI generate/migrate/push/seed workflows |
-| `VITE_SUPABASE_URL`           | Public Supabase project URL for browser client                            |
-| `VITE_SUPABASE_ANON_KEY`      | Public Supabase anon key for browser client                               |
-| `SUPABASE_URL`                | Server-side Supabase project URL                                          |
-| `SUPABASE_ANON_KEY`           | Server-side Supabase anon key                                             |
-| `SUPABASE_SERVICE_ROLE_KEY`   | Server-side Supabase admin key; keep secret                               |
-| `OTP_HASH_SECRET`             | Server-side HMAC secret for OTP hashes; keep secret                       |
-| `BLOB_READ_WRITE_TOKEN`       | Legacy Vercel Blob token for rollback/migration only                      |
-| `R2_ACCOUNT_ID`               | Cloudflare account ID for R2 S3-compatible endpoint                       |
-| `R2_ACCESS_KEY_ID`            | R2 access key ID; keep secret                                             |
-| `R2_SECRET_ACCESS_KEY`        | R2 secret access key; keep secret                                         |
-| `R2_BUCKET`                   | R2 bucket name for public media uploads                                   |
-| `R2_PUBLIC_BASE_URL`          | Public R2 custom domain/base URL for uploaded media                       |
-| `VITE_TURNSTILE_SITE_KEY`     | Public Cloudflare Turnstile site key                                      |
-| `TURNSTILE_SECRET_KEY`        | Server-side Turnstile secret key; keep secret                             |
-| `TURNSTILE_ALLOWED_HOSTNAMES` | Optional comma-separated Turnstile hostname allowlist                     |
-| `PAKASIR_PROJECT_SLUG`        | Pakasir project slug for checkout/payment URLs                            |
-| `PAKASIR_API_KEY`             | Pakasir API key for server-side transaction checks; keep secret           |
-| `PAKASIR_BASE_URL`            | Optional Pakasir base URL, defaults to `https://app.pakasir.com`          |
-| `SITE_URL`                    | Public app URL used for Pakasir redirect links                            |
-| `RESEND_API_KEY`              | Resend API key; keep secret                                               |
-| `RESEND_SENDER_EMAIL`         | Verified sender identity for email delivery                               |
+| Variable                      | Purpose                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------ |
+| `DATABASE_URL`                | Runtime PostgreSQL connection URL                                                    |
+| `DIRECT_URL`                  | Direct PostgreSQL URL for Prisma CLI generate/migrate/push/seed workflows            |
+| `VITE_SUPABASE_URL`           | Public Supabase project URL for browser client                                       |
+| `VITE_SUPABASE_ANON_KEY`      | Public Supabase anon key for browser client                                          |
+| `SUPABASE_URL`                | Server-side Supabase project URL                                                     |
+| `SUPABASE_ANON_KEY`           | Server-side Supabase anon key                                                        |
+| `SUPABASE_SERVICE_ROLE_KEY`   | Server-side Supabase admin key; keep secret                                          |
+| `OTP_HASH_SECRET`             | Server-side HMAC secret for OTP hashes; keep secret                                  |
+| `BLOB_READ_WRITE_TOKEN`       | Legacy Vercel Blob token for rollback/migration only                                 |
+| `R2_ACCOUNT_ID`               | Cloudflare account ID for R2 S3-compatible endpoint                                  |
+| `R2_ACCESS_KEY_ID`            | R2 access key ID; keep secret                                                        |
+| `R2_SECRET_ACCESS_KEY`        | R2 secret access key; keep secret                                                    |
+| `R2_BUCKET`                   | R2 bucket name for public media uploads                                              |
+| `R2_PUBLIC_BASE_URL`          | Public R2 custom domain/base URL for uploaded media                                  |
+| `VITE_TURNSTILE_SITE_KEY`     | Public Cloudflare Turnstile site key                                                 |
+| `TURNSTILE_SECRET_KEY`        | Server-side Turnstile secret key; keep secret                                        |
+| `TURNSTILE_ALLOWED_HOSTNAMES` | Optional comma-separated Turnstile hostname allowlist                                |
+| `PAKASIR_PROJECT_SLUG`        | Pakasir project slug for checkout/payment URLs                                       |
+| `PAKASIR_API_KEY`             | Pakasir API key for server-side transaction checks; keep secret                      |
+| `PAKASIR_BASE_URL`            | Optional Pakasir base URL, defaults to `https://app.pakasir.com`                     |
+| `SITE_URL`                    | Public app URL used for Pakasir redirect links                                       |
+| `RAJAONGKIR_API_KEY`          | RajaOngkir API key for server-side destination, cost, and waybill calls; keep secret |
+| `RAJAONGKIR_BASE_URL`         | Optional RajaOngkir base URL, defaults to `https://rajaongkir.komerce.id/api/v1`     |
+| `RESEND_API_KEY`              | Resend API key; keep secret                                                          |
+| `RESEND_SENDER_EMAIL`         | Verified sender identity for email delivery                                          |
 
 Never commit real `.env` files or production credentials.
 
@@ -339,7 +342,7 @@ Before deploying:
 2. Configure PostgreSQL/Supabase database connectivity.
 3. Generate/push Prisma schema or apply migrations.
 4. Configure Supabase Auth redirect URLs and providers.
-5. Configure Cloudflare R2 public domain, Resend sender identity, and Turnstile domain allowlist.
+5. Configure Cloudflare R2 public domain, RajaOngkir API key, Resend sender identity, and Turnstile domain allowlist.
 6. Run `bun run build` locally or in CI.
 
 ## Contributing

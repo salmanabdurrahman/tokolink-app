@@ -86,6 +86,12 @@ function OrderStatusPage() {
               {order.courier} {order.shippingService}
             </span>
           </div>
+          {order.trackingNumber && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Nomor resi</span>
+              <span className="font-medium">{order.trackingNumber}</span>
+            </div>
+          )}
         </div>
 
         <ul className="mt-6 divide-y divide-border">

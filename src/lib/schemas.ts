@@ -19,7 +19,23 @@ export const createTenantSchema = z.object({
   turnstileToken: z.string(),
 });
 
-export const updateTenantSchema = createTenantSchema.partial();
+export const updateTenantSchema = createTenantSchema
+  .extend({
+    originName: z.string().max(80).optional(),
+    originPhone: z.string().max(30).optional(),
+    originAddress: z.string().max(300).optional(),
+    originProvince: z.string().max(80).optional(),
+    originCity: z.string().max(80).optional(),
+    originDistrict: z.string().max(80).optional(),
+    originPostalCode: z.string().max(10).optional(),
+    rajaOngkirOriginId: z.string().max(80).optional(),
+    rajaOngkirOriginLabel: z.string().max(160).optional(),
+    allowedCouriers: z
+      .array(z.enum(["jne", "jnt", "sicepat", "anteraja", "pos", "tiki", "ninja"]))
+      .min(1, "Pilih minimal 1 kurir")
+      .optional(),
+  })
+  .partial();
 
 export const productVariantOptionSchema = z.object({
   id: z.string().uuid().optional(),
@@ -76,7 +92,7 @@ export const checkoutShippingSchema = z.object({
   courier: z.string().min(1, "Kurir harus diisi").max(40),
   service: z.string().min(1, "Layanan harus diisi").max(80),
   etd: z.string().max(80).default(""),
-  cost: z.number().int().min(0, "Ongkir tidak boleh negatif"),
+  cost: z.number().int().min(1, "Pilih layanan pengiriman"),
 });
 
 export const checkoutSchema = z.object({

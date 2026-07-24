@@ -33,6 +33,16 @@ export type Tenant = {
   tagline: string;
   avatar: string;
   whatsapp: string;
+  originName?: string;
+  originPhone?: string;
+  originAddress?: string;
+  originProvince?: string;
+  originCity?: string;
+  originDistrict?: string;
+  originPostalCode?: string;
+  rajaOngkirOriginId?: string;
+  rajaOngkirOriginLabel?: string;
+  allowedCouriers?: ("jne" | "jnt" | "sicepat" | "anteraja" | "pos" | "tiki" | "ninja")[];
   links: LinkItem[];
   products: Product[];
 };

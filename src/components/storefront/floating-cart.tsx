@@ -10,6 +10,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
+type Destination = {
+  id: string;
+  label: string;
+  provinceName: string;
+  cityName: string;
+  districtName: string;
+  subdistrictName: string;
+  zipCode: string;
+};
+
+type ShippingOption = {
+  courier: string;
+  service: string;
+  description: string;
+  cost: number;
+  etd: string;
+};
+
 interface FloatingCartProps {
   tenantSlug: string;
   storeName: string;
@@ -26,8 +44,14 @@ export function FloatingCart({ tenantSlug, storeName, phone }: FloatingCartProps
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchingDestination, setSearchingDestination] = useState(false);
+  const [loadingShipping, setLoadingShipping] = useState(false);
+  const [destinationQuery, setDestinationQuery] = useState("");
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [customer, setCustomer] = useState({ name: "", email: "", whatsapp: "", address: "" });
-  const [shipping, setShipping] = useState({ courier: "jne", service: "REG", etd: "", cost: 0 });
+  const [shipping, setShipping] = useState({ courier: "", service: "", etd: "", cost: 0 });
 
   if (totalQty === 0) return null;
 
@@ -37,7 +61,59 @@ export function FloatingCart({ tenantSlug, storeName, phone }: FloatingCartProps
     toast.success("Mengarahkan ke WhatsApp...");
   };
 
+  const searchDestination = async () => {
+    try {
+      setSearchingDestination(true);
+      const { searchRajaOngkirDestinations } = await import("@/server/shipping.functions");
+      const result = await searchRajaOngkirDestinations({
+        data: { search: destinationQuery, limit: 5 },
+      });
+      setDestinations(result);
+      if (!result.length) toast.error("Lokasi tidak ditemukan");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal mencari lokasi");
+    } finally {
+      setSearchingDestination(false);
+    }
+  };
+
+  const loadShippingCosts = async (destination: Destination) => {
+    try {
+      setSelectedDestination(destination);
+      setShipping({ courier: "", service: "", etd: "", cost: 0 });
+      setShippingOptions([]);
+      setLoadingShipping(true);
+      const { getRajaOngkirShippingCosts } = await import("@/server/shipping.functions");
+      const result = await getRajaOngkirShippingCosts({
+        data: {
+          tenantSlug,
+          destinationId: destination.id,
+          items: items.map((item) => ({ productId: item.productId, qty: item.qty })),
+        },
+      });
+      setShippingOptions(result.options);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Ongkir belum tersedia");
+    } finally {
+      setLoadingShipping(false);
+    }
+  };
+
+  const selectShipping = (option: ShippingOption) => {
+    setShipping({
+      courier: option.courier,
+      service: option.service,
+      etd: option.etd,
+      cost: option.cost,
+    });
+  };
+
   const checkoutPakasir = async () => {
+    if (!selectedDestination || !shipping.cost) {
+      toast.error("Pilih tujuan dan layanan pengiriman dulu");
+      return;
+    }
+
     try {
       setLoading(true);
       const { createCheckoutOrder } = await import("@/server/order.functions");
@@ -49,8 +125,16 @@ export function FloatingCart({ tenantSlug, storeName, phone }: FloatingCartProps
             variantOptionIds: item.variantId ? item.variantId.split(",") : [],
             qty: item.qty,
           })),
-          customer,
-          shipping: { ...shipping, cost: Number(shipping.cost) || 0 },
+          customer: {
+            ...customer,
+            province: selectedDestination.provinceName,
+            city: selectedDestination.cityName,
+            district: selectedDestination.districtName || selectedDestination.subdistrictName,
+            postalCode: selectedDestination.zipCode,
+            rajaOngkirDestinationId: selectedDestination.id,
+            rajaOngkirDestinationLabel: selectedDestination.label,
+          },
+          shipping,
         },
       });
       toast.success("Order dibuat. Mengarahkan ke pembayaran...");
@@ -129,7 +213,9 @@ export function FloatingCart({ tenantSlug, storeName, phone }: FloatingCartProps
           />
           <Input
             value={customer.whatsapp}
-            onChange={(e) => setCustomer((value) => ({ ...value, whatsapp: e.target.value }))}
+            onChange={(e) =>
+              setCustomer((value) => ({ ...value, whatsapp: e.target.value.replace(/\D/g, "") }))
+            }
             placeholder="WhatsApp, contoh 628123456789"
           />
           <Input
@@ -144,28 +230,56 @@ export function FloatingCart({ tenantSlug, storeName, phone }: FloatingCartProps
             rows={2}
           />
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-3 shrink-0">
-          <Input
-            value={shipping.courier}
-            onChange={(e) => setShipping((value) => ({ ...value, courier: e.target.value }))}
-            placeholder="Kurir"
-          />
-          <Input
-            value={shipping.service}
-            onChange={(e) => setShipping((value) => ({ ...value, service: e.target.value }))}
-            placeholder="Layanan"
-          />
-          <Input
-            value={shipping.etd}
-            onChange={(e) => setShipping((value) => ({ ...value, etd: e.target.value }))}
-            placeholder="Estimasi"
-          />
-          <Input
-            type="number"
-            value={shipping.cost}
-            onChange={(e) => setShipping((value) => ({ ...value, cost: Number(e.target.value) }))}
-            placeholder="Ongkir"
-          />
+        <div className="mt-4 space-y-3 shrink-0">
+          <Label>Tujuan pengiriman</Label>
+          <div className="flex gap-2">
+            <Input
+              value={destinationQuery}
+              onChange={(e) => setDestinationQuery(e.target.value)}
+              placeholder="Cari kecamatan/kelurahan"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={searchingDestination}
+              onClick={searchDestination}
+            >
+              {searchingDestination ? "Cari..." : "Cari"}
+            </Button>
+          </div>
+          {destinations.length > 0 && (
+            <div className="space-y-2">
+              {destinations.map((destination) => (
+                <button
+                  key={destination.id}
+                  type="button"
+                  onClick={() => loadShippingCosts(destination)}
+                  className="w-full rounded-xl border border-border p-3 text-left text-sm hover:bg-surface transition"
+                >
+                  {destination.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {loadingShipping && <p className="text-xs text-muted-foreground">Menghitung ongkir...</p>}
+          {shippingOptions.length > 0 && (
+            <div className="grid gap-2">
+              {shippingOptions.map((option) => (
+                <button
+                  key={`${option.courier}-${option.service}-${option.cost}`}
+                  type="button"
+                  onClick={() => selectShipping(option)}
+                  className={`rounded-xl border p-3 text-left text-sm transition ${shipping.courier === option.courier && shipping.service === option.service ? "border-foreground bg-surface" : "border-border hover:bg-surface"}`}
+                >
+                  <span className="font-medium uppercase">
+                    {option.courier} {option.service}
+                  </span>
+                  <span className="ml-2 text-muted-foreground">{option.etd}</span>
+                  <span className="float-right font-medium">{formatIDR(option.cost)}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="mt-4 space-y-1.5 shrink-0">
           <Label htmlFor="order-note">Catatan WhatsApp (opsional)</Label>

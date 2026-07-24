@@ -20,6 +20,16 @@ function SettingsPage() {
   const [tagline, setTagline] = useState(tenant?.tagline ?? "");
   const [whatsapp, setWhatsapp] = useState(tenant?.whatsapp ?? "");
   const [avatar, setAvatar] = useState(tenant?.avatar ?? "");
+  const [originAddress, setOriginAddress] = useState(tenant?.originAddress ?? "");
+  const [rajaOngkirOriginId, setRajaOngkirOriginId] = useState(tenant?.rajaOngkirOriginId ?? "");
+  const [rajaOngkirOriginLabel, setRajaOngkirOriginLabel] = useState(
+    tenant?.rajaOngkirOriginLabel ?? "",
+  );
+  const [originQuery, setOriginQuery] = useState(tenant?.rajaOngkirOriginLabel ?? "");
+  const [originOptions, setOriginOptions] = useState<
+    { id: string; label: string; provinceName: string; cityName: string; districtName: string }[]
+  >([]);
+  const [searchingOrigin, setSearchingOrigin] = useState(false);
 
   useEffect(() => {
     if (tenant) {
@@ -27,8 +37,28 @@ function SettingsPage() {
       setTagline(tenant.tagline);
       setWhatsapp(tenant.whatsapp);
       setAvatar(tenant.avatar);
+      setOriginAddress(tenant.originAddress ?? "");
+      setRajaOngkirOriginId(tenant.rajaOngkirOriginId ?? "");
+      setRajaOngkirOriginLabel(tenant.rajaOngkirOriginLabel ?? "");
+      setOriginQuery(tenant.rajaOngkirOriginLabel ?? "");
     }
   }, [tenant]);
+
+  const searchOrigin = async () => {
+    try {
+      setSearchingOrigin(true);
+      const { searchRajaOngkirDestinations } = await import("@/server/shipping.functions");
+      const result = await searchRajaOngkirDestinations({
+        data: { search: originQuery, limit: 5 },
+      });
+      setOriginOptions(result);
+      if (!result.length) toast.error("Origin tidak ditemukan");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal mencari origin");
+    } finally {
+      setSearchingOrigin(false);
+    }
+  };
 
   return (
     <div className="max-w-2xl space-y-10 bg-background text-foreground">
@@ -38,7 +68,15 @@ function SettingsPage() {
         onSubmit={async (e) => {
           e.preventDefault();
           try {
-            await updateSettings({ name, tagline, whatsapp, avatar });
+            await updateSettings({
+              name,
+              tagline,
+              whatsapp,
+              avatar,
+              originAddress,
+              rajaOngkirOriginId,
+              rajaOngkirOriginLabel,
+            });
             toast.success("Pengaturan toko berhasil disimpan");
           } catch (err: any) {
             toast.error(err.message || "Gagal menyimpan pengaturan");
@@ -63,6 +101,68 @@ function SettingsPage() {
         <Field label="Avatar / Logo Toko">
           <ImageUpload value={avatar} onChange={(url) => setAvatar(url)} />
         </Field>
+
+        <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+          <div>
+            <h2 className="font-display text-lg font-medium">Origin pengiriman</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Wajib diisi sebelum checkout berbayar bisa menghitung ongkir RajaOngkir.
+            </p>
+          </div>
+          <Field label="Alamat origin">
+            <Input
+              value={originAddress}
+              onChange={(e) => setOriginAddress(e.target.value)}
+              placeholder="Alamat pickup/toko"
+            />
+          </Field>
+          <Field label="Cari origin RajaOngkir">
+            <div className="flex gap-2">
+              <Input
+                value={originQuery}
+                onChange={(e) => setOriginQuery(e.target.value)}
+                placeholder="Ketik kecamatan/kelurahan origin"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={searchingOrigin}
+                onClick={searchOrigin}
+              >
+                {searchingOrigin ? "Cari..." : "Cari"}
+              </Button>
+            </div>
+          </Field>
+          {originOptions.length > 0 && (
+            <div className="grid gap-2">
+              {originOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => {
+                    setRajaOngkirOriginId(option.id);
+                    setRajaOngkirOriginLabel(option.label);
+                    setOriginQuery(option.label);
+                    setOriginOptions([]);
+                  }}
+                  className="rounded-xl border border-border p-3 text-left text-sm hover:bg-surface transition"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {rajaOngkirOriginId && (
+            <div className="rounded-xl bg-surface p-3 text-sm">
+              <div className="text-xs text-muted-foreground">Origin dipilih</div>
+              <div className="mt-1 font-medium">{rajaOngkirOriginLabel}</div>
+              <div className="mt-1 text-xs text-muted-foreground">ID: {rajaOngkirOriginId}</div>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Kurir default aktif: JNE, J&T, SiCepat, Anteraja, POS, TIKI, Ninja.
+          </p>
+        </div>
 
         <div className="flex items-center gap-3">
           <Button type="submit">Simpan perubahan</Button>

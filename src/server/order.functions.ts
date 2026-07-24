@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../db";
 import { checkoutSchema } from "../lib/schemas";
 import { buildPakasirPayUrl, createPakasirTransaction } from "./pakasir";
+import { authMiddleware } from "./auth-middleware";
 import { sendOrderReceiptEmail, sendTenantOrderNotificationEmail } from "./email";
 
 const PLATFORM_FEE_RATE = 0.015;
@@ -35,6 +36,15 @@ export const createCheckoutOrder = createServerFn({ method: "POST" })
     });
 
     if (!tenant) throw new Error("Toko tidak ditemukan");
+    if (!tenant.rajaOngkirOriginId) {
+      throw new Error("Toko belum mengatur origin pengiriman. Hubungi penjual.");
+    }
+    if (!data.customer.rajaOngkirDestinationId) {
+      throw new Error("Tujuan pengiriman harus dipilih");
+    }
+    if (!tenant.allowedCouriers.includes(data.shipping.courier)) {
+      throw new Error("Kurir tidak tersedia untuk toko ini");
+    }
     if (tenant.products.length !== new Set(data.items.map((item) => item.productId)).size) {
       throw new Error("Sebagian produk tidak ditemukan");
     }
@@ -80,6 +90,9 @@ export const createCheckoutOrder = createServerFn({ method: "POST" })
     });
 
     const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const calculatedWeight = orderItems.reduce((sum, item) => sum + item.totalWeightGram, 0);
+    if (calculatedWeight < 1) throw new Error("Berat pengiriman tidak valid");
+
     const shippingCost = data.shipping.cost;
     const platformFee = Math.ceil(subtotal * PLATFORM_FEE_RATE);
     const total = subtotal + shippingCost;
@@ -127,7 +140,7 @@ export const createCheckoutOrder = createServerFn({ method: "POST" })
           courier: data.shipping.courier,
           shippingService: data.shipping.service,
           shippingEtd: data.shipping.etd || "",
-          shippingWeightGram: orderItems.reduce((sum, item) => sum + item.totalWeightGram, 0),
+          shippingWeightGram: calculatedWeight,
           items: { create: orderItems },
           payment: {
             create: {
@@ -161,6 +174,12 @@ export const createCheckoutOrder = createServerFn({ method: "POST" })
 
     return { orderNumber: order.orderNumber, paymentUrl, total: order.total };
   });
+
+export const updateOrderTrackingSchema = z.object({
+  orderId: z.string().uuid(),
+  courier: z.string().min(2, "Kurir harus diisi").max(40),
+  trackingNumber: z.string().min(4, "Nomor resi harus diisi").max(80),
+});
 
 export const getOrderStatus = createServerFn({ method: "GET" })
   .validator(z.string().min(1))
@@ -237,6 +256,44 @@ export async function markOrderPaid(orderNumber: string, rawPayload: unknown, me
 
   return paidOrder;
 }
+
+export const getTenantOrders = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const tenantId = context.tenant?.id;
+    if (!tenantId) throw new Error("Toko tidak ditemukan untuk pengguna ini");
+
+    return prisma.order.findMany({
+      where: { tenantId },
+      orderBy: { createdAt: "desc" },
+      include: { items: true, payment: true },
+      take: 50,
+    });
+  });
+
+export const updateOrderTracking = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(updateOrderTrackingSchema)
+  .handler(async ({ data, context }) => {
+    const tenantId = context.tenant?.id;
+    if (!tenantId) throw new Error("Toko tidak ditemukan untuk pengguna ini");
+
+    const order = await prisma.order.findFirst({ where: { id: data.orderId, tenantId } });
+    if (!order) throw new Error("Order tidak ditemukan");
+    if (order.status !== "PAID" && order.status !== "SHIPPED") {
+      throw new Error("Resi hanya bisa diisi setelah order dibayar");
+    }
+
+    return prisma.order.update({
+      where: { id: order.id },
+      data: {
+        courier: data.courier,
+        trackingNumber: data.trackingNumber,
+        status: "SHIPPED",
+        shippedAt: order.shippedAt || new Date(),
+      },
+    });
+  });
 
 export async function markOrderCanceled(orderNumber: string, rawPayload: unknown) {
   return prisma.$transaction(async (tx) => {
