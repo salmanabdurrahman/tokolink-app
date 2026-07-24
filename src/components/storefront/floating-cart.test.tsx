@@ -89,6 +89,18 @@ describe("FloatingCart", () => {
     );
   });
 
+  it("keeps customer input focused while typing", () => {
+    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    const nameInput = screen.getByPlaceholderText("Nama lengkap");
+
+    nameInput.focus();
+    fireEvent.change(nameInput, { target: { value: "Budi" } });
+
+    expect(nameInput).toHaveFocus();
+  });
+
   it("shows WhatsApp fallback when store phone missing", () => {
     render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="" />);
 
