@@ -2,6 +2,7 @@ import { prisma } from "../db";
 import { checkoutSchema } from "../lib/schemas";
 import { buildPakasirPayUrl, createPakasirTransaction } from "./pakasir";
 import { markOrderCanceled } from "./order-helpers.server";
+import { calculateDomesticCost, type RajaOngkirCostOption } from "./rajaongkir";
 import type { z } from "zod";
 
 const PLATFORM_FEE_RATE = 0.015;
@@ -19,6 +20,10 @@ function getSiteUrl() {
     /\/$/,
     "",
   );
+}
+
+function normalizeShippingValue(value: string) {
+  return value.trim().toLowerCase();
 }
 
 export async function createCheckoutOrderData(data: CheckoutInput) {
@@ -90,7 +95,23 @@ export async function createCheckoutOrderData(data: CheckoutInput) {
   const calculatedWeight = orderItems.reduce((sum, item) => sum + item.totalWeightGram, 0);
   if (calculatedWeight < 1) throw new Error("Berat pengiriman tidak valid");
 
-  const shippingCost = data.shipping.cost;
+  const shippingOptions = await calculateDomesticCost({
+    origin: tenant.rajaOngkirOriginId,
+    destination: data.customer.rajaOngkirDestinationId,
+    weight: calculatedWeight,
+    couriers: [data.shipping.courier],
+  });
+  const matchedShipping = shippingOptions.find(
+    (option: RajaOngkirCostOption) =>
+      normalizeShippingValue(option.courier) === normalizeShippingValue(data.shipping.courier) &&
+      normalizeShippingValue(option.service) === normalizeShippingValue(data.shipping.service) &&
+      option.cost === data.shipping.cost,
+  );
+  if (!matchedShipping) {
+    throw new Error("Pilihan ongkir tidak valid. Silakan hitung ulang ongkir.");
+  }
+
+  const shippingCost = matchedShipping.cost;
   const platformFee = Math.ceil(subtotal * PLATFORM_FEE_RATE);
   const total = subtotal + shippingCost;
   const orderNumber = makeOrderNumber();
@@ -135,8 +156,8 @@ export async function createCheckoutOrderData(data: CheckoutInput) {
         total,
         status: "PENDING_PAYMENT",
         courier: data.shipping.courier,
-        shippingService: data.shipping.service,
-        shippingEtd: data.shipping.etd || "",
+        shippingService: matchedShipping.service,
+        shippingEtd: matchedShipping.etd || data.shipping.etd || "",
         shippingWeightGram: calculatedWeight,
         items: { create: orderItems },
         payment: {

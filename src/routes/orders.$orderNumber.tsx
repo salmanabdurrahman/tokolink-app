@@ -1,11 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Mail, MessageCircle, PackageCheck } from "lucide-react";
+import { MessageCircle, PackageCheck } from "lucide-react";
 import { buildWhatsAppUrl } from "../lib/store";
 import { formatIDR } from "../lib/utils";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-
-type PaymentPayload = { payment_url?: string };
 
 export const Route = createFileRoute("/orders/$orderNumber")({
   loader: async ({ params }) => {
@@ -39,8 +37,7 @@ function statusLabel(status: string) {
 
 function OrderStatusPage() {
   const { order } = Route.useLoaderData();
-  const paymentPayload = order.payment?.rawPayload as PaymentPayload | null;
-  const paymentUrl = paymentPayload?.payment_url || "";
+  const paymentUrl = order.payment?.paymentUrl || "";
   const whatsappUrl = buildWhatsAppUrl(
     order.tenant.whatsapp,
     order.tenant.name,
@@ -142,15 +139,9 @@ function OrderStatusPage() {
           >
             <MessageCircle className="h-4 w-4" /> Chat tenant
           </Button>
-          {order.customerEmail && (
-            <Button
-              variant="ghost"
-              className="w-full sm:col-span-2"
-              onClick={() => window.location.assign(`mailto:${order.customerEmail}`)}
-            >
-              <Mail className="h-4 w-4" /> Email receipt dikirim setelah pembayaran terkonfirmasi
-            </Button>
-          )}
+          <p className="text-center text-xs text-muted-foreground sm:col-span-2">
+            Email receipt dikirim setelah pembayaran terkonfirmasi.
+          </p>
         </div>
       </div>
     </main>

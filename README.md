@@ -65,7 +65,7 @@ Each merchant gets a public storefront at `tokolink-v2.vercel.app/{store-slug}`.
 | Auth           | Supabase Auth with email OTP and Google OAuth support                             |
 | Media          | Cloudflare R2 uploads with server-side image validation and legacy Blob dual-read |
 | Email          | Resend verification and welcome emails                                            |
-| Bot protection | Cloudflare Turnstile                                                              |
+| Bot protection | Server-side rate limits; Cloudflare Turnstile helper pending end-to-end wiring    |
 | Tests          | Vitest, Testing Library, jsdom, V8 coverage                                       |
 
 ## How It Works
@@ -330,7 +330,8 @@ Tokolink includes several hardening patterns:
 - **Supabase token verification** in auth middleware before protected mutations.
 - **Tenant ownership checks** before updating or deleting tenant-scoped products and links.
 - **Zod validation** for incoming Server Function input.
-- **Invisible Turnstile checks** for signup, OTP resend, and onboarding flows.
+- **Public/API abuse protection** with server-side rate limits for auth, onboarding, checkout, shipping, and webhook lookup paths.
+- **Turnstile helper** ready for end-to-end client/server token wiring.
 - **OTP brute-force protection** with server-side rate limits, hashed OTP storage, attempt limits, resend cooldown, and expiry handling.
 - **Image upload validation** with filename extension checks, magic-byte checks, dimension guard, malware-scan hook, media metadata, and 5MB pre-decode limit.
 - **R2 object uploads** with tenant-scoped keys, immutable public cache headers, and public custom-domain URLs.

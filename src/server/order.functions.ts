@@ -9,6 +9,11 @@ export const createCheckoutOrder = createServerFn({ method: "POST" })
   .validator(checkoutSchema)
   .handler(async ({ data }) => createCheckoutOrderData(data));
 
+function maskPublicTrackingNumber(value: string) {
+  if (value.length <= 6) return "••••";
+  return `${value.slice(0, 3)}••••${value.slice(-3)}`;
+}
+
 export const updateOrderTrackingSchema = z.object({
   orderId: z.string().uuid(),
   courier: z.string().min(2, "Kurir harus diisi").max(40),
@@ -25,10 +30,30 @@ export const getOrderStatus = createServerFn({ method: "GET" })
   .handler(async ({ data: orderNumber }) => {
     const order = await prisma.order.findUnique({
       where: { orderNumber },
-      include: { items: true, payment: true, tenant: true },
+      select: {
+        orderNumber: true,
+        customerName: true,
+        subtotal: true,
+        shippingCost: true,
+        total: true,
+        status: true,
+        courier: true,
+        shippingService: true,
+        trackingNumber: true,
+        tenant: { select: { name: true, whatsapp: true } },
+        payment: { select: { status: true, rawPayload: true } },
+        items: true,
+      },
     });
     if (!order) throw new Error("Order tidak ditemukan");
-    return order;
+    const paymentPayload = order.payment?.rawPayload as { payment_url?: string } | null;
+    return {
+      ...order,
+      trackingNumber: order.trackingNumber ? maskPublicTrackingNumber(order.trackingNumber) : "",
+      payment: order.payment
+        ? { status: order.payment.status, paymentUrl: paymentPayload?.payment_url || "" }
+        : null,
+    };
   });
 
 export const getTenantOrders = createServerFn({ method: "GET" })

@@ -1,7 +1,15 @@
 import crypto from "crypto";
 import { prisma } from "../db";
 
-export type AuthAbuseEvent = "signup" | "resend_signup_code" | "verify_signup_code" | "onboarding";
+export type AuthAbuseEvent =
+  | "signup"
+  | "resend_signup_code"
+  | "verify_signup_code"
+  | "onboarding"
+  | "checkout"
+  | "shipping_destinations"
+  | "shipping_costs"
+  | "payment_webhook_lookup";
 export type AuthAbuseOutcome = "success" | "blocked" | "failed";
 
 const RATE_LIMITS: Record<AuthAbuseEvent, { limit: number; windowMs: number }> = {
@@ -9,6 +17,10 @@ const RATE_LIMITS: Record<AuthAbuseEvent, { limit: number; windowMs: number }> =
   resend_signup_code: { limit: 3, windowMs: 10 * 60 * 1000 },
   verify_signup_code: { limit: 10, windowMs: 10 * 60 * 1000 },
   onboarding: { limit: 10, windowMs: 60 * 60 * 1000 },
+  checkout: { limit: 20, windowMs: 10 * 60 * 1000 },
+  shipping_destinations: { limit: 60, windowMs: 10 * 60 * 1000 },
+  shipping_costs: { limit: 40, windowMs: 10 * 60 * 1000 },
+  payment_webhook_lookup: { limit: 120, windowMs: 10 * 60 * 1000 },
 };
 
 function sha256(value: string) {

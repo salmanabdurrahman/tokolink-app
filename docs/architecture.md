@@ -15,7 +15,7 @@ Tokolink is a TanStack Start app with React routes, Server Functions, Prisma/Pos
 - Server/admin auth uses `src/lib/supabase.server.ts`.
 - `useSession()` syncs Supabase sessions into Prisma `User` rows via `syncSession`.
 - Protected Server Functions use `authMiddleware`, which reads `sb-access-token`, verifies Supabase auth, loads Prisma user, and attaches tenant context.
-- Signup, OTP resend, and onboarding use Cloudflare Turnstile.
+- Turnstile verifier/helpers are present; auth/onboarding/checkout currently depend on server-side rate limits until client token wiring is enabled end-to-end.
 - OTP codes are hashed before storage and protected by server-side rate limits/cooldowns.
 
 ## Data model
@@ -45,14 +45,15 @@ Commerce flow:
 
 ## Checkout, payment, shipping, ledger
 
-1. Storefront cart sends checkout data to `createCheckoutOrder`.
+1. Storefront cart sends checkout data to `/api/checkout`.
 2. Server validates cart, customer, tenant origin, destination, courier, service, and totals.
-3. Order is created as `pending_payment` with item/shipping/fee snapshots.
-4. Pakasir transaction is created and buyer receives payment URL.
-5. Pakasir webhook is verified by checking provider transaction detail server-side.
-6. Paid order creates ledger credit and platform fee entries.
-7. Balance becomes available after H+2 according to payout policy.
-8. Tenant fulfills from dashboard: add tracking number, mark shipped/completed, or cancel unpaid/manual orders.
+3. Server re-queries RajaOngkir and only accepts a shipping quote that matches destination, courier, service, cost, and calculated weight.
+4. Order is created as `pending_payment` with item/shipping/fee snapshots.
+5. Pakasir transaction is created and buyer receives payment URL.
+6. Pakasir webhook is verified by checking provider transaction detail server-side.
+7. Pending orders are conditionally marked paid and ledger credit/fee entries are duplicate-guarded.
+8. Balance becomes available after H+2 according to payout policy.
+9. Tenant fulfills from dashboard: add tracking number, mark shipped/completed, or cancel unpaid/manual orders.
 
 ## Observability
 

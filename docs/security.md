@@ -19,11 +19,10 @@ Security controls are layered across middleware, Server Functions, validation, p
 
 ## Turnstile and OTP abuse protection
 
-- Signup, resend OTP, and onboarding require Cloudflare Turnstile.
-- Production rejects missing/failed Turnstile tokens.
-- Development may bypass only when secret is missing and `NODE_ENV !== "production"`.
+- Turnstile verifier/helpers exist, but signup, resend OTP, onboarding, and checkout currently rely on server-side rate limits until UI token wiring is enabled end-to-end.
+- Do not claim production Turnstile enforcement unless the client sends tokens and the server verifies them on the target flow.
 - OTP codes are hashed with `OTP_HASH_SECRET` before storage.
-- Signup, resend, and verify flows use server-side rate limits and resend cooldown.
+- Signup, resend, verify, onboarding, checkout, public shipping APIs, and Pakasir webhook lookup use server-side rate limits; resend also has cooldown.
 - Auth abuse logs store hashed email/IP signals, not raw secrets.
 
 ## Upload validation
@@ -40,7 +39,8 @@ Security controls are layered across middleware, Server Functions, validation, p
 ## Payment and webhook validation
 
 - Pakasir API key stays server-only.
-- Checkout totals are calculated server-side from DB product/variant data and shipping choice.
+- Checkout totals are calculated server-side from DB product/variant data.
+- Checkout re-queries RajaOngkir and accepts only matching origin, destination, courier, service, weight, and cost.
 - Pakasir webhook payload is not trusted as final proof.
 - Webhook handler verifies `order_id` and amount, then double-checks with Pakasir Transaction Detail API.
 - Duplicate webhooks are handled idempotently.
@@ -50,7 +50,7 @@ Security controls are layered across middleware, Server Functions, validation, p
 
 - RajaOngkir API key stays server-only.
 - Storefront calls server functions for destination search, cost, and waybill checks.
-- Tenant origin, buyer destination, courier, service, and weight are validated before checkout.
+- Tenant origin, buyer destination, courier, service, weight, and cost are validated before checkout.
 - Errors are mapped to user-safe Indonesian messages.
 
 ## Ledger and withdrawal safety

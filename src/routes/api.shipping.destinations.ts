@@ -6,7 +6,9 @@ export const Route = createFileRoute("/api/shipping/destinations")({
       POST: async ({ request }) => {
         try {
           const data = await request.json();
+          const { enforceAuthRateLimit } = await import("../server/auth-abuse");
           const { searchRajaOngkirDestinations } = await import("../server/shipping.functions");
+          await enforceAuthRateLimit({ event: "shipping_destinations", request });
           const result = await searchRajaOngkirDestinations({ data });
           return Response.json(result);
         } catch (error) {

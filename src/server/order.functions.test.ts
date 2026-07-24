@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../db", () => ({
   prisma: {
     order: {
+      findUnique: vi.fn(),
       findFirst: vi.fn(),
       findMany: vi.fn(),
       count: vi.fn(),
@@ -30,6 +31,7 @@ vi.mock("./email", () => ({
 
 import { prisma } from "../db";
 import {
+  getOrderStatus,
   getTenantOrder,
   getTenantOrderCount,
   getTenantOrders,
@@ -42,6 +44,7 @@ const tenantContext = { tenant: { id: "tenant-1" } };
 const noTenantContext = { user: { id: "user-1" } };
 const orderId = "11111111-1111-4111-8111-111111111111";
 
+const getOrderStatusHandler = getOrderStatus as any;
 const getTenantOrdersHandler = getTenantOrders as any;
 const getTenantOrderCountHandler = getTenantOrderCount as any;
 const getTenantOrderHandler = getTenantOrder as any;
@@ -51,6 +54,33 @@ const updateTenantOrderStatusHandler = updateTenantOrderStatus as any;
 describe("tenant order dashboard functions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("returns public order status without email/address and masks tracking", async () => {
+    vi.mocked(prismaAny.order.findUnique).mockResolvedValue({
+      orderNumber: "TL1",
+      customerName: "Budi",
+      subtotal: 10000,
+      shippingCost: 12000,
+      total: 22000,
+      status: "SHIPPED",
+      courier: "jne",
+      shippingService: "REG",
+      trackingNumber: "JNE123456789",
+      tenant: { name: "Kopi Ibu", whatsapp: "6281234567890" },
+      payment: { status: "PAID", rawPayload: {} },
+      items: [],
+    });
+
+    await expect(getOrderStatusHandler({ data: "TL1" })).resolves.toMatchObject({
+      trackingNumber: "JNE••••789",
+      payment: { status: "PAID", paymentUrl: "" },
+    });
+
+    expect(prisma.order.findUnique).toHaveBeenCalledWith({
+      where: { orderNumber: "TL1" },
+      select: expect.not.objectContaining({ customerEmail: true, customerAddress: true }),
+    });
   });
 
   it("lists orders scoped to tenant with payment and items", async () => {

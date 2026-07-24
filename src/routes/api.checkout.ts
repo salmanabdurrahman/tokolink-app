@@ -7,7 +7,9 @@ export const Route = createFileRoute("/api/checkout")({
         try {
           const data = await request.json();
           const { checkoutSchema } = await import("../lib/schemas");
+          const { enforceAuthRateLimit } = await import("../server/auth-abuse");
           const { createCheckoutOrderData } = await import("../server/checkout.server");
+          await enforceAuthRateLimit({ event: "checkout", request });
           const result = await createCheckoutOrderData(checkoutSchema.parse(data));
           return Response.json(result);
         } catch (error) {

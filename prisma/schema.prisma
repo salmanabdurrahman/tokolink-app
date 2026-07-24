@@ -367,6 +367,7 @@ model LedgerEntry {
   @@index([tenantId, status, availableAt])
   @@index([tenantId, type, status, availableAt])
   @@index([tenantId, createdAt])
+  @@unique([orderId, type])
   @@index([orderId])
   @@index([withdrawalRequestId])
   @@map("ledger_entries")

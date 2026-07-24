@@ -10,9 +10,16 @@ export async function markOrderPaid(orderNumber: string, rawPayload: unknown, me
     const order = await tx.order.findUnique({ where: { orderNumber }, include: { payment: true } });
     if (!order) throw new Error("Order tidak ditemukan");
     if (order.status === "PAID") return order;
+    if (order.status !== "PENDING_PAYMENT") return order;
+
+    const updatedOrder = await tx.order.updateMany({
+      where: { id: order.id, status: "PENDING_PAYMENT" },
+      data: { status: "PAID", paidAt: new Date() },
+    });
+    if (updatedOrder.count !== 1) return order;
 
     await tx.payment.update({
-      where: { orderId: order.id },
+      where: { orderId: order.id, status: "PENDING" },
       data: {
         status: "PAID",
         method,
@@ -43,9 +50,8 @@ export async function markOrderPaid(orderNumber: string, rawPayload: unknown, me
       ],
       skipDuplicates: true,
     });
-    return tx.order.update({
+    return tx.order.findUniqueOrThrow({
       where: { id: order.id },
-      data: { status: "PAID", paidAt: new Date() },
       include: { items: true, tenant: { include: { user: true } } },
     });
   });
