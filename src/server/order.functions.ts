@@ -181,6 +181,11 @@ export const updateOrderTrackingSchema = z.object({
   trackingNumber: z.string().min(4, "Nomor resi harus diisi").max(80),
 });
 
+export const updateTenantOrderStatusSchema = z.object({
+  orderId: z.string().uuid(),
+  status: z.enum(["COMPLETED", "CANCELED"]),
+});
+
 export const getOrderStatus = createServerFn({ method: "GET" })
   .validator(z.string().min(1))
   .handler(async ({ data: orderNumber }) => {
@@ -266,9 +271,33 @@ export const getTenantOrders = createServerFn({ method: "GET" })
     return prisma.order.findMany({
       where: { tenantId },
       orderBy: { createdAt: "desc" },
-      include: { items: true, payment: true },
+      include: { items: true, payment: true, ledgerEntries: true },
       take: 50,
     });
+  });
+
+export const getTenantOrderCount = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const tenantId = context.tenant?.id;
+    if (!tenantId) throw new Error("Toko tidak ditemukan untuk pengguna ini");
+
+    return prisma.order.count({ where: { tenantId, status: "PAID" } });
+  });
+
+export const getTenantOrder = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator(z.string().uuid())
+  .handler(async ({ data: orderId, context }) => {
+    const tenantId = context.tenant?.id;
+    if (!tenantId) throw new Error("Toko tidak ditemukan untuk pengguna ini");
+
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, tenantId },
+      include: { items: true, payment: true, ledgerEntries: true },
+    });
+    if (!order) throw new Error("Order tidak ditemukan");
+    return order;
   });
 
 export const updateOrderTracking = createServerFn({ method: "POST" })
@@ -292,6 +321,41 @@ export const updateOrderTracking = createServerFn({ method: "POST" })
         status: "SHIPPED",
         shippedAt: order.shippedAt || new Date(),
       },
+    });
+  });
+
+export const updateTenantOrderStatus = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(updateTenantOrderStatusSchema)
+  .handler(async ({ data, context }) => {
+    const tenantId = context.tenant?.id;
+    if (!tenantId) throw new Error("Toko tidak ditemukan untuk pengguna ini");
+
+    const order = await prisma.order.findFirst({ where: { id: data.orderId, tenantId } });
+    if (!order) throw new Error("Order tidak ditemukan");
+
+    if (data.status === "COMPLETED") {
+      if (order.status !== "SHIPPED")
+        throw new Error("Order hanya bisa diselesaikan setelah dikirim");
+      return prisma.order.update({
+        where: { id: order.id },
+        data: { status: "COMPLETED", completedAt: new Date() },
+      });
+    }
+
+    if (order.status !== "PENDING_PAYMENT") {
+      throw new Error("Hanya order belum dibayar yang bisa dibatalkan");
+    }
+
+    return prisma.$transaction(async (tx) => {
+      await tx.payment.update({
+        where: { orderId: order.id },
+        data: { status: "CANCELED", rawPayload: { reason: "tenant_manual_cancel" } },
+      });
+      return tx.order.update({
+        where: { id: order.id },
+        data: { status: "CANCELED", canceledAt: new Date() },
+      });
     });
   });
 

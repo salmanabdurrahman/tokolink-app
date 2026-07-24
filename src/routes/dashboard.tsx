@@ -11,9 +11,11 @@ export const Route = createFileRoute("/dashboard")({
   loader: async () => {
     try {
       const tenant = await getMyTenant({});
-      return { tenant };
+      const { getTenantOrderCount } = await import("@/server/order.functions");
+      const orderCount = tenant ? await getTenantOrderCount({}).catch(() => 0) : 0;
+      return { tenant, orderCount };
     } catch {
-      return { tenant: null };
+      return { tenant: null, orderCount: 0 };
     }
   },
   head: () => ({
@@ -33,7 +35,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardLayout() {
-  const { tenant: loadedTenant } = Route.useLoaderData();
+  const { tenant: loadedTenant, orderCount } = Route.useLoaderData();
   const { isLoading: authLoading, user } = useAuthGuard({ requireTenant: true });
   const signOut = useAuth((s) => s.signOut);
   const tenant = useTenant((s) => s.tenant);
@@ -82,6 +84,7 @@ function DashboardLayout() {
           pathname={location.pathname}
           signOut={signOut}
           navigate={navigate}
+          orderCount={orderCount}
         />
       </motion.aside>
       <AnimatePresence>
@@ -110,13 +113,18 @@ function DashboardLayout() {
                 pathname={location.pathname}
                 signOut={signOut}
                 navigate={navigate}
+                orderCount={orderCount}
               />
             </motion.aside>
           </>
         )}
       </AnimatePresence>
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-        <DashboardHeader setIsMobileOpen={setIsMobileOpen} tenant={tenant} />
+        <DashboardHeader
+          setIsMobileOpen={setIsMobileOpen}
+          tenant={tenant}
+          orderCount={orderCount}
+        />
         <main className="flex-1 p-6 md:p-10 max-w-6xl w-full mx-auto">
           <Outlet />
         </main>

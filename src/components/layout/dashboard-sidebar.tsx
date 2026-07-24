@@ -39,6 +39,7 @@ interface DashboardSidebarProps {
   pathname: string;
   signOut: () => Promise<void>;
   navigate: (opts: { to: any }) => void;
+  orderCount?: number;
 }
 
 export function DashboardSidebar({
@@ -50,6 +51,7 @@ export function DashboardSidebar({
   pathname,
   signOut,
   navigate,
+  orderCount = 0,
 }: DashboardSidebarProps) {
   return (
     <div className="flex flex-col h-full">
@@ -106,9 +108,14 @@ export function DashboardSidebar({
                   initial={{ opacity: 0, x: -4 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -4 }}
-                  className="whitespace-nowrap"
+                  className="flex min-w-0 flex-1 items-center justify-between gap-2 whitespace-nowrap"
                 >
-                  {t.label}
+                  <span>{t.label}</span>
+                  {t.to === "/dashboard/orders" && orderCount > 0 && (
+                    <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-foreground">
+                      {orderCount > 99 ? "99+" : orderCount}
+                    </span>
+                  )}
                 </motion.span>
               )}
             </Link>

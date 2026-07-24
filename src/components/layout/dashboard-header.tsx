@@ -6,9 +6,10 @@ import type { Tenant } from "@/lib/types";
 interface DashboardHeaderProps {
   setIsMobileOpen: (open: boolean) => void;
   tenant: Tenant | null;
+  orderCount?: number;
 }
 
-export function DashboardHeader({ setIsMobileOpen, tenant }: DashboardHeaderProps) {
+export function DashboardHeader({ setIsMobileOpen, tenant, orderCount = 0 }: DashboardHeaderProps) {
   return (
     <header className="md:hidden flex items-center justify-between px-6 py-4 border-b border-border bg-card sticky top-0 z-30">
       <div className="flex items-center gap-3">
@@ -22,6 +23,11 @@ export function DashboardHeader({ setIsMobileOpen, tenant }: DashboardHeaderProp
         <span className="font-display text-sm font-semibold text-muted-foreground -ml-1.5">
           {tenant?.slug || ""}
         </span>
+        {orderCount > 0 && (
+          <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-foreground">
+            {orderCount > 99 ? "99+" : orderCount}
+          </span>
+        )}
       </div>
       <Link
         to="/$slug"
