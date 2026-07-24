@@ -112,7 +112,7 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
         onDragOver={handleDrag}
         onDragLeave={handleDrag}
         onDrop={handleDrop}
-        className={`relative flex flex-col items-center justify-center min-h-[160px] border-2 border-dashed rounded-3xl p-6 transition duration-200 text-center select-none overflow-hidden group ${
+        className={`relative flex flex-col items-center justify-center min-h-[160px] border-2 border-dashed rounded-2xl p-6 transition duration-200 text-center select-none overflow-hidden group ${
           dragActive
             ? "border-accent bg-accent/5"
             : "border-border hover:border-foreground/40 hover:bg-muted/10"

@@ -59,6 +59,8 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
       onClick={closeForm}
     >
       <motion.div
+        role="dialog"
+        aria-modal="true"
         initial={{ opacity: 0, y: 50, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 50, scale: 0.95 }}

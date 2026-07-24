@@ -59,7 +59,7 @@ export function LinkForm({ onSave }: LinkFormProps) {
         />
         {errors.url && <p className="mt-1 text-xs text-destructive">{errors.url}</p>}
       </div>
-      <Button type="submit" size="md" disabled={submitting} className="rounded-lg py-3">
+      <Button type="submit" size="md" disabled={submitting} className="py-3">
         {submitting ? "Menambah..." : "+ Tambah"}
       </Button>
     </form>

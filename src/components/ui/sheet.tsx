@@ -22,6 +22,8 @@ export function Sheet({ open, onClose, children, className }: SheetProps) {
             className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
           />
           <motion.div
+            role="dialog"
+            aria-modal="true"
             initial={{ y: "100%", scale: 0.95 }}
             animate={{ y: 0, scale: 1 }}
             exit={{ y: "100%", scale: 0.95 }}

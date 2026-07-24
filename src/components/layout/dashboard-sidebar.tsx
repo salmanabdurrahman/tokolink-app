@@ -68,6 +68,7 @@ export function DashboardSidebar({
         {isMobile && (
           <button
             onClick={() => setIsMobileOpen(false)}
+            aria-label="Tutup menu"
             className="p-1 -mr-1 text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
           >
             <X className="h-5 w-5" />
@@ -168,6 +169,7 @@ export function DashboardSidebar({
         {!isMobile && (
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
+            aria-label={isCollapsed ? "Besarkan menu" : "Kecilkan menu"}
             className="hidden md:flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40 transition duration-200 w-full text-left mt-1 cursor-pointer"
           >
             {isCollapsed ? (

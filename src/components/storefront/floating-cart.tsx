@@ -213,7 +213,7 @@ export function FloatingCart({
                   src={i.image}
                   alt={i.productName}
                   fallbackText={i.productName}
-                  className="h-14 w-14 rounded-lg object-cover"
+                  className="h-14 w-14 rounded-xl object-cover"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{i.productName}</div>

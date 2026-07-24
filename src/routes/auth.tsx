@@ -56,7 +56,7 @@ function AuthPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
-            className="font-display text-5xl font-medium tracking-tight text-balance text-white"
+            className="font-display text-5xl font-medium tracking-tight text-balance text-background"
           >
             "Bikin toko itu <em className="font-light text-accent">harusnya</em> semudah upload foto
             IG."

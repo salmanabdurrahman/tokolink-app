@@ -165,7 +165,7 @@ function OrdersPage() {
               const canUpdateTracking = order.status === "PAID" || order.status === "SHIPPED";
 
               return (
-                <article key={order.id} className="rounded-2xl border border-border bg-card p-5">
+                <article key={order.id} className="rounded-2xl border border-border bg-card p-6">
                   <button
                     type="button"
                     onClick={() => setSelectedOrderId(order.id)}
@@ -255,7 +255,7 @@ function OrdersPage() {
           </div>
 
           {selectedOrder && (
-            <aside className="rounded-2xl border border-border bg-card p-5 lg:sticky lg:top-6 lg:self-start">
+            <aside className="rounded-2xl border border-border bg-card p-6 lg:sticky lg:top-6 lg:self-start">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">

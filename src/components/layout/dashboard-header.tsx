@@ -15,6 +15,7 @@ export function DashboardHeader({ setIsMobileOpen, tenant, orderCount = 0 }: Das
       <div className="flex items-center gap-3">
         <button
           onClick={() => setIsMobileOpen(true)}
+          aria-label="Buka menu"
           className="p-1 -ml-1 text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
         >
           <Menu className="h-6 w-6" />
