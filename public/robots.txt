@@ -4,4 +4,4 @@ Disallow: /dashboard
 Disallow: /auth
 Disallow: /onboarding
 
-Sitemap: https://tokolink.app/sitemap.xml
+Sitemap: https://tokolink-v2.vercel.app/sitemap.xml

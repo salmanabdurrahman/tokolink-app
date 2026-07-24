@@ -7,11 +7,13 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
-import { Analytics } from "@vercel/analytics/react";
+const Analytics = lazy(() =>
+  import("@vercel/analytics/react").then((mod) => ({ default: mod.Analytics })),
+);
 
 function NotFoundComponent() {
   return (
@@ -131,7 +133,9 @@ function RootShell({ children }: { children: ReactNode }) {
       <body>
         {children}
         <Toaster />
-        <Analytics />
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
         <Scripts />
       </body>
     </html>

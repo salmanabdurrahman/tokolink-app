@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "../db";
 import { authMiddleware } from "./auth-middleware";
 import { sendWithdrawalRequestEmail, sendWithdrawalStatusEmail } from "./email";
+import { recordMetric } from "../lib/metrics.server";
 
 export const PLATFORM_FEE_RATE = 0.015;
 export const WITHDRAWAL_HOLD_DAYS = 2;
@@ -124,6 +125,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       );
     }
 
+    recordMetric("withdrawal_request", { tenantId });
     return withdrawal;
   });
 

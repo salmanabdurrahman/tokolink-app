@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+
+jobs:
+  quality:
+    name: Quality gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun run test:coverage
+
+      - name: Build
+        run: bun run build
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+          if-no-files-found: ignore
+
+      - name: Secret scan
+        run: |
+          if git grep -n -I -E '(SUPABASE_SERVICE_ROLE_KEY|BLOB_READ_WRITE_TOKEN|RESEND_API_KEY|TURNSTILE_SECRET_KEY|PAKASIR_API_KEY|RAJAONGKIR_API_KEY|R2_SECRET_ACCESS_KEY)=[^[:space:]]+' -- ':!README.md' ':!.env.example'; then
+            echo "Potential committed secret found"
+            exit 1
+          fi

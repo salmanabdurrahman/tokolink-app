@@ -7,6 +7,7 @@ import crypto from "crypto";
 import { z } from "zod";
 import { parseCookie } from "../lib/cookies";
 import { enforceAuthRateLimit, hashOtp, logAuthAbuse, normalizeEmail } from "./auth-abuse";
+import { recordMetric } from "../lib/metrics.server";
 
 export const getSessionUser = createServerFn({ method: "GET" }).handler(
   async ({ request }: any) => {
@@ -158,6 +159,7 @@ export const registerUser = createServerFn({ method: "POST" })
 
       await generateAndSendOTP(email);
       await logAuthAbuse({ event: "signup", email, request, outcome: "success" });
+      recordMetric("signup_success");
       return { success: true, message: "Kode verifikasi telah dikirim ulang." };
     }
 
@@ -187,8 +189,10 @@ export const registerUser = createServerFn({ method: "POST" })
 
       await generateAndSendOTP(email);
       await logAuthAbuse({ event: "signup", email, request, outcome: "success" });
+      recordMetric("signup_success");
       return { success: true, message: "Kode verifikasi telah dikirim." };
     } catch (err: any) {
+      recordMetric("signup_fail", { reason: err?.message });
       throw new Error(err.message || "Gagal melakukan registrasi.");
     }
   });
@@ -226,6 +230,7 @@ export const verifySignUpCode = createServerFn({ method: "POST" })
 
     if (record.codeHash !== hashOtp(code)) {
       await logAuthAbuse({ event: "verify_signup_code", email, request, outcome: "failed" });
+      recordMetric("otp_fail");
       throw new Error(`Kode verifikasi salah. Sisa percobaan: ${5 - newAttempts}`);
     }
 

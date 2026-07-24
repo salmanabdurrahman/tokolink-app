@@ -46,7 +46,7 @@ Each merchant gets a public storefront at `tokolink-v2.vercel.app/{store-slug}`.
 - **Client-side cart** — keep checkout fast without forcing customers into account creation.
 - **WhatsApp order generator** — convert cart items, variants, quantities, notes, and total price into a structured `wa.me` message.
 - **Merchant dashboard** — manage store settings, links, products, images, and product variants.
-- **SEO and social previews** — route-level metadata, canonical URLs, JSON-LD, and dynamic OG images.
+- **SEO and social previews** — route-level metadata, canonical URLs, sitemap, robots.txt, JSON-LD, and dynamic OG images.
 - **Open-source foundation** — built with modern TypeScript, React, TanStack Start, Prisma, and Supabase Auth.
 
 ## Tech Stack
@@ -276,6 +276,8 @@ tokolink-app/
 
 ## Testing
 
+GitHub Actions runs lint, typecheck, coverage tests, build, coverage artifact upload, and a basic secret scan on pull requests and pushes to `master`/`main`.
+
 Run quality checks before opening a pull request:
 
 ```bash
@@ -331,11 +333,22 @@ Tokolink includes several hardening patterns:
 - **Image upload validation** with filename extension checks, magic-byte checks, dimension guard, malware-scan hook, media metadata, and 5MB pre-decode limit.
 - **R2 object uploads** with tenant-scoped keys, immutable public cache headers, and public custom-domain URLs.
 - **OG image SSRF guard** with an allowlist for legacy Blob, R2 public domain, and production loopback/local-network blocking.
-- **Secret hygiene** through `.env.example` templates and local `.env` usage.
+- **Secret hygiene** through `.env.example` templates, local `.env` usage, and CI secret scanning.
+- **Observability hooks** through structured server logs, request IDs, health checks, basic metrics, and client analytics abstraction.
 
 ## Deployment
 
 The app is configured for Vercel through Nitro's `vercel` preset.
+
+Health check:
+
+```bash
+curl https://tokolink-v2.vercel.app/api/health
+```
+
+The endpoint checks DB reachability, required env presence, and R2 storage config without exposing secret values.
+
+Use [preview deploy checklist](docs/preview-deploy-checklist.md) and [performance baseline](docs/performance-baseline.md) before promoting a preview.
 
 Before deploying:
 

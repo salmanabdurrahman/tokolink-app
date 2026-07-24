@@ -11,6 +11,7 @@ import { FloatingCart } from "@/components/storefront/floating-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/$slug")({
   loader: async ({ params }) => {
@@ -77,6 +78,7 @@ function Storefront() {
   }, [query, tenant.products]);
 
   const copyStoreLink = async () => {
+    trackEvent("storefront_share_click", { tenantSlug: tenant.slug });
     try {
       await navigator.clipboard.writeText(storeUrl);
       toast.success("Link toko disalin");
@@ -157,7 +159,10 @@ function Storefront() {
                 key={p.id}
                 product={p}
                 delay={i * 0.04}
-                onSelect={() => setSelecting(p)}
+                onSelect={() => {
+                  trackEvent("product_select", { tenantSlug: tenant.slug, productId: p.id });
+                  setSelecting(p);
+                }}
               />
             ))}
           </div>

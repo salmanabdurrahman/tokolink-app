@@ -6,6 +6,19 @@ import tsConfigPaths from "vite-tsconfig-paths";
 import { nitro } from "nitro/vite";
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("@tanstack")) return "tanstack";
+          if (id.includes("react") || id.includes("scheduler")) return "react";
+          if (id.includes("framer-motion")) return "motion";
+          if (id.includes("lucide-react")) return "icons";
+        },
+      },
+    },
+  },
   plugins: [
     tsConfigPaths(),
     tailwindcss(),

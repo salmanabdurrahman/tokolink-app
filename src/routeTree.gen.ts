@@ -22,6 +22,7 @@ import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settin
 import { Route as DashboardProductsRouteImport } from './routes/dashboard.products'
 import { Route as DashboardOrdersRouteImport } from './routes/dashboard.orders'
 import { Route as DashboardLinksRouteImport } from './routes/dashboard.links'
+import { Route as ApiHealthRouteImport } from './routes/api.health'
 import { Route as ApiPakasirWebhookRouteImport } from './routes/api.pakasir.webhook'
 import { Route as ApiOgSlugRouteImport } from './routes/api.og.$slug'
 
@@ -90,6 +91,11 @@ const DashboardLinksRoute = DashboardLinksRouteImport.update({
   path: '/links',
   getParentRoute: () => DashboardRoute,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPakasirWebhookRoute = ApiPakasirWebhookRouteImport.update({
   id: '/api/pakasir/webhook',
   path: '/api/pakasir/webhook',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/health': typeof ApiHealthRoute
   '/dashboard/links': typeof DashboardLinksRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
   '/dashboard/products': typeof DashboardProductsRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/health': typeof ApiHealthRoute
   '/dashboard/links': typeof DashboardLinksRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
   '/dashboard/products': typeof DashboardProductsRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/health': typeof ApiHealthRoute
   '/dashboard/links': typeof DashboardLinksRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
   '/dashboard/products': typeof DashboardProductsRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/onboarding'
     | '/sitemap.xml'
+    | '/api/health'
     | '/dashboard/links'
     | '/dashboard/orders'
     | '/dashboard/products'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/onboarding'
     | '/sitemap.xml'
+    | '/api/health'
     | '/dashboard/links'
     | '/dashboard/orders'
     | '/dashboard/products'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/onboarding'
     | '/sitemap.xml'
+    | '/api/health'
     | '/dashboard/links'
     | '/dashboard/orders'
     | '/dashboard/products'
@@ -212,6 +224,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   OrdersOrderNumberRoute: typeof OrdersOrderNumberRoute
   ApiOgSlugRoute: typeof ApiOgSlugRoute
   ApiPakasirWebhookRoute: typeof ApiPakasirWebhookRoute
@@ -310,6 +323,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLinksRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/pakasir/webhook': {
       id: '/api/pakasir/webhook'
       path: '/api/pakasir/webhook'
@@ -356,6 +376,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiHealthRoute: ApiHealthRoute,
   OrdersOrderNumberRoute: OrdersOrderNumberRoute,
   ApiOgSlugRoute: ApiOgSlugRoute,
   ApiPakasirWebhookRoute: ApiPakasirWebhookRoute,
