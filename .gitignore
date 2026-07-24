@@ -17,7 +17,8 @@ dist-ssr
 .nitro
 .wrangler
 *.local
-.env
+.env*
+!.env.example
 __unconfig*
 todos.json
 src/generated
