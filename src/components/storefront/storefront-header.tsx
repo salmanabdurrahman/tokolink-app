@@ -42,7 +42,6 @@ export function StorefrontHeader({ tenant }: StorefrontHeaderProps) {
           </motion.p>
         </div>
       </header>
-      {/* Quick links */}
       <section className="mx-auto mt-8 max-w-md px-6">
         <div className="flex flex-wrap justify-center gap-2">
           {tenant.links.map((l, i) => (

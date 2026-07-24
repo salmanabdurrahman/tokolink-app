@@ -12,7 +12,6 @@ function parseCookie(cookieString: string, name: string): string | null {
   return null;
 }
 
-// Check active session and return User profile + Tenant if exists
 export const getSessionUser = createServerFn({ method: "GET" }).handler(
   async ({ request }: any) => {
     const cookieHeader = request.headers.get("cookie") ?? "";
@@ -38,7 +37,6 @@ export const getSessionUser = createServerFn({ method: "GET" }).handler(
   },
 );
 
-// Synchronize Supabase user with local Prisma database
 export const syncSession = createServerFn({ method: "POST" })
   .validator(
     z
@@ -68,7 +66,6 @@ export const syncSession = createServerFn({ method: "POST" })
     const avatarUrl = data?.avatarUrl || supaUser.user_metadata?.avatar_url || null;
     const provider = supaUser.app_metadata.provider || "email";
 
-    // If email provider, double-check that they are verified
     if (provider === "email" && !supaUser.email_confirmed_at) {
       throw new Error("Email belum diverifikasi.");
     }
@@ -81,14 +78,14 @@ export const syncSession = createServerFn({ method: "POST" })
         name,
         avatarUrl,
         provider,
-        emailVerified: provider !== "email" ? new Date() : null, // verified if OAuth, unverified if email (will be set during OTP verification)
+        emailVerified: provider !== "email" ? new Date() : null,
       },
       update: {
         email: supaUser.email!,
         name: name || undefined,
         avatarUrl: avatarUrl || undefined,
         provider,
-        emailVerified: provider !== "email" ? new Date() : undefined, // Set verified for Google OAuth logins if not already done
+        emailVerified: provider !== "email" ? new Date() : undefined,
       },
       include: {
         tenant: true,
@@ -98,7 +95,6 @@ export const syncSession = createServerFn({ method: "POST" })
     return user;
   });
 
-// Schema validations for registration and verification
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
@@ -115,10 +111,9 @@ const resendSchema = z.object({
   recaptchaToken: z.string(),
 });
 
-// Helper to generate verification OTP
 async function generateAndSendOTP(email: string) {
   const code = crypto.randomInt(100000, 999999).toString();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
   await prisma.verificationCode.upsert({
     where: { email },
@@ -139,19 +134,16 @@ async function generateAndSendOTP(email: string) {
   await sendVerificationEmail(email, code);
 }
 
-// 1. Server function to register unconfirmed user
 export const registerUser = createServerFn({ method: "POST" })
   .validator(registerSchema)
   .handler(async ({ data }) => {
     const { email, password, recaptchaToken } = data;
 
-    // Verify reCAPTCHA v3
     const isHuman = await verifyRecaptcha(recaptchaToken, "signup");
     if (!isHuman) {
       throw new Error("Verifikasi bot gagal (reCAPTCHA)");
     }
 
-    // Check if user exists in local database
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -161,7 +153,6 @@ export const registerUser = createServerFn({ method: "POST" })
         throw new Error("Email sudah terdaftar. Silakan masuk.");
       }
 
-      // Unverified user: update their password in Supabase and resend code
       await supabaseAdmin.auth.admin.updateUserById(existingUser.supabaseId, {
         password,
       });
@@ -170,7 +161,6 @@ export const registerUser = createServerFn({ method: "POST" })
       return { success: true, message: "Kode verifikasi telah dikirim ulang." };
     }
 
-    // User does not exist at all: create unconfirmed user in Supabase Auth
     try {
       const { data: supaUser, error: supaError } = await supabaseAdmin.auth.admin.createUser({
         email,
@@ -186,7 +176,6 @@ export const registerUser = createServerFn({ method: "POST" })
         throw new Error("Gagal membuat akun.");
       }
 
-      // Create unverified user in Prisma DB
       await prisma.user.create({
         data: {
           email,
@@ -203,7 +192,6 @@ export const registerUser = createServerFn({ method: "POST" })
     }
   });
 
-// 2. Server function to verify 6-digit OTP code
 export const verifySignUpCode = createServerFn({ method: "POST" })
   .validator(verifyCodeSchema)
   .handler(async ({ data }) => {
@@ -221,7 +209,6 @@ export const verifySignUpCode = createServerFn({ method: "POST" })
       throw new Error("Kode verifikasi telah kedaluwarsa. Silakan kirim ulang.");
     }
 
-    // Brute-force protection: check and increment attempts
     const newAttempts = record.attempts + 1;
     if (newAttempts > 5) {
       await prisma.verificationCode.delete({ where: { email } });
@@ -237,7 +224,6 @@ export const verifySignUpCode = createServerFn({ method: "POST" })
       throw new Error(`Kode verifikasi salah. Sisa percobaan: ${5 - newAttempts}`);
     }
 
-    // Successful verification: fetch user
     const user = await prisma.user.findUnique({
       where: { email },
     });
@@ -246,7 +232,6 @@ export const verifySignUpCode = createServerFn({ method: "POST" })
       throw new Error("User tidak ditemukan.");
     }
 
-    // Update Supabase confirm status
     const { error: supaError } = await supabaseAdmin.auth.admin.updateUserById(user.supabaseId, {
       email_confirm: true,
     });
@@ -255,18 +240,15 @@ export const verifySignUpCode = createServerFn({ method: "POST" })
       throw new Error(supaError.message);
     }
 
-    // Update email verified status in local DB
     await prisma.user.update({
       where: { email },
       data: { emailVerified: new Date() },
     });
 
-    // Cleanup OTP code
     await prisma.verificationCode.delete({
       where: { email },
     });
 
-    // Send welcome email asynchronously to avoid blocking the client response
     sendWelcomeEmail(email, user.name || email).catch((err) => {
       console.error("Failed to send welcome email:", err);
     });
@@ -274,7 +256,6 @@ export const verifySignUpCode = createServerFn({ method: "POST" })
     return { success: true, message: "Email berhasil diverifikasi." };
   });
 
-// 3. Server function to resend OTP code with rate limiting
 export const resendSignUpCode = createServerFn({ method: "POST" })
   .validator(resendSchema)
   .handler(async ({ data }) => {
@@ -297,7 +278,6 @@ export const resendSignUpCode = createServerFn({ method: "POST" })
       throw new Error("Email sudah terverifikasi.");
     }
 
-    // Rate limit check: 60 seconds cooldown
     const existing = await prisma.verificationCode.findUnique({
       where: { email },
     });

@@ -133,7 +133,7 @@ Tim Tokolink
 export async function sendWelcomeEmail(email: string, name: string) {
   const subject = "Selamat Datang di Tokolink! 🚀";
 
-  const displayName = name.split("@")[0]; // Use prefix if name is just email
+  const displayName = name.split("@")[0];
 
   const htmlBody = `
     <!DOCTYPE html>
@@ -281,7 +281,7 @@ Langkah Selanjutnya:
 3. Atur nomor WhatsApp untuk menerima pesanan/checkout langsung.
 4. Bagikan link Tokolink Anda di bio Instagram, TikTok, atau WhatsApp!
 
-Akses dashboard Anda di: https://tokolink.app/dashboard
+Akses dashboard Anda di: https:
 
 Jika Anda memiliki pertanyaan, jangan ragu untuk membalas email ini.
 

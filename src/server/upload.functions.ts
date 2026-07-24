@@ -6,22 +6,18 @@ import { z } from "zod";
 export function isValidImageBuffer(buffer: Buffer): boolean {
   if (buffer.length < 4) return false;
 
-  // PNG: 89 50 4E 47
   if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
     return true;
   }
 
-  // JPEG: FF D8 FF
   if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
     return true;
   }
 
-  // GIF: 47 49 46 38 ("GIF8")
   if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38) {
     return true;
   }
 
-  // WEBP: RIFF (52 49 46 46) and WEBP (57 45 42 50) at offset 8
   if (buffer.length >= 12) {
     const isRiff =
       buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46;
@@ -44,11 +40,9 @@ export const uploadImage = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    // 1. Get base64 content
     const base64Data = data.base64.split(",")[1] || data.base64;
     const buffer = Buffer.from(base64Data, "base64");
 
-    // 2. Server-side validation (Defense-in-depth)
     if (!isValidImageBuffer(buffer)) {
       throw new Error(
         "Format berkas tidak didukung. Hanya gambar (PNG, JPG, WEBP, GIF) yang diperbolehkan.",
@@ -63,7 +57,6 @@ export const uploadImage = createServerFn({ method: "POST" })
     const cleanName = data.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const blobPath = `tenants/${tenantId}/${Date.now()}-${cleanName}`;
 
-    // 3. Upload to Vercel Blob CDN
     const blob = await put(blobPath, buffer, {
       access: "public",
       contentType: "image/webp",

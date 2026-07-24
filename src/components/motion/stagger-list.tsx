@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 interface StaggerListProps {
   children: ReactNode;
   className?: string;
-  staggerDelay?: number; // ms between each child (default 60ms)
+  staggerDelay?: number;
   once?: boolean;
 }
 
@@ -22,10 +22,6 @@ const itemVariants = {
   show: { y: 0, opacity: 1, transition: { duration: 0.4, ease: [0.23, 1, 0.32, 1] as const } },
 };
 
-/**
- * StaggerList: wraps children in a container that staggers their entrance.
- * Children must each be wrapped in <StaggerItem> or use itemVariants.
- */
 export function StaggerList({
   children,
   className = "",

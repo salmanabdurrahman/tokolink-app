@@ -15,17 +15,17 @@ export const formatIDR = (n: number) =>
 export function getErrorMessage(err: any): string {
   if (!err) return "";
   const msg = err.message || String(err);
-  try {
-    if (typeof msg === "string" && msg.trim().startsWith("[")) {
+  if (typeof msg === "string" && msg.trim().startsWith("[")) {
+    try {
       const parsed = JSON.parse(msg);
       if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].message) {
         const first = parsed[0];
-        const pathStr = first.path && first.path.length > 0 ? `${first.path.join(".")} - ` : "";
+        const pathStr = first.path?.length ? `${first.path.join(".")} - ` : "";
         return `${pathStr}${first.message}`;
       }
+    } catch {
+      return msg;
     }
-  } catch (e) {
-    // Fail-safe to return original message
   }
   return msg;
 }

@@ -18,7 +18,6 @@ export function useAuthForm() {
   const user = useAuth((s) => s.user);
   const navigate = useNavigate();
 
-  // Redirect if user is already logged in
   useEffect(() => {
     if (user) {
       if (user.tenant) {
@@ -29,7 +28,6 @@ export function useAuthForm() {
     }
   }, [user, navigate]);
 
-  // Cooldown countdown timer
   useEffect(() => {
     if (cooldown <= 0) return;
     const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
@@ -79,7 +77,6 @@ export function useAuthForm() {
       const res = await verifySignUpCode({ data: { email, code } });
 
       if (res.success) {
-        // Auto-login using saved credentials
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,

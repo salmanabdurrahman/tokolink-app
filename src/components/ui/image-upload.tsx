@@ -22,21 +22,17 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
     setStatus("Memvalidasi gambar...");
 
     try {
-      // 1. Validate
       const validation = await validateImage(file);
       if (!validation.valid) {
         throw new Error(validation.error || "Validasi gagal");
       }
 
-      // 2. Compress to WebP
       setStatus("Mengompresi gambar ke WebP (80%)...");
       const webpBlob = await compressToWebP(file, 0.8);
 
-      // 3. Convert to Base64 for transfer
       setStatus("Menyiapkan file upload...");
       const base64 = await blobToBase64(webpBlob);
 
-      // 4. Upload to Server
       setStatus("Mengunggah gambar ke CDN...");
       const result = await uploadImage({
         data: {
@@ -45,7 +41,6 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
         },
       });
 
-      // 5. Done
       onChange(result.url);
       setStatus("");
     } catch (err: any) {
@@ -106,8 +101,6 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
         className="hidden"
         disabled={loading}
       />
-
-      {/* Upload Zone */}
       <div
         onDragEnter={handleDrag}
         onDragOver={handleDrag}
@@ -144,8 +137,6 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
             </div>
           </div>
         )}
-
-        {/* Loading Overlay */}
         {loading && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px] flex flex-col items-center justify-center p-4">
             <Loader2 className="h-6 w-6 text-accent animate-spin" />
@@ -153,8 +144,6 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
           </div>
         )}
       </div>
-
-      {/* Error Message */}
       {error && (
         <div className="flex items-center gap-2 text-destructive text-xs font-medium px-1">
           <AlertCircle className="h-4 w-4 shrink-0" />

@@ -44,14 +44,12 @@ function DashboardLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // Sync loader data to Zustand store
   useEffect(() => {
     if (loadedTenant) {
       setTenant(loadedTenant as any);
     }
   }, [loadedTenant, setTenant]);
 
-  // Close mobile sidebar on route change
   useEffect(() => {
     setIsMobileOpen(false);
   }, [location.pathname]);
@@ -72,7 +70,6 @@ function DashboardLayout() {
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
-      {/* 1. Desktop Sticky Sidebar (Hidden on mobile) */}
       <motion.aside
         animate={{ width: isCollapsed ? 72 : 256 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
@@ -89,12 +86,9 @@ function DashboardLayout() {
           navigate={navigate}
         />
       </motion.aside>
-
-      {/* 2. Mobile Drawer Sidebar (Slide-in, hidden on desktop) */}
       <AnimatePresence>
         {isMobileOpen && (
           <>
-            {/* Backdrop overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -102,8 +96,6 @@ function DashboardLayout() {
               onClick={() => setIsMobileOpen(false)}
               className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm md:hidden"
             />
-
-            {/* Mobile Sidebar Panel */}
             <motion.aside
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
@@ -125,12 +117,8 @@ function DashboardLayout() {
           </>
         )}
       </AnimatePresence>
-
-      {/* 3. Main Dashboard Wrapper */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         <DashboardHeader setIsMobileOpen={setIsMobileOpen} tenant={tenant} />
-
-        {/* Dashboard Pages Main Section */}
         <main className="flex-1 p-6 md:p-10 max-w-6xl w-full mx-auto">
           <Outlet />
         </main>

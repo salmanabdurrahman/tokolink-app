@@ -10,8 +10,6 @@ export function useSession() {
   useEffect(() => {
     async function handleSession(session: Session | null) {
       if (session) {
-        // Set the session cookie for TanStack Start Server Functions
-        // session.expires_in is in seconds, max-age expects seconds
         document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in}; SameSite=Lax; Secure`;
 
         try {
@@ -25,19 +23,16 @@ export function useSession() {
           setLoading(false);
         }
       } else {
-        // Clear session cookie
         document.cookie = `sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax; Secure`;
         setUser(null);
         setLoading(false);
       }
     }
 
-    // Get initial session
     supabase.auth.getSession().then(({ data }: any) => {
       handleSession(data.session);
     });
 
-    // Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(

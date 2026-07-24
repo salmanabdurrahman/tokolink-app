@@ -24,8 +24,6 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
         <div className="p-4">
           <div className="font-display text-base font-medium text-foreground">{product.name}</div>
           <div className="mt-1 text-xs text-muted-foreground">{formatIDR(product.basePrice)}</div>
-
-          {/* Variant groups display */}
           {product.variantGroups && product.variantGroups.length > 0 && (
             <div className="mt-3 space-y-1 border-t border-border pt-3">
               {product.variantGroups.map((g) => (

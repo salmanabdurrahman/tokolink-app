@@ -6,13 +6,11 @@ import path from "node:path";
 const SITE_URL = "https://tokolink.app";
 const FALLBACK_OG = `${SITE_URL}/og-main.png`;
 
-// Module-level font cache — loaded once per cold start
 let cachedFont: ArrayBuffer | null = null;
 
 async function getFont(): Promise<ArrayBuffer | null> {
   if (cachedFont) return cachedFont;
 
-  // 1. Try to read from local file first (fast, reliable, offline)
   try {
     const fontPath = path.join(process.cwd(), "public", "SpaceGrotesk-Bold.ttf");
     if (fs.existsSync(fontPath)) {
@@ -24,9 +22,7 @@ async function getFont(): Promise<ArrayBuffer | null> {
     console.warn("[OG] Failed to load local font, falling back to network fetch:", err);
   }
 
-  // 2. Fall back to Google Fonts API
   try {
-    // 1. Fetch the CSS stylesheet from Google Fonts API with a Chrome User-Agent to get modern formats (woff/woff2)
     const cssRes = await fetch("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700", {
       headers: {
         "User-Agent":
@@ -36,12 +32,10 @@ async function getFont(): Promise<ArrayBuffer | null> {
     if (!cssRes.ok) throw new Error(`CSS fetch status ${cssRes.status}`);
     const cssText = await cssRes.text();
 
-    // 2. Extract the font file URL
     const match = cssText.match(/url\((https:\/\/fonts\.gstatic\.com\/[^)]+)\)/);
     if (!match) throw new Error("Could not parse font URL from CSS");
     const fontUrl = match[1];
 
-    // 3. Fetch the actual font file
     const fontRes = await fetch(fontUrl);
     if (!fontRes.ok) throw new Error(`Font file fetch status ${fontRes.status}`);
     cachedFont = await fontRes.arrayBuffer();
@@ -60,12 +54,10 @@ export function isSafeImageUrl(url: string | null | undefined): boolean {
 
     const hostname = parsed.hostname;
 
-    // Allow trusted CDNs and official site domains
     if (hostname.endsWith(".public.blob.vercel-storage.com")) return true;
     if (hostname === "api.dicebear.com") return true;
     if (hostname === "tokolink.app") return true;
 
-    // Allow local development endpoints ONLY when not in production
     if (process.env.NODE_ENV !== "production") {
       if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.startsWith("192.168.")) {
         return true;
@@ -78,7 +70,6 @@ export function isSafeImageUrl(url: string | null | undefined): boolean {
   }
 }
 
-// Satori only supports PNG and JPEG formats. WebP and complex SVGs trigger crashes.
 function isSupportedImage(url: string | null | undefined): boolean {
   if (!url) return false;
   if (!isSafeImageUrl(url)) return false;
@@ -112,7 +103,6 @@ export const Route = createFileRoute("/api/og/$slug")({
             return Response.redirect(FALLBACK_OG, 302);
           }
 
-          // Build JSX layout (Satori compatible — inline styles only)
           const html = (
             <div
               style={{
@@ -126,7 +116,6 @@ export const Route = createFileRoute("/api/og/$slug")({
                 justifyContent: "space-between",
               }}
             >
-              {/* Top section: two columns */}
               <div
                 style={{
                   display: "flex",
@@ -137,7 +126,6 @@ export const Route = createFileRoute("/api/og/$slug")({
                   width: "100%",
                 }}
               >
-                {/* Left Column: Avatar + Title + Tagline */}
                 <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: "16px" }}>
                   {isSupportedImage(tenant.avatar) ? (
                     <img
@@ -193,8 +181,6 @@ export const Route = createFileRoute("/api/og/$slug")({
                     {tenant.tagline || "Toko online via WhatsApp"}
                   </div>
                 </div>
-
-                {/* Right Column: Product previews */}
                 {tenant.products.length > 0 && (
                   <div
                     style={{
@@ -248,8 +234,6 @@ export const Route = createFileRoute("/api/og/$slug")({
                   </div>
                 )}
               </div>
-
-              {/* Bottom section: Footer */}
               <div
                 style={{
                   display: "flex",

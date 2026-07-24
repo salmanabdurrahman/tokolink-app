@@ -7,7 +7,6 @@ if (!supabaseUrl) {
   console.warn("Warning: VITE_SUPABASE_URL is not defined in the environment.");
 }
 
-// Mock auth interface to prevent crashes when unconfigured
 const dummyAuth = {
   getSession: async () => ({ data: { session: null }, error: null }),
   onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
@@ -19,7 +18,6 @@ const dummyAuth = {
   signInWithOAuth: async () => ({ data: {}, error: new Error("Supabase is not configured.") }),
 };
 
-// Fallback to dummy client if URL is empty to prevent boot crash
 export const supabase = supabaseUrl
   ? createClient(supabaseUrl, supabaseAnonKey)
   : ({

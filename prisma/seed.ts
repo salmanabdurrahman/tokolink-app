@@ -2,8 +2,6 @@ import * as prismaPkg from "../src/generated/prisma/index.js";
 const { PrismaClient } = prismaPkg;
 import { PrismaPg } from "@prisma/adapter-pg";
 
-// In a real database environment, database drivers are passed via PrismaPg adapter
-// If running migrations or seed in node/bun CLI, we initialize the adapter
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
 });
@@ -13,7 +11,6 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("🌱 Seeding Tokolink database...");
 
-  // 1. Clean existing data
   await prisma.link.deleteMany();
   await prisma.productVariantOption.deleteMany();
   await prisma.productVariantGroup.deleteMany();
@@ -23,18 +20,16 @@ async function main() {
 
   console.log("🧹 Cleaned database tables.");
 
-  // 2. Create demo user
   const user = await prisma.user.create({
     data: {
       email: "demo@tokolink.app",
       name: "Demo Owner",
       provider: "email",
-      supabaseId: "c032a1eb-4752-47d0-9943-7fdf0ab2de32", // Hardcoded UUID for consistency
+      supabaseId: "c032a1eb-4752-47d0-9943-7fdf0ab2de32",
     },
   });
   console.log("👤 Created demo user:", user.email);
 
-  // 3. Create demo tenant
   const tenant = await prisma.tenant.create({
     data: {
       slug: "kopi-senja",
@@ -48,7 +43,6 @@ async function main() {
   });
   console.log("🏪 Created demo tenant:", tenant.name);
 
-  // 4. Create links
   await prisma.link.createMany({
     data: [
       {
@@ -79,8 +73,6 @@ async function main() {
   });
   console.log("🔗 Created demo links.");
 
-  // 5. Create products with variant groups and options
-  // Product 1: Arabika Gayo
   const p1 = await prisma.product.create({
     data: {
       name: "Arabika Gayo",
@@ -118,7 +110,6 @@ async function main() {
     },
   });
 
-  // Product 2: Robusta Lampung
   const p2 = await prisma.product.create({
     data: {
       name: "Robusta Lampung",
@@ -144,7 +135,6 @@ async function main() {
     },
   });
 
-  // Product 3: Tumbler Senja
   const p3 = await prisma.product.create({
     data: {
       name: "Tumbler Senja",
@@ -180,7 +170,6 @@ async function main() {
     },
   });
 
-  // Product 4: Cold Brew Bottle
   const p4 = await prisma.product.create({
     data: {
       name: "Cold Brew Bottle",

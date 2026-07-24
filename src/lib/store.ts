@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CartItem, LinkItem, Product, Tenant } from "./types";
 
-// ---------- Auth ----------
 type AuthState = {
   user: any | null;
   isLoading: boolean;
@@ -120,7 +119,6 @@ export const useTenant = create<TenantState>((set) => ({
   },
 }));
 
-// ---------- Cart (per session, not persisted) ----------
 type CartState = {
   items: CartItem[];
   add: (item: CartItem) => void;

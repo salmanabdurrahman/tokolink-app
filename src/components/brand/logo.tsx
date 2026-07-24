@@ -1,7 +1,6 @@
 interface TokolinkLogoProps {
-  /** Ukuran logogram dalam px. Default 32 */
   size?: number;
-  /** Tampilkan teks wordmark di samping logo. Default false (logogram only) */
+
   showWordmark?: boolean;
   className?: string;
 }
@@ -13,7 +12,6 @@ export function TokolinkLogo({
 }: TokolinkLogoProps) {
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
-      {/* Logogram: cross-shape */}
       <svg
         width={size}
         height={size}
@@ -23,11 +21,8 @@ export function TokolinkLogo({
         aria-hidden="true"
         className="shrink-0"
       >
-        {/* Horizontal bar: lime accent */}
         <rect x="48" y="76" width="160" height="48" rx="24" fill="var(--lime)" />
-        {/* Vertical bar: foreground (adapts dark/light) */}
         <rect x="104" y="44" width="48" height="168" rx="24" fill="var(--foreground)" />
-        {/* Intersection dot: lime */}
         <circle cx="128" cy="100" r="10" fill="var(--lime)" />
       </svg>
       {showWordmark && (

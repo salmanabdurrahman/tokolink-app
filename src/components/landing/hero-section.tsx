@@ -4,10 +4,7 @@ import { motion } from "framer-motion";
 export function HeroSection() {
   return (
     <section className="relative px-6 pt-40 pb-24 sm:pt-48 sm:pb-32 overflow-hidden">
-      {/* Background Grid Pattern with Radial Fade */}
       <div className="absolute inset-0 bg-grid-pattern [mask-image:radial-gradient(ellipse_at_center,black_50%,transparent_100%)] opacity-40 pointer-events-none -z-10" />
-
-      {/* Glowing Abstract Blurs */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         <motion.div
           animate={{
@@ -36,8 +33,6 @@ export function HeroSection() {
           className="absolute top-1/3 -right-1/4 h-[600px] w-[600px] rounded-full bg-muted/30 blur-[150px]"
         />
       </div>
-
-      {/* Abstract Concentric Circles Vector Ornament */}
       <motion.div
         initial={{ opacity: 0, rotate: -10 }}
         animate={{ opacity: 0.15, rotate: 10 }}

@@ -51,7 +51,6 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
   return (
     <div className="flex flex-col h-full">
-      {/* Brand Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-border h-[65px] shrink-0">
         <div className="flex items-center gap-3">
           {!isCollapsed || isMobile ? (
@@ -69,8 +68,6 @@ export function DashboardSidebar({
           </button>
         )}
       </div>
-
-      {/* Navigation List */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {tabs.map((t) => {
           const active = t.exact ? pathname === t.to : pathname.startsWith(t.to);
@@ -85,7 +82,6 @@ export function DashboardSidebar({
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {/* Shared layout active background pill */}
               {active && (
                 <motion.div
                   layoutId="active-pill"
@@ -117,17 +113,12 @@ export function DashboardSidebar({
           );
         })}
       </nav>
-
-      {/* Footer Section */}
       <div className="mt-auto p-3 border-t border-border flex flex-col gap-1 shrink-0">
-        {/* Store Slug Info */}
         {(!isCollapsed || isMobile) && (
           <div className="px-3 py-2 text-xs text-muted-foreground truncate">
             Toko: <span className="font-semibold text-foreground">{tenant?.slug || ""}</span>
           </div>
         )}
-
-        {/* View Store */}
         <Link
           to="/$slug"
           params={{ slug: tenant?.slug || "" }}
@@ -145,8 +136,6 @@ export function DashboardSidebar({
             </motion.span>
           )}
         </Link>
-
-        {/* Logout */}
         <button
           onClick={() => {
             signOut().then(() => {
@@ -166,8 +155,6 @@ export function DashboardSidebar({
             </motion.span>
           )}
         </button>
-
-        {/* Desktop Collapse Toggle */}
         {!isMobile && (
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}

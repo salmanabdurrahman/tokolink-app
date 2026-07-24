@@ -19,7 +19,6 @@ export function FallbackImage({
   const [isLoaded, setIsLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
-  // Reset states if src changes and check for cached images
   useEffect(() => {
     if (!src) {
       setIsError(true);
@@ -30,7 +29,6 @@ export function FallbackImage({
     setIsError(false);
     setIsLoaded(false);
 
-    // If the image is already loaded (e.g. from browser cache)
     if (imgRef.current?.complete) {
       if (imgRef.current.naturalWidth === 0) {
         setIsError(true);

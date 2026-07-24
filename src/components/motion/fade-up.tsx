@@ -8,11 +8,6 @@ interface FadeUpProps extends MotionProps {
   once?: boolean;
 }
 
-/**
- * Premium FadeUp: y:16, opacity:0 -> y:0, opacity:1
- * Emil principle: never from y:0 opacity:0 only — combine position + opacity
- * Duration 400ms ease-out, viewport triggered
- */
 export function FadeUp({
   children,
   delay = 0,

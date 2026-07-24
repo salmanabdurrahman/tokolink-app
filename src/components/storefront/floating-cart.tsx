@@ -91,8 +91,6 @@ export function FloatingCart({ storeName, phone }: FloatingCartProps) {
             </li>
           ))}
         </ul>
-
-        {/* Order Notes Field */}
         <div className="mt-4 space-y-1.5 shrink-0">
           <Label htmlFor="order-note">Catatan Pesanan (opsional)</Label>
           <Textarea

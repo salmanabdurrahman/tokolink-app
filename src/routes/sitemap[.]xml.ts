@@ -20,12 +20,12 @@ export const Route = createFileRoute("/sitemap.xml")({
         const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://tokolink.app/</loc>
+    <loc>https:
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://tokolink.app/auth</loc>
+    <loc>https:
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/sitemap.xml")({
     .map(
       (tenant) => `
   <url>
-    <loc>https://tokolink.app/${tenant.slug}</loc>
+    <loc>https:
     <lastmod>${tenant.updatedAt.toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

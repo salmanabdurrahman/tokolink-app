@@ -35,7 +35,6 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
         onClick={(e) => e.stopPropagation()}
         className="max-h-[85vh] w-full max-w-xl flex flex-col rounded-2xl bg-background overflow-hidden shadow-2xl"
       >
-        {/* Fixed Header */}
         <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
           <h2 className="font-display text-2xl font-medium text-foreground">
             {initial ? "Edit produk" : "Produk baru"}
@@ -47,8 +46,6 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
             ×
           </button>
         </div>
-
-        {/* Scrollable Form Body Container */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5 min-h-0 hide-scrollbar">
           <form
             onSubmit={(e) => {
@@ -85,8 +82,6 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
             <Field label="Gambar Produk">
               <ImageUpload value={image} onChange={(url) => setImage(url)} />
             </Field>
-
-            {/* Variant groups builder section */}
             <div className="space-y-4 pt-4 border-t border-border">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -144,8 +139,6 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
                         Hapus Grup
                       </button>
                     </div>
-
-                    {/* Options inside this group */}
                     <div className="pl-4 border-l-2 border-border space-y-2">
                       <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground block mb-2">
                         Pilihan & Harga Ekstra

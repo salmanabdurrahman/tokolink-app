@@ -29,7 +29,7 @@ export const productVariantOptionSchema = z.object({
 
 export const productVariantGroupSchema = z.object({
   id: z.string().uuid().optional(),
-  name: z.string().min(1, "Nama varian harus diisi").max(50), // e.g. "Ukuran", "Warna"
+  name: z.string().min(1, "Nama varian harus diisi").max(50),
   options: z.array(productVariantOptionSchema).min(1, "Harus ada minimal 1 opsi varian"),
 });
 

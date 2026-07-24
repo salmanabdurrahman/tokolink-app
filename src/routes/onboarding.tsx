@@ -29,7 +29,6 @@ function Onboarding() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Guard: Redirect if already has a tenant
   useEffect(() => {
     if (!authLoading && user && user.tenant) {
       navigate({ to: "/dashboard" });
@@ -62,7 +61,6 @@ function Onboarding() {
         },
       });
 
-      // Update the user profile in store with the new tenant info
       setUser({
         ...user,
         tenant,

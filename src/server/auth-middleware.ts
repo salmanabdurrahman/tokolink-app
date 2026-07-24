@@ -25,7 +25,6 @@ export const authMiddleware = createMiddleware().server(async ({ next, request }
     throw new Error("Unauthorized: Invalid session");
   }
 
-  // Find user in Prisma database
   const user = await prisma.user.findUnique({
     where: { supabaseId: supaUser.id },
     include: { tenant: true },
@@ -35,7 +34,6 @@ export const authMiddleware = createMiddleware().server(async ({ next, request }
     throw new Error("Unauthorized: User not found in database");
   }
 
-  // Pass user and their tenant to function context
   return await next({
     context: {
       user,

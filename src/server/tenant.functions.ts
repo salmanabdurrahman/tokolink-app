@@ -4,7 +4,6 @@ import { authMiddleware } from "./auth-middleware";
 import { createTenantSchema, updateTenantSchema } from "../lib/schemas";
 import { z } from "zod";
 
-// Fetch tenant by slug (public - for storefront)
 export const getTenant = createServerFn({ method: "GET" })
   .validator(z.string())
   .handler(async ({ data: slug }) => {
@@ -37,7 +36,6 @@ export const getTenant = createServerFn({ method: "GET" })
     return tenant;
   });
 
-// Get currently logged-in user's tenant
 export const getMyTenant = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
@@ -67,14 +65,12 @@ export const getMyTenant = createServerFn({ method: "GET" })
     return tenant;
   });
 
-// Create tenant (onboarding)
 export const createTenant = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(createTenantSchema)
   .handler(async ({ data, context }) => {
     const userId = context.user.id;
 
-    // Verify reCAPTCHA
     if (data.recaptchaToken) {
       const { verifyRecaptcha } = await import("./recaptcha");
       const isValid = await verifyRecaptcha(data.recaptchaToken, "onboarding");
@@ -83,7 +79,6 @@ export const createTenant = createServerFn({ method: "POST" })
       }
     }
 
-    // Check if user already has a tenant
     const existingUserTenant = await prisma.tenant.findUnique({
       where: { userId },
     });
@@ -91,7 +86,6 @@ export const createTenant = createServerFn({ method: "POST" })
       throw new Error("User already has an onboarding tenant");
     }
 
-    // Check if slug is taken
     const existingSlug = await prisma.tenant.findUnique({
       where: { slug: data.slug },
     });
@@ -115,7 +109,6 @@ export const createTenant = createServerFn({ method: "POST" })
     return tenant;
   });
 
-// Update tenant settings
 export const updateTenant = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(updateTenantSchema)
@@ -125,7 +118,6 @@ export const updateTenant = createServerFn({ method: "POST" })
       throw new Error("No tenant found for this user");
     }
 
-    // If updating slug, check for uniqueness
     if (data.slug && data.slug !== context.tenant?.slug) {
       const existingSlug = await prisma.tenant.findUnique({
         where: { slug: data.slug },

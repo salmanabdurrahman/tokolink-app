@@ -8,12 +8,12 @@ export type LinkItem = {
 export type ProductVariantOption = {
   id: string;
   name: string;
-  priceDelta: number; // adjustment vs base price
+  priceDelta: number;
 };
 
 export type ProductVariantGroup = {
   id: string;
-  name: string; // e.g. "Ukuran" | "Warna"
+  name: string;
   options: ProductVariantOption[];
 };
 
@@ -31,17 +31,17 @@ export type Tenant = {
   name: string;
   tagline: string;
   avatar: string;
-  whatsapp: string; // E.164 without +
+  whatsapp: string;
   links: LinkItem[];
   products: Product[];
 };
 
 export type CartItem = {
-  key: string; // productId + variantIds
+  key: string;
   productId: string;
   productName: string;
-  variantId?: string; // comma separated option IDs
-  variantName?: string; // comma separated option names
+  variantId?: string;
+  variantName?: string;
   unitPrice: number;
   qty: number;
   image: string;

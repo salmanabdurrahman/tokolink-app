@@ -4,7 +4,6 @@ import { authMiddleware } from "./auth-middleware";
 import { createLinkSchema, updateLinkSchema } from "../lib/schemas";
 import { z } from "zod";
 
-// Fetch all links for a specific tenant (public)
 export const getLinks = createServerFn({ method: "GET" })
   .validator(z.string().uuid())
   .handler(async ({ data: tenantId }) => {
@@ -14,7 +13,6 @@ export const getLinks = createServerFn({ method: "GET" })
     });
   });
 
-// Add a link (auth required)
 export const addLink = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(createLinkSchema)
@@ -24,7 +22,6 @@ export const addLink = createServerFn({ method: "POST" })
       throw new Error("No tenant found for this user");
     }
 
-    // Get max sortOrder to append
     const maxLink = await prisma.link.findFirst({
       where: { tenantId },
       orderBy: { sortOrder: "desc" },
@@ -44,7 +41,6 @@ export const addLink = createServerFn({ method: "POST" })
     return link;
   });
 
-// Update a link (auth required, ownership check)
 export const updateLink = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
@@ -59,7 +55,6 @@ export const updateLink = createServerFn({ method: "POST" })
       throw new Error("No tenant found for this user");
     }
 
-    // Verify ownership
     const existingLink = await prisma.link.findFirst({
       where: { id, tenantId },
     });
@@ -79,7 +74,6 @@ export const updateLink = createServerFn({ method: "POST" })
     return updatedLink;
   });
 
-// Delete a link (auth required, ownership check)
 export const deleteLink = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(z.string().uuid())
@@ -89,7 +83,6 @@ export const deleteLink = createServerFn({ method: "POST" })
       throw new Error("No tenant found for this user");
     }
 
-    // Verify ownership
     const existingLink = await prisma.link.findFirst({
       where: { id, tenantId },
     });

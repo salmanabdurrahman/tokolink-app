@@ -17,7 +17,6 @@ export function CtaBanner() {
         {...fadeUp}
         className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-foreground p-10 sm:p-20"
       >
-        {/* Ambient animated glow blob */}
         <motion.div
           animate={{
             scale: [1, 1.2, 0.9, 1],

@@ -93,11 +93,7 @@ function Storefront() {
           })),
         })}
       </script>
-
-      {/* Header */}
       <StorefrontHeader tenant={tenant} />
-
-      {/* Catalog */}
       <section className="mx-auto mt-16 max-w-2xl px-4">
         <div className="mb-6 flex items-baseline justify-between px-2">
           <h2 className="font-display text-lg font-medium tracking-tight">Katalog</h2>
@@ -113,8 +109,6 @@ function Storefront() {
       <div className="mx-auto mt-16 max-w-md px-6 text-center text-xs text-muted-foreground">
         powered by <span className="text-foreground">tokolink</span>
       </div>
-
-      {/* Variant selection sheet */}
       <AnimatePresence>
         {selecting && <VariantSheet product={selecting} onClose={() => setSelecting(null)} />}
       </AnimatePresence>

@@ -7,7 +7,6 @@ if (!supabaseUrl) {
   console.warn("Warning: Supabase URL is not defined on the server side.");
 }
 
-// Mock admin auth interface to prevent crashes when unconfigured
 const dummyAdminAuth = {
   admin: {
     createUser: async () => ({

@@ -4,7 +4,6 @@ import { authMiddleware } from "./auth-middleware";
 import { createProductSchema, updateProductSchema } from "../lib/schemas";
 import { z } from "zod";
 
-// Fetch all products for a specific tenant (public)
 export const getProducts = createServerFn({ method: "GET" })
   .validator(z.string().uuid())
   .handler(async ({ data: tenantId }) => {
@@ -24,7 +23,6 @@ export const getProducts = createServerFn({ method: "GET" })
     });
   });
 
-// Create product (auth required)
 export const createProduct = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(createProductSchema)
@@ -34,7 +32,6 @@ export const createProduct = createServerFn({ method: "POST" })
       throw new Error("No tenant found for this user");
     }
 
-    // Get max sortOrder to append
     const maxProduct = await prisma.product.findFirst({
       where: { tenantId },
       orderBy: { sortOrder: "desc" },
@@ -75,7 +72,6 @@ export const createProduct = createServerFn({ method: "POST" })
     return product;
   });
 
-// Update product (auth required, ownership check)
 export const updateProduct = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
@@ -90,7 +86,6 @@ export const updateProduct = createServerFn({ method: "POST" })
       throw new Error("No tenant found for this user");
     }
 
-    // Verify ownership
     const existingProduct = await prisma.product.findFirst({
       where: { id, tenantId },
     });
@@ -98,16 +93,13 @@ export const updateProduct = createServerFn({ method: "POST" })
       throw new Error("Unauthorized: Product not found or does not belong to your store");
     }
 
-    // Run update in transaction
     const updatedProduct = await prisma.$transaction(async (tx) => {
-      // 1. If variantGroups are supplied in the update, clear the old ones first
       if (data.variantGroups !== undefined) {
         await tx.productVariantGroup.deleteMany({
           where: { productId: id },
         });
       }
 
-      // 2. Perform the product update
       return await tx.product.update({
         where: { id },
         data: {
@@ -147,7 +139,6 @@ export const updateProduct = createServerFn({ method: "POST" })
     return updatedProduct;
   });
 
-// Delete product (auth required, ownership check)
 export const deleteProduct = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(z.string().uuid())
@@ -157,7 +148,6 @@ export const deleteProduct = createServerFn({ method: "POST" })
       throw new Error("No tenant found for this user");
     }
 
-    // Verify ownership
     const existingProduct = await prisma.product.findFirst({
       where: { id, tenantId },
     });
@@ -165,7 +155,6 @@ export const deleteProduct = createServerFn({ method: "POST" })
       throw new Error("Unauthorized: Product not found or does not belong to your store");
     }
 
-    // Delete product (variantGroups and options will be cascade-deleted by database foreign keys)
     await prisma.product.delete({
       where: { id },
     });

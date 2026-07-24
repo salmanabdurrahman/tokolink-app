@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
 
 interface PageHeaderProps {
-  /** Label kecil di atas judul, e.g. "Manajemen" */
   label: string;
-  /** Judul halaman, e.g. "Produk" */
+
   title: string;
-  /** Slot untuk CTA button di kanan */
+
   action?: ReactNode;
 }
 
