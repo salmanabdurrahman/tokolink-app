@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../db", () => ({
   prisma: {
-    product: { findFirst: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    product: { findFirst: vi.fn(), update: vi.fn(), delete: vi.fn(), create: vi.fn() },
     productVariantGroup: { deleteMany: vi.fn() },
-    link: { findFirst: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    link: { findFirst: vi.fn(), update: vi.fn(), delete: vi.fn(), create: vi.fn() },
     $transaction: vi.fn(async (callback) =>
       callback({
         product: { update: vi.fn() },
@@ -17,16 +17,18 @@ vi.mock("../db", () => ({
 vi.mock("./auth-middleware", () => ({ authMiddleware: vi.fn() }));
 
 import { prisma } from "../db";
-import { deleteLink, updateLink } from "./link.functions";
+import { addLink, deleteLink, updateLink } from "./link.functions";
 import { deleteProduct, updateProduct } from "./product.functions";
 
 const prismaAny = prisma as any;
+const addLinkHandler = addLink as any;
 const updateProductHandler = updateProduct as any;
 const deleteProductHandler = deleteProduct as any;
 const updateLinkHandler = updateLink as any;
 const deleteLinkHandler = deleteLink as any;
 
 const tenantContext = { tenant: { id: "tenant-1" } };
+const noTenantContext = { user: { id: "user-1" } };
 const otherId = "11111111-1111-4111-8111-111111111111";
 
 describe("product/link ownership guards", () => {
@@ -115,5 +117,70 @@ describe("product update transaction", () => {
         context: tenantContext,
       }),
     ).rejects.toThrow("db failed");
+  });
+});
+
+describe("addLink", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("throws without tenant context", async () => {
+    await expect(
+      addLinkHandler({
+        data: { label: "Instagram", url: "https://instagram.com/test" },
+        context: noTenantContext,
+      }),
+    ).rejects.toThrow("No tenant found for this user");
+  });
+
+  it("creates link with next sort order", async () => {
+    vi.mocked(prismaAny.link.findFirst).mockResolvedValue({ sortOrder: 5 });
+    vi.mocked(prismaAny.link.create).mockResolvedValue({
+      id: "link-1",
+      label: "Instagram",
+      url: "https://instagram.com/test",
+      icon: "instagram",
+      sortOrder: 6,
+      tenantId: "tenant-1",
+    });
+
+    const result = await addLinkHandler({
+      data: { label: "Instagram", url: "https://instagram.com/test", icon: "instagram" },
+      context: tenantContext,
+    });
+
+    expect(result).toMatchObject({ label: "Instagram", sortOrder: 6 });
+    expect(prisma.link.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        label: "Instagram",
+        url: "https://instagram.com/test",
+        sortOrder: 6,
+        tenantId: "tenant-1",
+      }),
+    });
+  });
+
+  it("starts sort order at 0 when no existing links", async () => {
+    vi.mocked(prismaAny.link.findFirst).mockResolvedValue(null);
+    vi.mocked(prismaAny.link.create).mockResolvedValue({
+      id: "link-1",
+      label: "First",
+      url: "https://example.com",
+      icon: null,
+      sortOrder: 0,
+      tenantId: "tenant-1",
+    });
+
+    await addLinkHandler({
+      data: { label: "First", url: "https://example.com" },
+      context: tenantContext,
+    });
+
+    expect(prisma.link.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ sortOrder: 0 }),
+      }),
+    );
   });
 });

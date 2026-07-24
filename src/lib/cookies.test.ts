@@ -12,4 +12,9 @@ describe("parseCookie", () => {
     expect(parseCookie("x-sb-access-token=wrong; other=value", "sb-access-token")).toBeNull();
     expect(parseCookie("", "sb-access-token")).toBeNull();
   });
+
+  it("returns raw value when decodeURIComponent throws", () => {
+    const raw = "%E0%A4%A";
+    expect(parseCookie(`key=${raw}`, "key")).toBe(raw);
+  });
 });

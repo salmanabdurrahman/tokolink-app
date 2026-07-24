@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { validateImage } from "./image-utils";
 
 const png = [0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -33,6 +33,18 @@ describe("validateImage", () => {
     await expect(validateImage(largeFile)).resolves.toMatchObject({
       valid: false,
       error: "Ukuran gambar maksimal 5MB",
+    });
+  });
+
+  it("catches slice/arrayBuffer failure and returns read error", async () => {
+    const badFile = new File(["x"], "bad.png", { type: "image/png" });
+    vi.spyOn(badFile, "slice").mockImplementation(() => {
+      throw new Error("read failed");
+    });
+
+    await expect(validateImage(badFile)).resolves.toMatchObject({
+      valid: false,
+      error: "Gagal membaca file gambar",
     });
   });
 });

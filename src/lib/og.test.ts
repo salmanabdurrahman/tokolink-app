@@ -38,4 +38,15 @@ describe("OG image safety", () => {
     expect(isSupportedOgImage("https://tokolink.app/avatar.webp")).toBe(false);
     expect(isSupportedOgImage("https://evil.example/avatar.png")).toBe(false);
   });
+
+  it("rejects null, undefined, empty, and invalid URLs", () => {
+    expect(isSafeImageUrl(null)).toBe(false);
+    expect(isSafeImageUrl(undefined)).toBe(false);
+    expect(isSafeImageUrl("")).toBe(false);
+    expect(isSafeImageUrl("not-a-url")).toBe(false);
+    expect(isSafeImageUrl("file:///etc/passwd")).toBe(false);
+    expect(isSupportedOgImage(null)).toBe(false);
+    expect(isSupportedOgImage(undefined)).toBe(false);
+    expect(isSupportedOgImage("not-a-url")).toBe(false);
+  });
 });

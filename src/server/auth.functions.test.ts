@@ -6,6 +6,7 @@ vi.mock("../db", () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      upsert: vi.fn(),
     },
     verificationCode: {
       findUnique: vi.fn(),
@@ -38,9 +39,17 @@ import { prisma } from "../db";
 import { supabaseAdmin } from "../lib/supabase.server";
 import { sendVerificationEmail } from "./email";
 import { verifyRecaptcha } from "./recaptcha";
-import { registerUser, resendSignUpCode, verifySignUpCode } from "./auth.functions";
+import {
+  getSessionUser,
+  syncSession,
+  registerUser,
+  resendSignUpCode,
+  verifySignUpCode,
+} from "./auth.functions";
 
 const prismaAny = prisma as any;
+const getSessionUserHandler = getSessionUser as any;
+const syncSessionHandler = syncSession as any;
 const registerUserHandler = registerUser as any;
 const resendSignUpCodeHandler = resendSignUpCode as any;
 const verifySignUpCodeHandler = verifySignUpCode as any;
@@ -51,17 +60,22 @@ const recaptchaToken = "human-token";
 
 const mockUser = { id: "user-1", supabaseId: "supa-1", email, name: "Owner", emailVerified: null };
 
+const makeRequest = (cookie = "") =>
+  new Request("http://localhost", { headers: { cookie } });
+
 beforeEach(() => {
   vi.mocked(verifyRecaptcha).mockResolvedValue(true);
   vi.mocked(prismaAny.user.findUnique).mockReset();
   vi.mocked(prismaAny.user.create).mockReset();
   vi.mocked(prismaAny.user.update).mockReset();
+  vi.mocked(prismaAny.user.upsert).mockReset();
   vi.mocked(prismaAny.verificationCode.findUnique).mockReset();
   vi.mocked(prismaAny.verificationCode.upsert).mockReset();
   vi.mocked(prismaAny.verificationCode.update).mockReset();
   vi.mocked(prismaAny.verificationCode.delete).mockReset();
   vi.mocked(supabaseAdmin.auth.admin.createUser).mockReset();
   vi.mocked(supabaseAdmin.auth.admin.updateUserById).mockReset();
+  vi.mocked(supabaseAdmin.auth.getUser).mockReset();
   vi.mocked(sendVerificationEmail).mockReset();
 });
 
@@ -270,6 +284,155 @@ describe("resendSignUpCode", () => {
 
     await expect(resendSignUpCodeHandler({ data: { email, recaptchaToken } })).rejects.toThrow(
       /Tunggu \d+ detik sebelum mengirim ulang\./,
+    );
+  });
+});
+
+describe("getSessionUser", () => {
+  it("returns null without cookie", async () => {
+    await expect(getSessionUserHandler({ request: makeRequest() })).resolves.toBeNull();
+  });
+
+  it("returns null when Supabase token invalid", async () => {
+    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValue({
+      data: { user: null },
+      error: { message: "invalid" },
+    });
+
+    await expect(
+      getSessionUserHandler({ request: makeRequest("sb-access-token=bad") }),
+    ).resolves.toBeNull();
+  });
+
+  it("returns user with tenant for valid session", async () => {
+    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValue({
+      data: { user: { id: "supa-1" } },
+      error: null,
+    });
+    vi.mocked(prismaAny.user.findUnique).mockResolvedValue({
+      ...mockUser,
+      tenant: { id: "tenant-1", slug: "toko-test" },
+    });
+
+    const result = await getSessionUserHandler({
+      request: makeRequest("sb-access-token=good"),
+    });
+
+    expect(result).toMatchObject({
+      email,
+      id: "user-1",
+      tenant: { id: "tenant-1" },
+    });
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      where: { supabaseId: "supa-1" },
+      include: { tenant: true },
+    });
+  });
+});
+
+describe("syncSession", () => {
+  it("rejects missing token", async () => {
+    await expect(syncSessionHandler({ data: {}, request: makeRequest() })).rejects.toThrow(
+      "Unauthorized: No session token",
+    );
+  });
+
+  it("rejects invalid Supabase token", async () => {
+    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValue({
+      data: { user: null },
+      error: { message: "invalid" },
+    });
+
+    await expect(
+      syncSessionHandler({ data: {}, request: makeRequest("sb-access-token=bad") }),
+    ).rejects.toThrow("Unauthorized: Invalid session token");
+  });
+
+  it("rejects unverified email-only provider", async () => {
+    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValue({
+      data: {
+        user: {
+          id: "supa-1",
+          email,
+          email_confirmed_at: null,
+          app_metadata: { provider: "email" },
+          user_metadata: {},
+        },
+      },
+      error: null,
+    });
+
+    await expect(
+      syncSessionHandler({ data: {}, request: makeRequest("sb-access-token=good") }),
+    ).rejects.toThrow("Email belum diverifikasi.");
+  });
+
+  it("upserts user from Supabase session for email provider", async () => {
+    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValue({
+      data: {
+        user: {
+          id: "supa-1",
+          email,
+          email_confirmed_at: new Date().toISOString(),
+          app_metadata: { provider: "email" },
+          user_metadata: { name: "Owner" },
+        },
+      },
+      error: null,
+    });
+    vi.mocked(prismaAny.user.upsert).mockResolvedValue({
+      ...mockUser,
+      emailVerified: new Date(),
+      tenant: null,
+    });
+
+    const result = await syncSessionHandler({
+      data: {},
+      request: makeRequest("sb-access-token=good"),
+    });
+
+    expect(result).toMatchObject({ email, name: "Owner" });
+    expect(prisma.user.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { supabaseId: "supa-1" },
+        create: expect.objectContaining({ email, supabaseId: "supa-1" }),
+        update: expect.objectContaining({ email }),
+      }),
+    );
+  });
+
+  it("sets emailVerified immediately for OAuth provider", async () => {
+    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValue({
+      data: {
+        user: {
+          id: "supa-2",
+          email,
+          email_confirmed_at: null,
+          app_metadata: { provider: "google" },
+          user_metadata: {},
+        },
+      },
+      error: null,
+    });
+    vi.mocked(prismaAny.user.upsert).mockResolvedValue({
+      ...mockUser,
+      supabaseId: "supa-2",
+      emailVerified: expect.any(Date),
+      tenant: null,
+    });
+
+    await syncSessionHandler({
+      data: {},
+      request: makeRequest("sb-access-token=oauth"),
+    });
+
+    expect(prisma.user.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          emailVerified: expect.any(Date),
+          provider: "google",
+        }),
+      }),
     );
   });
 });
