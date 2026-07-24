@@ -57,9 +57,7 @@ function DashboardLayout() {
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
-        <p className="text-sm font-medium text-muted-foreground animate-pulse font-medium">
-          Memuat...
-        </p>
+        <p className="text-sm font-medium text-muted-foreground animate-pulse">Memuat...</p>
       </div>
     );
   }
