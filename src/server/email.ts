@@ -253,7 +253,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
           </div>
 
           <div class="btn-wrapper">
-            <a href="https://tokolink.app/dashboard" class="btn">Mulai Kelola Toko</a>
+            <a href="https://tokolink-v2.vercel.app/dashboard" class="btn">Mulai Kelola Toko</a>
           </div>
 
           <p>Jika Anda memiliki pertanyaan atau butuh bantuan dalam mengatur toko Anda, silakan hubungi tim dukungan kami.</p>

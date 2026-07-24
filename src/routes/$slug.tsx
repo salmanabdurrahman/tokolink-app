@@ -22,8 +22,8 @@ export const Route = createFileRoute("/$slug")({
   head: ({ loaderData }) => {
     const tenant = loaderData?.tenant;
     const ogImage = tenant
-      ? `https://tokolink.app/api/og/${tenant.slug}`
-      : "https://tokolink.app/og-main.png";
+      ? `https://tokolink-v2.vercel.app/api/og/${tenant.slug}`
+      : "https://tokolink-v2.vercel.app/og-main.png";
 
     return {
       meta: [
@@ -38,14 +38,14 @@ export const Route = createFileRoute("/$slug")({
           content: tenant?.tagline || "Kunjungi toko kami di Tokolink.",
         },
         { property: "og:type", content: "website" },
-        { property: "og:url", content: `https://tokolink.app/${tenant?.slug || ""}` },
+        { property: "og:url", content: `https://tokolink-v2.vercel.app/${tenant?.slug || ""}` },
         { property: "og:image", content: ogImage },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:image", content: ogImage },
       ],
-      links: [{ rel: "canonical", href: `https://tokolink.app/${tenant?.slug || ""}` }],
+      links: [{ rel: "canonical", href: `https://tokolink-v2.vercel.app/${tenant?.slug || ""}` }],
     };
   },
   component: Storefront,
@@ -73,7 +73,7 @@ function Storefront() {
           description: tenant.tagline,
           image: tenant.avatar,
           telephone: tenant.whatsapp,
-          url: `https://tokolink.app/${tenant.slug}`,
+          url: `https://tokolink-v2.vercel.app/${tenant.slug}`,
           priceRange: "$$",
           itemListElement: tenant.products.map((p, idx) => ({
             "@type": "ListItem",

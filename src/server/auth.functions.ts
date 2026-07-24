@@ -45,7 +45,7 @@ export const syncSession = createServerFn({ method: "POST" })
     const cookieHeader = request.headers.get("cookie") ?? "";
     const token = parseCookie(cookieHeader, "sb-access-token");
     if (!token) {
-      throw new Error("Unauthorized: No session token");
+      throw new Error("Tidak terautentikasi: Tidak ada token sesi");
     }
 
     const {
@@ -53,7 +53,7 @@ export const syncSession = createServerFn({ method: "POST" })
       error,
     } = await supabaseAdmin.auth.getUser(token);
     if (error || !supaUser) {
-      throw new Error("Unauthorized: Invalid session token");
+      throw new Error("Tidak terautentikasi: Token sesi tidak valid");
     }
 
     const name =
@@ -136,7 +136,7 @@ export const registerUser = createServerFn({ method: "POST" })
 
     const isHuman = await verifyRecaptcha(recaptchaToken, "signup");
     if (!isHuman) {
-      throw new Error("Verifikasi bot gagal (reCAPTCHA)");
+      throw new Error("Verifikasi reCAPTCHA gagal. Silakan coba lagi.");
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -224,7 +224,7 @@ export const verifySignUpCode = createServerFn({ method: "POST" })
     });
 
     if (!user) {
-      throw new Error("User tidak ditemukan.");
+      throw new Error("Pengguna tidak ditemukan.");
     }
 
     const { error: supaError } = await supabaseAdmin.auth.admin.updateUserById(user.supabaseId, {
@@ -258,7 +258,7 @@ export const resendSignUpCode = createServerFn({ method: "POST" })
 
     const isHuman = await verifyRecaptcha(recaptchaToken, "resend_signup_code");
     if (!isHuman) {
-      throw new Error("Verifikasi bot gagal (reCAPTCHA)");
+      throw new Error("Verifikasi reCAPTCHA gagal. Silakan coba lagi.");
     }
 
     const user = await prisma.user.findUnique({

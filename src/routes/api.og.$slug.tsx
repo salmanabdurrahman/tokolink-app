@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { isSupportedOgImage } from "../lib/og";
 
-const SITE_URL = "https://tokolink.app";
+const SITE_URL = "https://tokolink-v2.vercel.app";
 const FALLBACK_OG = `${SITE_URL}/og-main.png`;
 
 let cachedFont: ArrayBuffer | null = null;
@@ -220,7 +220,7 @@ export const Route = createFileRoute("/api/og/$slug")({
                   }}
                 >
                   <span style={{ color: "#888", fontSize: "16px", display: "flex" }}>
-                    Powered by tokolink.app
+                    Powered by tokolink-v2.vercel.app
                   </span>
                 </div>
 
@@ -235,7 +235,7 @@ export const Route = createFileRoute("/api/og/$slug")({
                     display: "flex",
                   }}
                 >
-                  tokolink.app/{tenant.slug}
+                  tokolink-v2.vercel.app/{tenant.slug}
                 </div>
               </div>
             </div>

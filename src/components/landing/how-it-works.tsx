@@ -25,7 +25,7 @@ export function HowItWorks() {
             {
               step: "01",
               title: "Daftar & klaim slug",
-              copy: "tokolink.app/nama-toko-kamu. Gratis, 30 detik.",
+              copy: "tokolink-v2.vercel.app/nama-toko-kamu. Gratis, 30 detik.",
             },
             {
               step: "02",

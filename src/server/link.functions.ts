@@ -19,7 +19,7 @@ export const addLink = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const tenantId = context.tenant?.id;
     if (!tenantId) {
-      throw new Error("No tenant found for this user");
+      throw new Error("Toko tidak ditemukan untuk pengguna ini");
     }
 
     const maxLink = await prisma.link.findFirst({
@@ -52,14 +52,14 @@ export const updateLink = createServerFn({ method: "POST" })
   .handler(async ({ data: { id, data }, context }) => {
     const tenantId = context.tenant?.id;
     if (!tenantId) {
-      throw new Error("No tenant found for this user");
+      throw new Error("Toko tidak ditemukan untuk pengguna ini");
     }
 
     const existingLink = await prisma.link.findFirst({
       where: { id, tenantId },
     });
     if (!existingLink) {
-      throw new Error("Unauthorized: Link not found or does not belong to your store");
+      throw new Error("Tautan tidak ditemukan atau bukan milik toko Anda");
     }
 
     const updatedLink = await prisma.link.update({
@@ -80,14 +80,14 @@ export const deleteLink = createServerFn({ method: "POST" })
   .handler(async ({ data: id, context }) => {
     const tenantId = context.tenant?.id;
     if (!tenantId) {
-      throw new Error("No tenant found for this user");
+      throw new Error("Toko tidak ditemukan untuk pengguna ini");
     }
 
     const existingLink = await prisma.link.findFirst({
       where: { id, tenantId },
     });
     if (!existingLink) {
-      throw new Error("Unauthorized: Link not found or does not belong to your store");
+      throw new Error("Tautan tidak ditemukan atau bukan milik toko Anda");
     }
 
     await prisma.link.delete({

@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
     meta: [{ title: "Onboarding — Tokolink" }],
-    links: [{ rel: "canonical", href: "https://tokolink.app/onboarding" }],
+    links: [{ rel: "canonical", href: "https://tokolink-v2.vercel.app/onboarding" }],
   }),
   component: Onboarding,
 });
@@ -111,7 +111,7 @@ function Onboarding() {
             <Label htmlFor="slug-input">URL Toko</Label>
             <div className="flex items-center border-b border-border focus-within:border-foreground transition">
               <span className="font-display text-lg text-muted-foreground pl-1 shrink-0">
-                tokolink.app/
+                tokolink-v2.vercel.app/
               </span>
               <Input
                 id="slug-input"
@@ -125,7 +125,8 @@ function Onboarding() {
             </div>
             {cleanSlug && (
               <p className="mt-2 text-xs text-muted-foreground">
-                URL kamu: <span className="text-foreground">tokolink.app/{cleanSlug}</span>
+                URL kamu:{" "}
+                <span className="text-foreground">tokolink-v2.vercel.app/{cleanSlug}</span>
               </p>
             )}
           </div>

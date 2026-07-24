@@ -8,7 +8,7 @@ export function isSafeImageUrl(url: string | null | undefined): boolean {
 
     if (hostname.endsWith(".public.blob.vercel-storage.com")) return true;
     if (hostname === "api.dicebear.com") return true;
-    if (hostname === "tokolink.app") return true;
+    if (hostname === "tokolink-v2.vercel.app") return true;
 
     if (process.env.NODE_ENV !== "production") {
       if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.startsWith("192.168.")) {

@@ -42,7 +42,7 @@ describe("getTenant", () => {
     vi.mocked(prismaAny.tenant.findUnique).mockResolvedValue(null);
 
     await expect(getTenantHandler({ data: "invalid-slug" })).rejects.toThrow(
-      'Tenant with slug "invalid-slug" not found',
+      'Toko dengan slug "invalid-slug" tidak ditemukan',
     );
   });
 });
@@ -62,7 +62,7 @@ describe("createTenant", () => {
     vi.mocked(prismaAny.tenant.findUnique).mockResolvedValueOnce({ id: "tenant-1" });
 
     await expect(createTenantHandler({ data, context })).rejects.toThrow(
-      "User already has an onboarding tenant",
+      "Anda sudah memiliki toko",
     );
   });
 
@@ -87,15 +87,15 @@ describe("updateTenant", () => {
   it("throws when user has no tenant", async () => {
     await expect(
       updateTenantHandler({ data: { name: "Updated" }, context: { user: { id: "user-1" } } }),
-    ).rejects.toThrow("No tenant found for this user");
+    ).rejects.toThrow("Toko tidak ditemukan untuk pengguna ini");
   });
 
   it("rejects slug conflict", async () => {
     vi.mocked(prismaAny.tenant.findUnique).mockResolvedValue({ id: "other-tenant", slug: "other" });
 
-    await expect(
-      updateTenantHandler({ data: { slug: "other" }, context }),
-    ).rejects.toThrow("Domain/slug toko ini sudah digunakan");
+    await expect(updateTenantHandler({ data: { slug: "other" }, context })).rejects.toThrow(
+      "Domain/slug toko ini sudah digunakan",
+    );
   });
 
   it("updates tenant fields successfully", async () => {
@@ -106,9 +106,11 @@ describe("updateTenant", () => {
       name: "Updated",
     });
 
-    await expect(
-      updateTenantHandler({ data: { name: "Updated" }, context }),
-    ).resolves.toEqual({ id: "tenant-1", slug: "toko-test", name: "Updated" });
+    await expect(updateTenantHandler({ data: { name: "Updated" }, context })).resolves.toEqual({
+      id: "tenant-1",
+      slug: "toko-test",
+      name: "Updated",
+    });
     expect(prisma.tenant.update).toHaveBeenCalledWith({
       where: { id: "tenant-1" },
       data: { name: "Updated" },

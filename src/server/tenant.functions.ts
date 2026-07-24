@@ -30,7 +30,7 @@ export const getTenant = createServerFn({ method: "GET" })
     });
 
     if (!tenant) {
-      throw new Error(`Tenant with slug "${slug}" not found`);
+      throw new Error(`Toko dengan slug "${slug}" tidak ditemukan`);
     }
 
     return tenant;
@@ -83,7 +83,7 @@ export const createTenant = createServerFn({ method: "POST" })
       where: { userId },
     });
     if (existingUserTenant) {
-      throw new Error("User already has an onboarding tenant");
+      throw new Error("Anda sudah memiliki toko");
     }
 
     const existingSlug = await prisma.tenant.findUnique({
@@ -115,7 +115,7 @@ export const updateTenant = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const tenantId = context.tenant?.id;
     if (!tenantId) {
-      throw new Error("No tenant found for this user");
+      throw new Error("Toko tidak ditemukan untuk pengguna ini");
     }
 
     if (data.slug && data.slug !== context.tenant?.slug) {

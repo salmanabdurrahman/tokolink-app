@@ -8,7 +8,7 @@ export const authMiddleware = createMiddleware().server(async ({ next, request }
   const token = parseCookie(cookieHeader, "sb-access-token");
 
   if (!token) {
-    throw new Error("Unauthorized: No session token found");
+    throw new Error("Tidak terautentikasi: Tidak ada token sesi");
   }
 
   const {
@@ -17,7 +17,7 @@ export const authMiddleware = createMiddleware().server(async ({ next, request }
   } = await supabaseAdmin.auth.getUser(token);
 
   if (error || !supaUser) {
-    throw new Error("Unauthorized: Invalid session");
+    throw new Error("Tidak terautentikasi: Sesi tidak valid");
   }
 
   const user = await prisma.user.findUnique({
@@ -26,7 +26,7 @@ export const authMiddleware = createMiddleware().server(async ({ next, request }
   });
 
   if (!user) {
-    throw new Error("Unauthorized: User not found in database");
+    throw new Error("Tidak terautentikasi: Pengguna tidak ditemukan");
   }
 
   return await next({

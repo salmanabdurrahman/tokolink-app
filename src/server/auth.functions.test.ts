@@ -60,8 +60,7 @@ const recaptchaToken = "human-token";
 
 const mockUser = { id: "user-1", supabaseId: "supa-1", email, name: "Owner", emailVerified: null };
 
-const makeRequest = (cookie = "") =>
-  new Request("http://localhost", { headers: { cookie } });
+const makeRequest = (cookie = "") => new Request("http://localhost", { headers: { cookie } });
 
 beforeEach(() => {
   vi.mocked(verifyRecaptcha).mockResolvedValue(true);
@@ -333,7 +332,7 @@ describe("getSessionUser", () => {
 describe("syncSession", () => {
   it("rejects missing token", async () => {
     await expect(syncSessionHandler({ data: {}, request: makeRequest() })).rejects.toThrow(
-      "Unauthorized: No session token",
+      "Tidak terautentikasi: Tidak ada token sesi",
     );
   });
 
@@ -345,7 +344,7 @@ describe("syncSession", () => {
 
     await expect(
       syncSessionHandler({ data: {}, request: makeRequest("sb-access-token=bad") }),
-    ).rejects.toThrow("Unauthorized: Invalid session token");
+    ).rejects.toThrow("Tidak terautentikasi: Token sesi tidak valid");
   });
 
   it("rejects unverified email-only provider", async () => {

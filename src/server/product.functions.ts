@@ -29,7 +29,7 @@ export const createProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const tenantId = context.tenant?.id;
     if (!tenantId) {
-      throw new Error("No tenant found for this user");
+      throw new Error("Toko tidak ditemukan untuk pengguna ini");
     }
 
     const maxProduct = await prisma.product.findFirst({
@@ -83,14 +83,14 @@ export const updateProduct = createServerFn({ method: "POST" })
   .handler(async ({ data: { id, data }, context }) => {
     const tenantId = context.tenant?.id;
     if (!tenantId) {
-      throw new Error("No tenant found for this user");
+      throw new Error("Toko tidak ditemukan untuk pengguna ini");
     }
 
     const existingProduct = await prisma.product.findFirst({
       where: { id, tenantId },
     });
     if (!existingProduct) {
-      throw new Error("Unauthorized: Product not found or does not belong to your store");
+      throw new Error("Produk tidak ditemukan atau bukan milik toko Anda");
     }
 
     const updatedProduct = await prisma.$transaction(async (tx) => {
@@ -145,14 +145,14 @@ export const deleteProduct = createServerFn({ method: "POST" })
   .handler(async ({ data: id, context }) => {
     const tenantId = context.tenant?.id;
     if (!tenantId) {
-      throw new Error("No tenant found for this user");
+      throw new Error("Toko tidak ditemukan untuk pengguna ini");
     }
 
     const existingProduct = await prisma.product.findFirst({
       where: { id, tenantId },
     });
     if (!existingProduct) {
-      throw new Error("Unauthorized: Product not found or does not belong to your store");
+      throw new Error("Produk tidak ditemukan atau bukan milik toko Anda");
     }
 
     await prisma.product.delete({

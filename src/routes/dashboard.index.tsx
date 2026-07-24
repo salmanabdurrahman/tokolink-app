@@ -31,12 +31,12 @@ function Overview() {
         <p className="text-sm text-muted-foreground">
           URL toko-mu:{" "}
           <a
-            href={`https://tokolink.app/${tenant.slug}`}
+            href={`https://tokolink-v2.vercel.app/${tenant.slug}`}
             target="_blank"
             rel="noreferrer"
             className="text-foreground font-semibold hover:underline"
           >
-            tokolink.app/{tenant.slug} ↗
+            tokolink-v2.vercel.app/{tenant.slug} ↗
           </a>
         </p>
       </div>

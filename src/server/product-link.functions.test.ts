@@ -2,9 +2,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../db", () => ({
   prisma: {
-    product: { findFirst: vi.fn(), update: vi.fn(), delete: vi.fn(), create: vi.fn() },
+    product: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      create: vi.fn(),
+    },
     productVariantGroup: { deleteMany: vi.fn() },
-    link: { findFirst: vi.fn(), update: vi.fn(), delete: vi.fn(), create: vi.fn() },
+    link: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      create: vi.fn(),
+    },
     $transaction: vi.fn(async (callback) =>
       callback({
         product: { update: vi.fn() },
@@ -17,13 +29,16 @@ vi.mock("../db", () => ({
 vi.mock("./auth-middleware", () => ({ authMiddleware: vi.fn() }));
 
 import { prisma } from "../db";
-import { addLink, deleteLink, updateLink } from "./link.functions";
-import { deleteProduct, updateProduct } from "./product.functions";
+import { addLink, deleteLink, getLinks, updateLink } from "./link.functions";
+import { createProduct, deleteProduct, getProducts, updateProduct } from "./product.functions";
 
 const prismaAny = prisma as any;
 const addLinkHandler = addLink as any;
+const getLinksHandler = getLinks as any;
 const updateProductHandler = updateProduct as any;
 const deleteProductHandler = deleteProduct as any;
+const getProductsHandler = getProducts as any;
+const createProductHandler = createProduct as any;
 const updateLinkHandler = updateLink as any;
 const deleteLinkHandler = deleteLink as any;
 
@@ -44,10 +59,10 @@ describe("product/link ownership guards", () => {
         data: { id: otherId, data: { name: "Produk" } },
         context: tenantContext,
       }),
-    ).rejects.toThrow("Unauthorized: Product not found or does not belong to your store");
+    ).rejects.toThrow("Produk tidak ditemukan atau bukan milik toko Anda");
 
     await expect(deleteProductHandler({ data: otherId, context: tenantContext })).rejects.toThrow(
-      "Unauthorized: Product not found or does not belong to your store",
+      "Produk tidak ditemukan atau bukan milik toko Anda",
     );
     expect(prisma.product.update).not.toHaveBeenCalled();
     expect(prisma.product.delete).not.toHaveBeenCalled();
@@ -58,10 +73,10 @@ describe("product/link ownership guards", () => {
 
     await expect(
       updateLinkHandler({ data: { id: otherId, data: { label: "IG" } }, context: tenantContext }),
-    ).rejects.toThrow("Unauthorized: Link not found or does not belong to your store");
+    ).rejects.toThrow("Tautan tidak ditemukan atau bukan milik toko Anda");
 
     await expect(deleteLinkHandler({ data: otherId, context: tenantContext })).rejects.toThrow(
-      "Unauthorized: Link not found or does not belong to your store",
+      "Tautan tidak ditemukan atau bukan milik toko Anda",
     );
     expect(prisma.link.update).not.toHaveBeenCalled();
     expect(prisma.link.delete).not.toHaveBeenCalled();
@@ -131,7 +146,7 @@ describe("addLink", () => {
         data: { label: "Instagram", url: "https://instagram.com/test" },
         context: noTenantContext,
       }),
-    ).rejects.toThrow("No tenant found for this user");
+    ).rejects.toThrow("Toko tidak ditemukan untuk pengguna ini");
   });
 
   it("creates link with next sort order", async () => {
@@ -182,5 +197,196 @@ describe("addLink", () => {
         data: expect.objectContaining({ sortOrder: 0 }),
       }),
     );
+  });
+});
+
+describe("getLinks", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns links ordered by sortOrder for tenant", async () => {
+    const mockLinks = [
+      { id: "l1", label: "Instagram", url: "https://ig.com", icon: null, sortOrder: 0 },
+      { id: "l2", label: "TikTok", url: "https://tiktok.com", icon: null, sortOrder: 1 },
+    ];
+    vi.mocked(prismaAny.link.findMany).mockResolvedValue(mockLinks);
+
+    const result = await getLinksHandler({ data: "tenant-1" });
+
+    expect(result).toEqual(mockLinks);
+    expect(prisma.link.findMany).toHaveBeenCalledWith({
+      where: { tenantId: "tenant-1" },
+      orderBy: { sortOrder: "asc" },
+    });
+  });
+
+  it("returns empty array for tenant with no links", async () => {
+    vi.mocked(prismaAny.link.findMany).mockResolvedValue([]);
+
+    const result = await getLinksHandler({ data: "tenant-empty" });
+
+    expect(result).toEqual([]);
+  });
+});
+
+describe("getProducts", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns products with variant groups ordered by sortOrder", async () => {
+    const mockProducts = [
+      {
+        id: "p1",
+        name: "Kopi",
+        basePrice: 25000,
+        sortOrder: 0,
+        variantGroups: [
+          {
+            id: "vg1",
+            name: "Ukuran",
+            sortOrder: 0,
+            options: [{ id: "o1", name: "Large", priceDelta: 5000, sortOrder: 0 }],
+          },
+        ],
+      },
+    ];
+    vi.mocked(prismaAny.product.findMany).mockResolvedValue(mockProducts);
+
+    const result = await getProductsHandler({ data: "tenant-1" });
+
+    expect(result).toEqual(mockProducts);
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      where: { tenantId: "tenant-1" },
+      orderBy: { sortOrder: "asc" },
+      include: {
+        variantGroups: {
+          orderBy: { sortOrder: "asc" },
+          include: {
+            options: {
+              orderBy: { sortOrder: "asc" },
+            },
+          },
+        },
+      },
+    });
+  });
+
+  it("returns empty array for tenant with no products", async () => {
+    vi.mocked(prismaAny.product.findMany).mockResolvedValue([]);
+
+    const result = await getProductsHandler({ data: "tenant-empty" });
+
+    expect(result).toEqual([]);
+  });
+});
+
+describe("createProduct", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("throws without tenant context", async () => {
+    await expect(
+      createProductHandler({
+        data: { name: "Kopi", basePrice: 25000 },
+        context: noTenantContext,
+      }),
+    ).rejects.toThrow("Toko tidak ditemukan untuk pengguna ini");
+  });
+
+  it("creates product with next sort order and no variant groups", async () => {
+    vi.mocked(prismaAny.product.findFirst).mockResolvedValue({ sortOrder: 2 });
+    vi.mocked(prismaAny.product.create).mockResolvedValue({
+      id: "new-prod",
+      name: "Kopi Susu",
+      basePrice: 18000,
+      sortOrder: 3,
+      variantGroups: [],
+    });
+
+    const result = await createProductHandler({
+      data: { name: "Kopi Susu", basePrice: 18000 },
+      context: tenantContext,
+    });
+
+    expect(result).toMatchObject({ name: "Kopi Susu", sortOrder: 3 });
+    expect(prisma.product.create).toHaveBeenCalled();
+    const callData = vi.mocked(prisma.product.create).mock.calls[0][0];
+    expect(callData).toMatchObject({
+      data: {
+        name: "Kopi Susu",
+        basePrice: 18000,
+        sortOrder: 3,
+        tenantId: "tenant-1",
+      },
+    });
+  });
+
+  it("creates product with variants when provided", async () => {
+    vi.mocked(prismaAny.product.findFirst).mockResolvedValue(null);
+    vi.mocked(prismaAny.product.create).mockResolvedValue({
+      id: "new-prod",
+      name: "Kopi",
+      basePrice: 25000,
+      sortOrder: 0,
+      variantGroups: [
+        {
+          id: "vg1",
+          name: "Ukuran",
+          options: [{ id: "o1", name: "Large", priceDelta: 5000 }],
+        },
+      ],
+    });
+
+    const result = await createProductHandler({
+      data: {
+        name: "Kopi",
+        basePrice: 25000,
+        variantGroups: [{ name: "Ukuran", options: [{ name: "Large", priceDelta: 5000 }] }],
+      },
+      context: tenantContext,
+    });
+
+    expect(result).toMatchObject({ name: "Kopi", sortOrder: 0 });
+    expect(prisma.product.create).toHaveBeenCalled();
+    const callData = vi.mocked(prisma.product.create).mock.calls[0][0];
+    expect(callData).toMatchObject({
+      data: {
+        variantGroups: {
+          create: [
+            {
+              name: "Ukuran",
+              options: {
+                create: [{ name: "Large", priceDelta: 5000 }],
+              },
+            },
+          ],
+        },
+      },
+    });
+  });
+
+  it("starts sort order at 0 when no existing products", async () => {
+    vi.mocked(prismaAny.product.findFirst).mockResolvedValue(null);
+    vi.mocked(prismaAny.product.create).mockResolvedValue({
+      id: "new-prod",
+      name: "First Product",
+      basePrice: 10000,
+      sortOrder: 0,
+      variantGroups: [],
+    });
+
+    await createProductHandler({
+      data: { name: "First Product", basePrice: 10000 },
+      context: tenantContext,
+    });
+
+    expect(prisma.product.create).toHaveBeenCalled();
+    const callData = vi.mocked(prisma.product.create).mock.calls[0][0];
+    expect(callData).toMatchObject({
+      data: { sortOrder: 0 },
+    });
   });
 });

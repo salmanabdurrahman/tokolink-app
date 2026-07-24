@@ -11,7 +11,7 @@ describe("OG image safety", () => {
   it("allows trusted image hosts", () => {
     expect(isSafeImageUrl("https://asset.public.blob.vercel-storage.com/a.png")).toBe(true);
     expect(isSafeImageUrl("https://api.dicebear.com/9.x/initials/svg?seed=Toko")).toBe(true);
-    expect(isSafeImageUrl("https://tokolink.app/og-main.png")).toBe(true);
+    expect(isSafeImageUrl("https://tokolink-v2.vercel.app/og-main.png")).toBe(true);
   });
 
   it("rejects private/local hosts in production and unsupported protocols", () => {
@@ -32,10 +32,10 @@ describe("OG image safety", () => {
   });
 
   it("supports only PNG and JPEG files for OG rendering", () => {
-    expect(isSupportedOgImage("https://tokolink.app/avatar.png?cache=1")).toBe(true);
-    expect(isSupportedOgImage("https://tokolink.app/avatar.jpg")).toBe(true);
-    expect(isSupportedOgImage("https://tokolink.app/avatar.jpeg")).toBe(true);
-    expect(isSupportedOgImage("https://tokolink.app/avatar.webp")).toBe(false);
+    expect(isSupportedOgImage("https://tokolink-v2.vercel.app/avatar.png?cache=1")).toBe(true);
+    expect(isSupportedOgImage("https://tokolink-v2.vercel.app/avatar.jpg")).toBe(true);
+    expect(isSupportedOgImage("https://tokolink-v2.vercel.app/avatar.jpeg")).toBe(true);
+    expect(isSupportedOgImage("https://tokolink-v2.vercel.app/avatar.webp")).toBe(false);
     expect(isSupportedOgImage("https://evil.example/avatar.png")).toBe(false);
   });
 

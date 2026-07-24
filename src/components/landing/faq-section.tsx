@@ -29,7 +29,7 @@ export function FaqSection() {
             },
             {
               q: "Bagaimana dengan custom domain?",
-              a: "Belum, Untuk sekarang kamu dapat slug tokolink.app/slug.",
+              a: "Belum, Untuk sekarang kamu dapat slug tokolink-v2.vercel.app/slug.",
             },
             {
               q: "Bisa dipakai untuk produk dengan banyak varian?",

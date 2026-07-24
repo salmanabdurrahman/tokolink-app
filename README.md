@@ -35,7 +35,7 @@
 
 ## Fitur Utama
 
-- **Instan Deploy & Onboarding:** Buat website toko fungsional (`tokolink.app/slug-toko`) dalam waktu singkat dengan alur onboarding yang intuitif.
+- **Instan Deploy & Onboarding:** Buat website toko fungsional (`tokolink-v2.vercel.app/slug-toko`) dalam waktu singkat dengan alur onboarding yang intuitif.
 - **Hybrid Mobile-First Layout:** Tampilan storefront minimalis berbasis _continuous scroll_ yang menggabungkan link eksternal (sosial media) dan grid katalog produk dalam satu halaman.
 - **WhatsApp Order Generator:** Keranjang belanja _client-side_ terintegrasi yang menghitung total harga beserta pilihan varian, lalu mengonversinya menjadi format pesan WhatsApp terstruktur untuk memproses pemesanan.
 - **Dasbor & Manajemen Produk:** Kelola toko secara mandiri, atur data produk, harga dasar, deskripsi, foto produk, serta kelola varian dinamis (seperti pilihan ukuran atau warna) beserta selisih harga (_price delta_).
@@ -155,7 +155,7 @@ tokolink/
 Platform ini mengimplementasikan best-practice keamanan modern untuk menjaga data pengguna dan performa server:
 
 - **Perlindungan CSRF:** Setiap RPC request ke server functions diproteksi secara otomatis melalui middleware CSRF bawaan TanStack Start.
-- **Pencegahan SSRF:** Modul pembuatan OG Image membatasi tautan eksternal gambar hanya dari host yang terpercaya (`*.vercel-storage.com`, `api.dicebear.com`, `tokolink.app`). Permintaan ke local network/loopback IP diblokir di lingkungan produksi.
+- **Pencegahan SSRF:** Modul pembuatan OG Image membatasi tautan eksternal gambar hanya dari host yang terpercaya (`*.vercel-storage.com`, `api.dicebear.com`, `tokolink-v2.vercel.app`). Permintaan ke local network/loopback IP diblokir di lingkungan produksi.
 - **Validasi Tipe & Skema:** Seluruh parameter input dari client divalidasi ketat menggunakan pustaka **Zod** sebelum dieksekusi di database.
 - **Verifikasi Magic Bytes Gambar:** Server-side upload memverifikasi struktur biner gambar (PNG, JPG, GIF, WEBP) untuk menghindari manipulasi berkas biner berbahaya.
 - **Proteksi Brute-Force OTP:** Sistem verifikasi kode OTP membatasi percobaan salah maksimal 5 kali sebelum berkas OTP otomatis dihapus dari database.

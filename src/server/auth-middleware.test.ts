@@ -32,7 +32,7 @@ describe("authMiddleware", () => {
   it("rejects missing cookie", async () => {
     await expect(
       authMiddlewareHandler({ request: requestWithCookie(), next: vi.fn() }),
-    ).rejects.toThrow("Unauthorized: No session token found");
+    ).rejects.toThrow("Tidak terautentikasi: Tidak ada token sesi");
   });
 
   it("rejects invalid token", async () => {
@@ -40,7 +40,7 @@ describe("authMiddleware", () => {
 
     await expect(
       authMiddlewareHandler({ request: requestWithCookie("sb-access-token=bad"), next: vi.fn() }),
-    ).rejects.toThrow("Unauthorized: Invalid session");
+    ).rejects.toThrow("Tidak terautentikasi: Sesi tidak valid");
   });
 
   it("rejects when local user does not exist", async () => {
@@ -52,7 +52,7 @@ describe("authMiddleware", () => {
 
     await expect(
       authMiddlewareHandler({ request: requestWithCookie("sb-access-token=good"), next: vi.fn() }),
-    ).rejects.toThrow("Unauthorized: User not found in database");
+    ).rejects.toThrow("Tidak terautentikasi: Pengguna tidak ditemukan");
   });
 
   it("passes user and tenant context for valid session", async () => {
