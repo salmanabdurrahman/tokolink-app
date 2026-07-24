@@ -75,12 +75,6 @@ export const createTenant = createServerFn({ method: "POST" })
 
     await enforceAuthRateLimit({ event: "onboarding", userId, request });
 
-    const { verifyTurnstile } = await import("./turnstile");
-    const isValid = await verifyTurnstile(data.turnstileToken, "onboarding");
-    if (!isValid) {
-      throw new Error("Verifikasi Turnstile gagal. Harap coba lagi.");
-    }
-
     const existingUserTenant = await prisma.tenant.findUnique({
       where: { userId },
     });

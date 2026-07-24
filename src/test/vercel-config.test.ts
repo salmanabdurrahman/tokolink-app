@@ -36,7 +36,7 @@ describe("vercel production config", () => {
   it("uses reproducible Bun installs and Nitro Vercel output", () => {
     expect(config.framework).toBeNull();
     expect(config.installCommand).toBe("bun install --frozen-lockfile");
-    expect(config.buildCommand).toBe("bun run build");
+    expect(config.buildCommand).toBe("bun run db:generate && bun run build");
     expect(config.outputDirectory).toBe(".vercel/output");
   });
 

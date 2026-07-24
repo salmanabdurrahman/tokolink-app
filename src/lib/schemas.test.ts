@@ -32,7 +32,6 @@ describe("schemas", () => {
     const parsed = createTenantSchema.parse({
       slug: "toko-123",
       name: "Toko Saya",
-      turnstileToken: "human-token",
     });
 
     expect(parsed.tagline).toBe("");

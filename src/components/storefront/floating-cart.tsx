@@ -89,10 +89,13 @@ export function FloatingCart({
   const searchDestination = async () => {
     try {
       setSearchingDestination(true);
-      const { searchRajaOngkirDestinations } = await import("@/server/shipping.functions");
-      const result = await searchRajaOngkirDestinations({
-        data: { search: destinationQuery, limit: 5 },
+      const response = await fetch("/api/shipping/destinations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ search: destinationQuery, limit: 5 }),
       });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.message || "Gagal mencari lokasi");
       setDestinations(result);
       if (!result.length) toast.error("Lokasi tidak ditemukan");
     } catch (error) {
@@ -108,14 +111,17 @@ export function FloatingCart({
       setShipping({ courier: "", service: "", etd: "", cost: 0 });
       setShippingOptions([]);
       setLoadingShipping(true);
-      const { getRajaOngkirShippingCosts } = await import("@/server/shipping.functions");
-      const result = await getRajaOngkirShippingCosts({
-        data: {
+      const response = await fetch("/api/shipping/costs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           tenantSlug,
           destinationId: destination.id,
           items: items.map((item) => ({ productId: item.productId, qty: item.qty })),
-        },
+        }),
       });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.message || "Ongkir belum tersedia");
       setShippingOptions(result.options);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Ongkir belum tersedia");
@@ -141,9 +147,10 @@ export function FloatingCart({
 
     try {
       setLoading(true);
-      const { createCheckoutOrder } = await import("@/server/order.functions");
-      const result = await createCheckoutOrder({
-        data: {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           tenantSlug,
           items: items.map((item) => ({
             productId: item.productId,
@@ -160,8 +167,10 @@ export function FloatingCart({
             rajaOngkirDestinationLabel: selectedDestination.label,
           },
           shipping,
-        },
+        }),
       });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.message || "Checkout gagal. Coba lagi.");
       toast.success("Order dibuat. Mengarahkan ke pembayaran...");
       clear();
       setNote("");
@@ -195,128 +204,135 @@ export function FloatingCart({
       <Sheet open={open} onClose={() => setOpen(false)}>
         <h3 className="font-display text-2xl font-medium shrink-0">Keranjang</h3>
 
-        <ul className="mt-4 divide-y divide-border overflow-y-auto flex-1 pr-1 hide-scrollbar">
-          {items.map((i) => (
-            <li key={i.key} className="flex items-center gap-3 py-3">
-              <FallbackImage
-                src={i.image}
-                alt={i.productName}
-                fallbackText={i.productName}
-                className="h-14 w-14 rounded-lg object-cover"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{i.productName}</div>
-                {i.variantName && (
-                  <div className="text-xs text-muted-foreground truncate">{i.variantName}</div>
-                )}
-                <div className="text-xs text-muted-foreground">{formatIDR(i.unitPrice)}</div>
-              </div>
-              <div className="flex items-center gap-2 text-sm shrink-0">
-                <button
-                  aria-label={`Kurangi ${i.productName}`}
-                  onClick={() => dec(i.key)}
-                  className="h-8 w-8 rounded-full border border-border hover:bg-surface transition cursor-pointer"
-                >
-                  −
-                </button>
-                <span className="min-w-6 text-center font-semibold">{i.qty}</span>
-                <button
-                  aria-label={`Tambah ${i.productName}`}
-                  onClick={() => inc(i.key)}
-                  className="h-8 w-8 rounded-full border border-border bg-surface hover:bg-muted transition cursor-pointer"
-                >
-                  +
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-4 grid gap-3 shrink-0">
-          <Label>Data pembeli</Label>
-          <Input
-            value={customer.name}
-            onChange={(e) => setCustomer((value) => ({ ...value, name: e.target.value }))}
-            placeholder="Nama lengkap"
-          />
-          <Input
-            value={customer.whatsapp}
-            onChange={(e) =>
-              setCustomer((value) => ({ ...value, whatsapp: formatWhatsAppNumber(e.target.value) }))
-            }
-            placeholder="WhatsApp, contoh 628123456789"
-          />
-          <Input
-            value={customer.email}
-            onChange={(e) => setCustomer((value) => ({ ...value, email: e.target.value }))}
-            placeholder="Email receipt (opsional)"
-          />
-          <Textarea
-            value={customer.address}
-            onChange={(e) => setCustomer((value) => ({ ...value, address: e.target.value }))}
-            placeholder="Alamat pengiriman"
-            rows={2}
-          />
-        </div>
-        <div className="mt-4 space-y-3 shrink-0">
-          <Label>Tujuan pengiriman</Label>
-          <div className="flex gap-2">
+        <div className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1 hide-scrollbar">
+          <ul className="divide-y divide-border">
+            {items.map((i) => (
+              <li key={i.key} className="flex items-center gap-3 py-3">
+                <FallbackImage
+                  src={i.image}
+                  alt={i.productName}
+                  fallbackText={i.productName}
+                  className="h-14 w-14 rounded-lg object-cover"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{i.productName}</div>
+                  {i.variantName && (
+                    <div className="text-xs text-muted-foreground truncate">{i.variantName}</div>
+                  )}
+                  <div className="text-xs text-muted-foreground">{formatIDR(i.unitPrice)}</div>
+                </div>
+                <div className="flex items-center gap-2 text-sm shrink-0">
+                  <button
+                    aria-label={`Kurangi ${i.productName}`}
+                    onClick={() => dec(i.key)}
+                    className="h-8 w-8 rounded-full border border-border hover:bg-surface transition cursor-pointer"
+                  >
+                    −
+                  </button>
+                  <span className="min-w-6 text-center font-semibold">{i.qty}</span>
+                  <button
+                    aria-label={`Tambah ${i.productName}`}
+                    onClick={() => inc(i.key)}
+                    className="h-8 w-8 rounded-full border border-border bg-surface hover:bg-muted transition cursor-pointer"
+                  >
+                    +
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-4 grid gap-3 shrink-0">
+            <Label>Data pembeli</Label>
             <Input
-              value={destinationQuery}
-              onChange={(e) => setDestinationQuery(e.target.value)}
-              placeholder="Cari kecamatan/kelurahan"
+              value={customer.name}
+              onChange={(e) => setCustomer((value) => ({ ...value, name: e.target.value }))}
+              placeholder="Nama lengkap"
             />
-            <Button
-              type="button"
-              variant="outline"
-              disabled={searchingDestination}
-              onClick={searchDestination}
-            >
-              {searchingDestination ? "Cari..." : "Cari"}
-            </Button>
+            <Input
+              value={customer.whatsapp}
+              onChange={(e) =>
+                setCustomer((value) => ({
+                  ...value,
+                  whatsapp: formatWhatsAppNumber(e.target.value),
+                }))
+              }
+              placeholder="WhatsApp, contoh 628123456789"
+            />
+            <Input
+              value={customer.email}
+              onChange={(e) => setCustomer((value) => ({ ...value, email: e.target.value }))}
+              placeholder="Email receipt (opsional)"
+            />
+            <Textarea
+              value={customer.address}
+              onChange={(e) => setCustomer((value) => ({ ...value, address: e.target.value }))}
+              placeholder="Alamat pengiriman"
+              rows={2}
+            />
           </div>
-          {destinations.length > 0 && (
-            <div className="space-y-2">
-              {destinations.map((destination) => (
-                <button
-                  key={destination.id}
-                  type="button"
-                  onClick={() => loadShippingCosts(destination)}
-                  className="w-full rounded-xl border border-border p-3 text-left text-sm hover:bg-surface transition"
-                >
-                  {destination.label}
-                </button>
-              ))}
+          <div className="mt-4 space-y-3 shrink-0">
+            <Label>Tujuan pengiriman</Label>
+            <div className="flex gap-2">
+              <Input
+                value={destinationQuery}
+                onChange={(e) => setDestinationQuery(e.target.value)}
+                placeholder="Cari kecamatan/kelurahan"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={searchingDestination}
+                onClick={searchDestination}
+              >
+                {searchingDestination ? "Cari..." : "Cari"}
+              </Button>
             </div>
-          )}
-          {loadingShipping && <p className="text-xs text-muted-foreground">Menghitung ongkir...</p>}
-          {shippingOptions.length > 0 && (
-            <div className="grid gap-2">
-              {shippingOptions.map((option) => (
-                <button
-                  key={`${option.courier}-${option.service}-${option.cost}`}
-                  type="button"
-                  onClick={() => selectShipping(option)}
-                  className={`rounded-xl border p-3 text-left text-sm transition ${shipping.courier === option.courier && shipping.service === option.service ? "border-foreground bg-surface" : "border-border hover:bg-surface"}`}
-                >
-                  <span className="font-medium uppercase">
-                    {option.courier} {option.service}
-                  </span>
-                  <span className="ml-2 text-muted-foreground">{option.etd}</span>
-                  <span className="float-right font-medium">{formatIDR(option.cost)}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="mt-4 space-y-1.5 shrink-0">
-          <Label htmlFor="order-note">Catatan WhatsApp (opsional)</Label>
-          <Textarea
-            id="order-note"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Contoh: Titip di pos satpam, request gilingan kasar, dll."
-            rows={2}
-          />
+            {destinations.length > 0 && (
+              <div className="space-y-2">
+                {destinations.map((destination) => (
+                  <button
+                    key={destination.id}
+                    type="button"
+                    onClick={() => loadShippingCosts(destination)}
+                    className="w-full rounded-xl border border-border p-3 text-left text-sm hover:bg-surface transition"
+                  >
+                    {destination.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {loadingShipping && (
+              <p className="text-xs text-muted-foreground">Menghitung ongkir...</p>
+            )}
+            {shippingOptions.length > 0 && (
+              <div className="grid gap-2">
+                {shippingOptions.map((option) => (
+                  <button
+                    key={`${option.courier}-${option.service}-${option.cost}`}
+                    type="button"
+                    onClick={() => selectShipping(option)}
+                    className={`rounded-xl border p-3 text-left text-sm transition ${shipping.courier === option.courier && shipping.service === option.service ? "border-foreground bg-surface" : "border-border hover:bg-surface"}`}
+                  >
+                    <span className="font-medium uppercase">
+                      {option.courier} {option.service}
+                    </span>
+                    <span className="ml-2 text-muted-foreground">{option.etd}</span>
+                    <span className="float-right font-medium">{formatIDR(option.cost)}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="mt-4 space-y-1.5 shrink-0">
+            <Label htmlFor="order-note">Catatan WhatsApp (opsional)</Label>
+            <Textarea
+              id="order-note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Contoh: Titip di pos satpam, request gilingan kasar, dll."
+              rows={2}
+            />
+          </div>
         </div>
 
         <div className="mt-4 flex items-center justify-between border-t border-border pt-4 shrink-0">

@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "../db";
 import { supabaseAdmin } from "../lib/supabase.server";
-import { verifyTurnstile } from "./turnstile";
 import { sendVerificationEmail, sendWelcomeEmail } from "./email";
 import crypto from "crypto";
 import { z } from "zod";
@@ -95,7 +94,6 @@ export const syncSession = createServerFn({ method: "POST" })
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
-  turnstileToken: z.string(),
 });
 
 const verifyCodeSchema = z.object({
@@ -105,7 +103,6 @@ const verifyCodeSchema = z.object({
 
 const resendSchema = z.object({
   email: z.string().email(),
-  turnstileToken: z.string(),
 });
 
 async function generateAndSendOTP(email: string) {
@@ -135,14 +132,9 @@ export const registerUser = createServerFn({ method: "POST" })
   .validator(registerSchema)
   .handler(async ({ data, request }: any) => {
     const email = normalizeEmail(data.email);
-    const { password, turnstileToken } = data;
+    const { password } = data;
 
     await enforceAuthRateLimit({ event: "signup", email, request });
-
-    const isHuman = await verifyTurnstile(turnstileToken, "signup");
-    if (!isHuman) {
-      throw new Error("Verifikasi Turnstile gagal. Silakan coba lagi.");
-    }
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -272,14 +264,8 @@ export const resendSignUpCode = createServerFn({ method: "POST" })
   .validator(resendSchema)
   .handler(async ({ data, request }: any) => {
     const email = normalizeEmail(data.email);
-    const { turnstileToken } = data;
 
     await enforceAuthRateLimit({ event: "resend_signup_code", email, request });
-
-    const isHuman = await verifyTurnstile(turnstileToken, "resend_signup_code");
-    if (!isHuman) {
-      throw new Error("Verifikasi Turnstile gagal. Silakan coba lagi.");
-    }
 
     const user = await prisma.user.findUnique({
       where: { email },

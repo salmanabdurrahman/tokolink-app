@@ -11,14 +11,14 @@ vi.mock("./pakasir", () => ({
   isCompletedPakasirStatus: (status: string) => status.toLowerCase() === "completed",
 }));
 
-vi.mock("./order.functions", () => ({
+vi.mock("./order-helpers.server", () => ({
   markOrderPaid: vi.fn(),
   markOrderCanceled: vi.fn(),
 }));
 
 import { prisma } from "../db";
 import { getPakasirTransactionDetail } from "./pakasir";
-import { markOrderCanceled, markOrderPaid } from "./order.functions";
+import { markOrderCanceled, markOrderPaid } from "./order-helpers.server";
 import { handlePakasirWebhook } from "./pakasir-webhook";
 
 const prismaAny = prisma as any;

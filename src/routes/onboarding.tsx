@@ -49,19 +49,13 @@ function Onboarding() {
     setError("");
 
     try {
-      const { getTurnstileToken, resetTurnstileWidget } = await import("@/lib/turnstile");
-      const turnstileToken = await getTurnstileToken("onboarding");
-
       const tenant = await createTenant({
         data: {
           slug: cleanSlug,
           name,
           tagline,
-          turnstileToken,
         },
       });
-
-      resetTurnstileWidget();
 
       setUser({
         ...user,
@@ -70,11 +64,7 @@ function Onboarding() {
 
       navigate({ to: "/dashboard" });
     } catch (err: any) {
-      const [{ getErrorMessage }, { resetTurnstileWidget }] = await Promise.all([
-        import("@/lib/utils"),
-        import("@/lib/turnstile"),
-      ]);
-      resetTurnstileWidget();
+      const { getErrorMessage } = await import("@/lib/utils");
       setError(getErrorMessage(err) || "Gagal membuat toko. Silakan coba lagi.");
     } finally {
       setLoading(false);
