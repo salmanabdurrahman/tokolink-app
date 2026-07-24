@@ -3,7 +3,7 @@ import { prisma } from "../db";
 import { authMiddleware } from "./auth-middleware";
 import { createProductSchema, updateProductSchema } from "../lib/schemas";
 import { deleteTenantMediaByUrl } from "./media-cleanup";
-import { productVariantInclude } from "./catalog.queries.server";
+import { clearStorefrontCatalogCache, productVariantInclude } from "./catalog.queries.server";
 import { requireOwnedRecord, requireTenant } from "./tenant-context.server";
 import { z } from "zod";
 
@@ -60,6 +60,7 @@ export const createProduct = createServerFn({ method: "POST" })
       },
     });
 
+    clearStorefrontCatalogCache(context.tenant?.slug);
     return product;
   });
 
@@ -114,6 +115,8 @@ export const updateProduct = createServerFn({ method: "POST" })
       });
     });
 
+    clearStorefrontCatalogCache(context.tenant?.slug);
+
     if (shouldDeleteOldImage) {
       await deleteTenantMediaByUrl(tenantId, existingProduct.image);
     }
@@ -135,6 +138,7 @@ export const deleteProduct = createServerFn({ method: "POST" })
       where: { id },
     });
 
+    clearStorefrontCatalogCache(context.tenant?.slug);
     await deleteTenantMediaByUrl(tenantId, existingProduct.image);
 
     return { success: true };
@@ -163,5 +167,6 @@ export const reorderProducts = createServerFn({ method: "POST" })
       ),
     );
 
+    clearStorefrontCatalogCache(context.tenant?.slug);
     return { success: true };
   });

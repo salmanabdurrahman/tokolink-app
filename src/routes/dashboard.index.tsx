@@ -1,21 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout/page-header";
-import { getDashboardData } from "@/server/tenant.functions";
 import { getPublicHostname, getPublicUrl } from "@/lib/site-url";
+import { Route as DashboardRoute } from "./dashboard";
 
 export const Route = createFileRoute("/dashboard/")({
-  loader: async () => {
-    try {
-      return await getDashboardData({});
-    } catch {
-      return { tenant: null, productCount: 0, linkCount: 0 };
-    }
-  },
   component: Overview,
 });
 
 function Overview() {
-  const { tenant, productCount, linkCount } = Route.useLoaderData();
+  const { tenant, productCount, linkCount } = DashboardRoute.useLoaderData();
 
   if (!tenant) return null;
 

@@ -13,7 +13,7 @@ export const Route = createFileRoute("/dashboard")({
     try {
       return await getDashboardData({});
     } catch {
-      return { tenant: null, orderCount: 0 };
+      return { tenant: null, orderCount: 0, productCount: 0, linkCount: 0 };
     }
   },
   head: () => ({

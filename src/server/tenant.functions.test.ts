@@ -16,6 +16,7 @@ vi.mock("./auth-middleware", () => ({ authMiddleware: vi.fn() }));
 vi.mock("./storage", () => ({ storage: { deleteObject: vi.fn() } }));
 
 import { prisma } from "../db";
+import { clearStorefrontCatalogCache } from "./catalog.queries.server";
 import { createTenant, getDashboardData, getTenant, updateTenant } from "./tenant.functions";
 
 const prismaAny = prisma as any;
@@ -46,6 +47,7 @@ beforeEach(() => {
   vi.mocked(prismaAny.authAuditLog.create).mockReset();
   vi.mocked(prismaAny.media.findFirst).mockReset();
   vi.mocked(prismaAny.media.delete).mockReset();
+  clearStorefrontCatalogCache();
 });
 
 describe("getTenant", () => {
@@ -58,6 +60,16 @@ describe("getTenant", () => {
       where: { slug: "toko-test" },
       include: expect.objectContaining({ links: expect.any(Object), products: expect.any(Object) }),
     });
+  });
+
+  it("caches storefront catalog within the same runtime window", async () => {
+    const mockTenant = { id: "tenant-1", slug: "toko-test", links: [], products: [] };
+    vi.mocked(prismaAny.tenant.findUnique).mockResolvedValue(mockTenant);
+
+    await expect(getTenantHandler({ data: "toko-test" })).resolves.toEqual(mockTenant);
+    await expect(getTenantHandler({ data: "toko-test" })).resolves.toEqual(mockTenant);
+
+    expect(prisma.tenant.findUnique).toHaveBeenCalledTimes(1);
   });
 
   it("throws when slug not found", async () => {
@@ -164,5 +176,23 @@ describe("updateTenant", () => {
       where: { id: "tenant-1" },
       data: { name: "Updated" },
     });
+  });
+
+  it("clears cached storefront catalog after tenant update", async () => {
+    const cachedTenant = { id: "tenant-1", slug: "toko-test", name: "Before" };
+    const updatedTenant = { id: "tenant-1", slug: "toko-test", name: "Updated" };
+    vi.mocked(prismaAny.tenant.findUnique).mockResolvedValue(cachedTenant);
+
+    await expect(getTenantHandler({ data: "toko-test" })).resolves.toEqual(cachedTenant);
+    vi.mocked(prismaAny.tenant.findUnique).mockClear();
+    vi.mocked(prismaAny.tenant.findUnique).mockResolvedValue(updatedTenant);
+    vi.mocked(prismaAny.tenant.update).mockResolvedValue(updatedTenant);
+
+    await expect(updateTenantHandler({ data: { name: "Updated" }, context })).resolves.toEqual(
+      updatedTenant,
+    );
+    await expect(getTenantHandler({ data: "toko-test" })).resolves.toEqual(updatedTenant);
+
+    expect(prisma.tenant.findUnique).toHaveBeenCalledTimes(1);
   });
 });

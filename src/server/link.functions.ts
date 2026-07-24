@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "../db";
 import { authMiddleware } from "./auth-middleware";
 import { createLinkSchema, updateLinkSchema } from "../lib/schemas";
+import { clearStorefrontCatalogCache } from "./catalog.queries.server";
 import { requireOwnedRecord, requireTenant } from "./tenant-context.server";
 import { z } from "zod";
 
@@ -36,6 +37,7 @@ export const addLink = createServerFn({ method: "POST" })
       },
     });
 
+    clearStorefrontCatalogCache(context.tenant?.slug);
     return link;
   });
 
@@ -61,6 +63,7 @@ export const updateLink = createServerFn({ method: "POST" })
       },
     });
 
+    clearStorefrontCatalogCache(context.tenant?.slug);
     return updatedLink;
   });
 
@@ -76,6 +79,7 @@ export const deleteLink = createServerFn({ method: "POST" })
       where: { id },
     });
 
+    clearStorefrontCatalogCache(context.tenant?.slug);
     return { success: true };
   });
 
@@ -102,5 +106,6 @@ export const reorderLinks = createServerFn({ method: "POST" })
       ),
     );
 
+    clearStorefrontCatalogCache(context.tenant?.slug);
     return { success: true };
   });

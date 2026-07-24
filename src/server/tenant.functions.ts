@@ -5,6 +5,7 @@ import { createTenantSchema, updateTenantSchema } from "../lib/schemas";
 import { enforceAuthRateLimit, logAuthAbuse } from "./auth-abuse";
 import { deleteTenantMediaByUrl } from "./media-cleanup";
 import {
+  clearStorefrontCatalogCache,
   getStorefrontCatalogBySlug,
   tenantCatalogInclude,
   tenantIdentitySelect,
@@ -135,6 +136,7 @@ export const createTenant = createServerFn({ method: "POST" })
       },
     });
 
+    clearStorefrontCatalogCache(tenant.slug);
     await logAuthAbuse({ event: "onboarding", userId, request, outcome: "success" });
 
     return tenant;
@@ -160,6 +162,9 @@ export const updateTenant = createServerFn({ method: "POST" })
       where: { id: tenantId },
       data,
     });
+
+    clearStorefrontCatalogCache(context.tenant?.slug);
+    clearStorefrontCatalogCache(tenant.slug);
 
     if (data.avatar !== undefined && data.avatar !== oldAvatar) {
       await deleteTenantMediaByUrl(tenantId, oldAvatar);

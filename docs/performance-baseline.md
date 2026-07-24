@@ -35,10 +35,10 @@ Expected output: no files. If a client asset contains Prisma/pg/server-only code
 
 Run this checklist before promoting a preview when dashboard or DB interactions feel slow:
 
-1. **Auth/session** — avoid duplicate Supabase `getUser` + Prisma user/tenant reads on one navigation. Dashboard parent data should be loaded through one protected server function when possible.
+1. **Auth/session** — avoid duplicate Supabase `getUser` + Prisma user/tenant reads on one navigation. Dashboard parent data should be loaded through one protected server function when possible. `/dashboard/` reuses the parent `/dashboard` loader data; do not re-add a child `getDashboardData` loader.
 2. **Dashboard parent loader** — keep shell data light: tenant identity + badge/counts only. Load products, links, and settings data in their own child route loaders so every dashboard page does not download the full catalog.
 3. **Orders page** — list query should only include fields used by UI. Do not include `ledgerEntries` in order list unless rendered.
-4. **Storefront** — public `/{slug}` currently loads full tenant catalog, links, products, variants, and options. For large stores, add pagination or split summary/catalog data before increasing product limits.
+4. **Storefront** — public `/{slug}` loads full tenant catalog, links, products, variants, and options through a short in-memory server cache (`getStorefrontCatalogBySlug`, 60s per runtime, bounded, cleared after tenant/product/link dashboard mutations). For large stores, add pagination or split summary/catalog data before increasing product limits.
 5. **Images** — catalog images should default to `loading="lazy"` and `decoding="async"`; use eager only for above-the-fold/avatar images.
 6. **External APIs** — RajaOngkir and Pakasir calls sit on user interaction path. Keep timeout, loading state, and caching/debounce for destination search.
 7. **DB indexes** — keep composite indexes for sorted variants, media cleanup, and ledger balance aggregates applied in production migrations.
