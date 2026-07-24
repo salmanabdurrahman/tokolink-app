@@ -21,3 +21,7 @@ Tokolink keeps merchant balance from ledger entries, not from mutable balance fi
 - Withdrawal statuses: requested, processing, paid, rejected.
 - MVP payout processing is manual outside Tokolink system.
 - Merchants receive email when withdrawal is requested and when status changes.
+
+## Manual payout timing
+
+Payout requests enter a manual operations queue after submission. Tokolink does not disburse funds automatically in the MVP. Keep the request status and email notification as the merchant-facing source of truth until an exact payout SLA is finalized.

@@ -34,6 +34,7 @@ Each merchant gets a public storefront at `tokolink-v2.vercel.app/{store-slug}`.
 - [Testing](#testing)
 - [Security](#security)
 - [Deployment](#deployment)
+- [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -215,7 +216,8 @@ Open `http://localhost:3000`.
 | `PAKASIR_PROJECT_SLUG`        | Pakasir project slug for checkout/payment URLs                                       |
 | `PAKASIR_API_KEY`             | Pakasir API key for server-side transaction checks; keep secret                      |
 | `PAKASIR_BASE_URL`            | Optional Pakasir base URL, defaults to `https://app.pakasir.com`                     |
-| `SITE_URL`                    | Public app URL used for Pakasir redirect links                                       |
+| `SITE_URL`                    | Server-side public app URL used for Pakasir redirect/webhook links                   |
+| `VITE_SITE_URL`               | Optional browser-exposed public app URL fallback                                     |
 | `RAJAONGKIR_API_KEY`          | RajaOngkir API key for server-side destination, cost, and waybill calls; keep secret |
 | `RAJAONGKIR_BASE_URL`         | Optional RajaOngkir base URL, defaults to `https://rajaongkir.komerce.id/api/v1`     |
 | `RESEND_API_KEY`              | Resend API key; keep secret                                                          |
@@ -359,16 +361,18 @@ Before deploying:
 5. Configure Cloudflare R2 public domain, RajaOngkir API key, Resend sender identity, and Turnstile domain allowlist.
 6. Run `bun run build` locally or in CI.
 
+## Documentation
+
+- [Architecture](docs/architecture.md) — auth, storage, DB, Server Functions, checkout, payment, shipping, and ledger flow.
+- [Security](docs/security.md) — CSRF posture, Turnstile, upload validation, OTP limits, webhook validation, and reconciliation.
+- [Testing](docs/testing.md) — test layers, mocks, factories, coverage, and CI gate.
+- [Troubleshooting](docs/troubleshooting.md) — Prisma, Supabase cookies, R2 public URL, Turnstile localhost, Pakasir webhook, RajaOngkir, and email issues.
+- [Payout policy](docs/payout-policy.md) — platform fee, balance hold, minimum withdrawal, and manual payout processing.
+- [Preview deploy checklist](docs/preview-deploy-checklist.md) — checks before preview promotion.
+
 ## Contributing
 
-Contributions are welcome.
-
-1. Fork the repository.
-2. Create a feature branch.
-3. Follow existing code, logic, and UI patterns.
-4. Add or update tests when behavior changes.
-5. Run `bun run typecheck`, `bun run lint`, and `bun run test`.
-6. Open a pull request with a clear summary and verification notes.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, development rules, quality checks, and pull request expectations.
 
 ## License
 
