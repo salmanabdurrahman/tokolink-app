@@ -15,10 +15,12 @@ vi.mock("./pakasir", () => ({
   })),
 }));
 
-vi.mock("./order-helpers.server", () => ({ markOrderCanceled: vi.fn() }));
+vi.mock("./order-helpers.server", () => ({ markOrderCanceled: vi.fn(async () => undefined) }));
 vi.mock("./rajaongkir", () => ({ calculateDomesticCost: vi.fn() }));
 
 import { prisma } from "../db";
+import { markOrderCanceled } from "./order-helpers.server";
+import { createPakasirTransaction } from "./pakasir";
 import { calculateDomesticCost } from "./rajaongkir";
 import { createCheckoutOrderData } from "./checkout.server";
 
@@ -92,6 +94,19 @@ describe("createCheckoutOrderData", () => {
   });
 
   it("re-queries RajaOngkir and stores matched quote snapshot", async () => {
+    const orderCreate = vi.fn().mockResolvedValue({
+      id: "order-1",
+      orderNumber: "TL1",
+      total: 36000,
+      payment: { id: "payment-1" },
+    });
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) =>
+      callback({
+        customer: { create: vi.fn().mockResolvedValue({ id: "customer-1" }) },
+        order: { create: orderCreate },
+      }),
+    );
+
     await expect(createCheckoutOrderData(checkoutInput)).resolves.toMatchObject({ total: 36000 });
 
     expect(calculateDomesticCost).toHaveBeenCalledWith({
@@ -99,6 +114,39 @@ describe("createCheckoutOrderData", () => {
       destination: "dest-1",
       weight: 1000,
       couriers: ["jne"],
+    });
+    expect(orderCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        subtotal: 24000,
+        shippingCost: 12000,
+        platformFee: 360,
+        total: 36000,
+        shippingService: "REG",
+        shippingEtd: "1-2",
+        shippingWeightGram: 1000,
+        items: {
+          create: [
+            expect.objectContaining({
+              productName: "Kopi Susu",
+              variantName: "Ukuran: Large",
+              qty: 2,
+              unitPrice: 12000,
+              totalPrice: 24000,
+              weightGram: 500,
+              totalWeightGram: 1000,
+              variantSnapshot: [
+                expect.objectContaining({
+                  id: optionId,
+                  groupName: "Ukuran",
+                  name: "Large",
+                  priceDelta: 2000,
+                }),
+              ],
+            }),
+          ],
+        },
+      }),
+      include: { payment: true },
     });
   });
 
@@ -141,5 +189,13 @@ describe("createCheckoutOrderData", () => {
       "Pilihan ongkir tidak valid",
     );
     expect(calculateDomesticCost).toHaveBeenCalledWith(expect.objectContaining({ weight: 1600 }));
+  });
+
+  it("cancels pending order when Pakasir transaction creation fails", async () => {
+    vi.mocked(createPakasirTransaction).mockRejectedValueOnce(new Error("Pakasir down"));
+
+    await expect(createCheckoutOrderData(checkoutInput)).rejects.toThrow("Pakasir down");
+
+    expect(markOrderCanceled).toHaveBeenCalledWith("TL1", { reason: "pakasir_create_failed" });
   });
 });

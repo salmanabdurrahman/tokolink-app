@@ -1,28 +1,111 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Smoke tests: verify email functions exist and accept expected params
-import { sendVerificationEmail, sendWelcomeEmail } from "./email";
+const sendMock = vi.hoisted(() => vi.fn(async () => ({ data: { id: "email-1" }, error: null })));
 
-describe("sendVerificationEmail", () => {
-  it("is a function accepting email and code", () => {
-    expect(typeof sendVerificationEmail).toBe("function");
-    expect(sendVerificationEmail.length).toBe(2);
+vi.mock("resend", () => ({
+  Resend: vi.fn(function Resend() {
+    return { emails: { send: sendMock } };
+  }),
+}));
+
+const sender = "Tokolink Test <test@example.com>";
+
+async function loadEmail() {
+  vi.resetModules();
+  process.env.RESEND_API_KEY = "test-resend-key";
+  process.env.RESEND_SENDER_EMAIL = sender;
+  return import("./email");
+}
+
+describe("email payloads", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it("resolves without throwing (dev fallback or Resend call)", async () => {
-    await expect(sendVerificationEmail("test@example.com", "123456")).resolves.toBeUndefined();
+  it("sends OTP email payload", async () => {
+    const { sendVerificationEmail } = await loadEmail();
+
+    await sendVerificationEmail("user@example.com", "123456");
+
+    expect(sendMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: sender,
+        to: "user@example.com",
+        subject: "Kode Verifikasi Tokolink: 123456",
+        text: expect.stringContaining("KODE VERIFIKASI: 123456"),
+        html: expect.stringContaining("123456"),
+      }),
+    );
   });
-});
 
-describe("sendWelcomeEmail", () => {
-  it("is a function accepting email and name", () => {
-    expect(typeof sendWelcomeEmail).toBe("function");
-    expect(sendWelcomeEmail.length).toBe(2);
+  it("sends welcome email payload", async () => {
+    const { sendWelcomeEmail } = await loadEmail();
+
+    await sendWelcomeEmail("user@example.com", "Budi");
+
+    expect(sendMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: sender,
+        to: "user@example.com",
+        subject: "Selamat Datang di Tokolink! 🚀",
+        text: expect.stringContaining("Halo Budi"),
+      }),
+    );
   });
 
-  it("resolves without throwing (dev fallback or Resend call)", async () => {
-    await expect(sendWelcomeEmail("user@example.com", "User")).resolves.toBeUndefined();
+  it("sends order paid receipt payload", async () => {
+    const { sendOrderReceiptEmail } = await loadEmail();
 
-    await expect(sendWelcomeEmail("user@example.com", "user@example.com")).resolves.toBeUndefined();
+    await sendOrderReceiptEmail("buyer@example.com", "TL1", 36000);
+
+    expect(sendMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "buyer@example.com",
+        subject: "Receipt Tokolink TL1",
+        text: expect.stringContaining("Rp36.000"),
+      }),
+    );
+  });
+
+  it("sends tenant order notification payload", async () => {
+    const { sendTenantOrderNotificationEmail } = await loadEmail();
+
+    await sendTenantOrderNotificationEmail("tenant@example.com", "TL1", 36000);
+
+    expect(sendMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "tenant@example.com",
+        subject: "Order baru dibayar: TL1",
+        text: expect.stringContaining("Silakan proses fulfillment"),
+      }),
+    );
+  });
+
+  it("sends withdrawal request payload", async () => {
+    const { sendWithdrawalRequestEmail } = await loadEmail();
+
+    await sendWithdrawalRequestEmail("tenant@example.com", 50000);
+
+    expect(sendMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "tenant@example.com",
+        subject: "Request pencairan Tokolink diterima",
+        text: expect.stringContaining("Rp50.000"),
+      }),
+    );
+  });
+
+  it("sends withdrawal status payload", async () => {
+    const { sendWithdrawalStatusEmail } = await loadEmail();
+
+    await sendWithdrawalStatusEmail("tenant@example.com", 50000, "PAID");
+
+    expect(sendMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "tenant@example.com",
+        subject: "Status pencairan Tokolink: dibayar",
+        text: expect.stringContaining("sekarang dibayar"),
+      }),
+    );
   });
 });

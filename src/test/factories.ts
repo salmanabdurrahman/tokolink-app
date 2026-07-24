@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import type {
   CartItem,
   LinkItem,
@@ -15,6 +16,8 @@ const ids = {
   variantGroup: "44444444-4444-4444-8444-444444444444",
   variantOption: "55555555-5555-4555-8555-555555555555",
   link: "66666666-6666-4666-8666-666666666666",
+  order: "77777777-7777-4777-8777-777777777777",
+  payment: "88888888-8888-4888-8888-888888888888",
 };
 
 export function makeUser(overrides: Record<string, unknown> = {}) {
@@ -118,5 +121,60 @@ export function makePrismaTenant(overrides: Record<string, unknown> = {}) {
     products: [makeProduct()],
     links: [makeLink()],
     ...overrides,
+  };
+}
+
+export function makePrismaOrder(overrides: Record<string, unknown> = {}) {
+  return {
+    id: ids.order,
+    orderNumber: "TL202501010001",
+    tenantId: ids.tenant,
+    customerName: "Budi",
+    customerEmail: "budi@example.com",
+    customerWhatsapp: "6281234567890",
+    customerAddress: "Jl. Melati 1",
+    subtotal: 25000,
+    shippingCost: 12000,
+    platformFee: 375,
+    total: 37000,
+    status: "PENDING_PAYMENT",
+    createdAt: baseDate,
+    updatedAt: baseDate,
+    items: [],
+    payment: makePrismaPayment(),
+    ...overrides,
+  };
+}
+
+export function makePrismaPayment(overrides: Record<string, unknown> = {}) {
+  return {
+    id: ids.payment,
+    orderId: ids.order,
+    provider: "pakasir",
+    pakasirOrderId: "TL202501010001",
+    amount: 37000,
+    status: "PENDING",
+    method: "qris",
+    rawPayload: {},
+    createdAt: baseDate,
+    updatedAt: baseDate,
+    ...overrides,
+  };
+}
+
+export function makePrismaMockModel() {
+  return {
+    findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    findFirst: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    createMany: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn(),
+    upsert: vi.fn(),
+    delete: vi.fn(),
+    deleteMany: vi.fn(),
+    count: vi.fn(),
   };
 }

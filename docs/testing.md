@@ -34,7 +34,7 @@ Use unit tests for helpers with no DB/network dependency:
 - OG URL safety in `src/lib/og.ts`
 - cart and WhatsApp helpers in `src/lib/store.ts`
 
-### Server Functions
+### Server handlers
 
 Mock external boundaries and assert public behavior:
 
@@ -48,6 +48,17 @@ Mock external boundaries and assert public behavior:
 
 Cover validation failures, tenant isolation, transaction rollback, provider errors, and user-facing error messages.
 
+### API contracts
+
+Use route-level tests for public HTTP shape:
+
+- status codes and JSON response body
+- rate-limit hook invocation for public endpoints
+- validation error message shape
+- no-store/cache headers for health and status endpoints
+
+Keep business logic in server handler tests; API tests should prove HTTP contract stays stable.
+
 ### Provider clients
 
 Provider clients should be tested with mocked `fetch`/SDK calls:
@@ -58,16 +69,26 @@ Provider clients should be tested with mocked `fetch`/SDK calls:
 - RajaOngkir destination/cost/waybill
 - Resend email payloads
 
-### UI/components
+### UI behavior
 
 Use Testing Library for components where behavior matters:
 
 - form validation display
 - cart controls
+- checkout/search interactions
 - modal/sheet interactions
 - loading/empty/error states
 
 Prefer behavior assertions over implementation details.
+
+### Future DB integration and E2E
+
+Add DB integration/E2E when local test DB and provider mocks are stable:
+
+- Prisma migrations and unique constraints
+- webhook idempotency under duplicate events
+- signup/onboarding/storefront/checkout smoke flow
+- tenant isolation across real DB records
 
 ## Factories and mocks
 
