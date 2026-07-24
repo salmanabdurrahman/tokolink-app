@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useTenant } from "@/lib/store";
+import { useLoadedTenant } from "@/hooks/use-loaded-tenant";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { PageHeader } from "@/components/layout/page-header";
@@ -25,10 +26,7 @@ export const Route = createFileRoute("/dashboard/settings")({
 
 function SettingsPage() {
   const { tenant: loadedTenant } = Route.useLoaderData();
-  const storeTenant = useTenant((s) => s.tenant);
-  const setTenant = useTenant((s) => s.setTenant);
-  const [hasHydratedTenant, setHasHydratedTenant] = useState(false);
-  const tenant = hasHydratedTenant ? storeTenant : loadedTenant;
+  const tenant = useLoadedTenant(loadedTenant);
   const updateSettings = useTenant((s) => s.updateSettings);
 
   const [name, setName] = useState(tenant?.name ?? "");
@@ -48,12 +46,6 @@ function SettingsPage() {
   const [searchingOrigin, setSearchingOrigin] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    if (!loadedTenant) return;
-    setTenant(loadedTenant as any);
-    setHasHydratedTenant(true);
-  }, [loadedTenant, setTenant]);
 
   useEffect(() => {
     if (tenant) {

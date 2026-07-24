@@ -205,8 +205,10 @@ export function FloatingCart({
         </span>
       </motion.button>
 
-      <Sheet open={open} onClose={() => setOpen(false)}>
-        <h3 className="font-display text-2xl font-medium shrink-0">Keranjang</h3>
+      <Sheet open={open} onClose={() => setOpen(false)} titleId="cart-sheet-title">
+        <h3 id="cart-sheet-title" className="font-display text-2xl font-medium shrink-0">
+          Keranjang
+        </h3>
 
         <div className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1 hide-scrollbar">
           <ul className="divide-y divide-border">

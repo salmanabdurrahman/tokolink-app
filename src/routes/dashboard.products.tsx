@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTenant } from "@/lib/store";
+import { useLoadedTenant } from "@/hooks/use-loaded-tenant";
 import type { Product } from "@/lib/types";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -25,25 +26,15 @@ export const Route = createFileRoute("/dashboard/products")({
 
 function ProductsPage() {
   const { tenant: loadedTenant } = Route.useLoaderData();
-  const storeTenant = useTenant((s) => s.tenant);
-  const setTenant = useTenant((s) => s.setTenant);
+  const tenant = useLoadedTenant(loadedTenant);
   const add = useTenant((s) => s.addProduct);
   const remove = useTenant((s) => s.removeProduct);
   const reorderProducts = useTenant((s) => s.reorderProducts);
-  const [hasHydratedTenant, setHasHydratedTenant] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const tenant = hasHydratedTenant ? storeTenant : loadedTenant;
-
-  useEffect(() => {
-    if (!loadedTenant) return;
-    setTenant(loadedTenant as any);
-    setHasHydratedTenant(true);
-  }, [loadedTenant, setTenant]);
-
   if (!tenant) {
     return (
       <div className="flex items-center justify-center py-12">

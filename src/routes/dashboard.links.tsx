@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTenant } from "@/lib/store";
+import { useLoadedTenant } from "@/hooks/use-loaded-tenant";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { LinkForm } from "@/components/dashboard/link-form";
@@ -22,10 +23,7 @@ export const Route = createFileRoute("/dashboard/links")({
 
 function LinksPage() {
   const { tenant: loadedTenant } = Route.useLoaderData();
-  const storeTenant = useTenant((s) => s.tenant);
-  const setTenant = useTenant((s) => s.setTenant);
-  const [hasHydratedTenant, setHasHydratedTenant] = useState(false);
-  const tenant = hasHydratedTenant ? storeTenant : loadedTenant;
+  const tenant = useLoadedTenant(loadedTenant);
   const add = useTenant((s) => s.addLink);
   const update = useTenant((s) => s.updateLink);
   const remove = useTenant((s) => s.removeLink);
@@ -36,12 +34,6 @@ function LinksPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const tenantLinks = tenant?.links;
-
-  useEffect(() => {
-    if (!loadedTenant) return;
-    setTenant(loadedTenant as any);
-    setHasHydratedTenant(true);
-  }, [loadedTenant, setTenant]);
 
   useEffect(() => {
     if (!tenantLinks) return;
