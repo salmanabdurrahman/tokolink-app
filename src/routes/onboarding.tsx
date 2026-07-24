@@ -49,17 +49,19 @@ function Onboarding() {
     setError("");
 
     try {
-      const { getRecaptchaToken } = await import("@/lib/recaptcha");
-      const recaptchaToken = await getRecaptchaToken("onboarding");
+      const { getTurnstileToken, resetTurnstileWidget } = await import("@/lib/turnstile");
+      const turnstileToken = await getTurnstileToken("onboarding");
 
       const tenant = await createTenant({
         data: {
           slug: cleanSlug,
           name,
           tagline,
-          recaptchaToken,
+          turnstileToken,
         },
       });
+
+      resetTurnstileWidget();
 
       setUser({
         ...user,
@@ -68,7 +70,11 @@ function Onboarding() {
 
       navigate({ to: "/dashboard" });
     } catch (err: any) {
-      const { getErrorMessage } = await import("@/lib/utils");
+      const [{ getErrorMessage }, { resetTurnstileWidget }] = await Promise.all([
+        import("@/lib/utils"),
+        import("@/lib/turnstile"),
+      ]);
+      resetTurnstileWidget();
       setError(getErrorMessage(err) || "Gagal membuat toko. Silakan coba lagi.");
     } finally {
       setLoading(false);

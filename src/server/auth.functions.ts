@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "../db";
 import { supabaseAdmin } from "../lib/supabase.server";
-import { verifyRecaptcha } from "./recaptcha";
+import { verifyTurnstile } from "./turnstile";
 import { sendVerificationEmail, sendWelcomeEmail } from "./email";
 import crypto from "crypto";
 import { z } from "zod";
@@ -93,7 +93,7 @@ export const syncSession = createServerFn({ method: "POST" })
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
-  recaptchaToken: z.string(),
+  turnstileToken: z.string(),
 });
 
 const verifyCodeSchema = z.object({
@@ -103,7 +103,7 @@ const verifyCodeSchema = z.object({
 
 const resendSchema = z.object({
   email: z.string().email(),
-  recaptchaToken: z.string(),
+  turnstileToken: z.string(),
 });
 
 async function generateAndSendOTP(email: string) {
@@ -132,11 +132,11 @@ async function generateAndSendOTP(email: string) {
 export const registerUser = createServerFn({ method: "POST" })
   .validator(registerSchema)
   .handler(async ({ data }) => {
-    const { email, password, recaptchaToken } = data;
+    const { email, password, turnstileToken } = data;
 
-    const isHuman = await verifyRecaptcha(recaptchaToken, "signup");
+    const isHuman = await verifyTurnstile(turnstileToken, "signup");
     if (!isHuman) {
-      throw new Error("Verifikasi reCAPTCHA gagal. Silakan coba lagi.");
+      throw new Error("Verifikasi Turnstile gagal. Silakan coba lagi.");
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -254,11 +254,11 @@ export const verifySignUpCode = createServerFn({ method: "POST" })
 export const resendSignUpCode = createServerFn({ method: "POST" })
   .validator(resendSchema)
   .handler(async ({ data }) => {
-    const { email, recaptchaToken } = data;
+    const { email, turnstileToken } = data;
 
-    const isHuman = await verifyRecaptcha(recaptchaToken, "resend_signup_code");
+    const isHuman = await verifyTurnstile(turnstileToken, "resend_signup_code");
     if (!isHuman) {
-      throw new Error("Verifikasi reCAPTCHA gagal. Silakan coba lagi.");
+      throw new Error("Verifikasi Turnstile gagal. Silakan coba lagi.");
     }
 
     const user = await prisma.user.findUnique({

@@ -29,7 +29,11 @@ describe("schemas", () => {
     expectInvalid("Toko", tenantSlugSchema);
     expectInvalid("toko_slug", tenantSlugSchema);
 
-    const parsed = createTenantSchema.parse({ slug: "toko-123", name: "Toko Saya" });
+    const parsed = createTenantSchema.parse({
+      slug: "toko-123",
+      name: "Toko Saya",
+      turnstileToken: "human-token",
+    });
 
     expect(parsed.tagline).toBe("");
     expect(parsed.avatar).toBe("");

@@ -29,7 +29,7 @@ vi.mock("../lib/supabase.server", () => ({
   },
 }));
 
-vi.mock("./recaptcha", () => ({ verifyRecaptcha: vi.fn(async () => true) }));
+vi.mock("./turnstile", () => ({ verifyTurnstile: vi.fn(async () => true) }));
 vi.mock("./email", () => ({
   sendVerificationEmail: vi.fn(),
   sendWelcomeEmail: vi.fn(() => Promise.resolve()),
@@ -38,7 +38,7 @@ vi.mock("./email", () => ({
 import { prisma } from "../db";
 import { supabaseAdmin } from "../lib/supabase.server";
 import { sendVerificationEmail } from "./email";
-import { verifyRecaptcha } from "./recaptcha";
+import { verifyTurnstile } from "./turnstile";
 import {
   getSessionUser,
   syncSession,
@@ -56,14 +56,14 @@ const verifySignUpCodeHandler = verifySignUpCode as any;
 
 const email = "owner@example.com";
 const password = "secret123";
-const recaptchaToken = "human-token";
+const turnstileToken = "human-token";
 
 const mockUser = { id: "user-1", supabaseId: "supa-1", email, name: "Owner", emailVerified: null };
 
 const makeRequest = (cookie = "") => new Request("http://localhost", { headers: { cookie } });
 
 beforeEach(() => {
-  vi.mocked(verifyRecaptcha).mockResolvedValue(true);
+  vi.mocked(verifyTurnstile).mockResolvedValue(true);
   vi.mocked(prismaAny.user.findUnique).mockReset();
   vi.mocked(prismaAny.user.create).mockReset();
   vi.mocked(prismaAny.user.update).mockReset();
@@ -87,13 +87,13 @@ describe("registerUser", () => {
     });
 
     await expect(
-      registerUserHandler({ data: { email, password, recaptchaToken } }),
+      registerUserHandler({ data: { email, password, turnstileToken } }),
     ).resolves.toEqual({
       success: true,
       message: "Kode verifikasi telah dikirim.",
     });
 
-    expect(verifyRecaptcha).toHaveBeenCalledWith(recaptchaToken, "signup");
+    expect(verifyTurnstile).toHaveBeenCalledWith(turnstileToken, "signup");
     expect(prisma.user.create).toHaveBeenCalledWith({
       data: { email, supabaseId: "supa-1", provider: "email", emailVerified: null },
     });
@@ -114,7 +114,7 @@ describe("registerUser", () => {
     });
 
     await expect(
-      registerUserHandler({ data: { email, password, recaptchaToken } }),
+      registerUserHandler({ data: { email, password, turnstileToken } }),
     ).rejects.toThrow("Email sudah terdaftar. Silakan masuk.");
   });
 
@@ -122,7 +122,7 @@ describe("registerUser", () => {
     vi.mocked(prismaAny.user.findUnique).mockResolvedValue(mockUser);
 
     await expect(
-      registerUserHandler({ data: { email, password, recaptchaToken } }),
+      registerUserHandler({ data: { email, password, turnstileToken } }),
     ).resolves.toEqual({
       success: true,
       message: "Kode verifikasi telah dikirim ulang.",
@@ -140,7 +140,7 @@ describe("registerUser", () => {
     });
 
     await expect(
-      registerUserHandler({ data: { email, password, recaptchaToken } }),
+      registerUserHandler({ data: { email, password, turnstileToken } }),
     ).rejects.toThrow("Supabase down");
   });
 
@@ -153,7 +153,7 @@ describe("registerUser", () => {
     vi.mocked(sendVerificationEmail).mockRejectedValue(new Error("email failed"));
 
     await expect(
-      registerUserHandler({ data: { email, password, recaptchaToken } }),
+      registerUserHandler({ data: { email, password, turnstileToken } }),
     ).rejects.toThrow("email failed");
   });
 });
@@ -247,7 +247,7 @@ describe("verifySignUpCode", () => {
 describe("resendSignUpCode", () => {
   it("rejects missing or verified users", async () => {
     vi.mocked(prismaAny.user.findUnique).mockResolvedValueOnce(null);
-    await expect(resendSignUpCodeHandler({ data: { email, recaptchaToken } })).rejects.toThrow(
+    await expect(resendSignUpCodeHandler({ data: { email, turnstileToken } })).rejects.toThrow(
       "Email tidak terdaftar.",
     );
 
@@ -255,7 +255,7 @@ describe("resendSignUpCode", () => {
       ...mockUser,
       emailVerified: new Date(),
     });
-    await expect(resendSignUpCodeHandler({ data: { email, recaptchaToken } })).rejects.toThrow(
+    await expect(resendSignUpCodeHandler({ data: { email, turnstileToken } })).rejects.toThrow(
       "Email sudah terverifikasi.",
     );
   });
@@ -267,7 +267,7 @@ describe("resendSignUpCode", () => {
       createdAt: new Date(Date.now() - 61_000),
     });
 
-    await expect(resendSignUpCodeHandler({ data: { email, recaptchaToken } })).resolves.toEqual({
+    await expect(resendSignUpCodeHandler({ data: { email, turnstileToken } })).resolves.toEqual({
       success: true,
       message: "Kode verifikasi baru dikirim.",
     });
@@ -281,7 +281,7 @@ describe("resendSignUpCode", () => {
       createdAt: new Date(),
     });
 
-    await expect(resendSignUpCodeHandler({ data: { email, recaptchaToken } })).rejects.toThrow(
+    await expect(resendSignUpCodeHandler({ data: { email, turnstileToken } })).rejects.toThrow(
       /Tunggu \d+ detik sebelum mengirim ulang\./,
     );
   });

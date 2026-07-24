@@ -43,10 +43,11 @@ export function useAuthForm() {
 
     try {
       if (mode === "signup") {
-        const { getRecaptchaToken } = await import("@/lib/recaptcha");
+        const { getTurnstileToken, resetTurnstileWidget } = await import("@/lib/turnstile");
         const { registerUser } = await import("@/server/auth.functions");
-        const recaptchaToken = await getRecaptchaToken("signup");
-        const res = await registerUser({ data: { email, password, recaptchaToken } });
+        const turnstileToken = await getTurnstileToken("signup");
+        const res = await registerUser({ data: { email, password, turnstileToken } });
+        resetTurnstileWidget();
         if (res.success) {
           setMode("otp");
           setCooldown(60);
@@ -59,6 +60,10 @@ export function useAuthForm() {
         if (signInError) throw signInError;
       }
     } catch (err: any) {
+      if (mode === "signup") {
+        const { resetTurnstileWidget } = await import("@/lib/turnstile");
+        resetTurnstileWidget();
+      }
       setError(getErrorMessage(err) || "Terjadi kesalahan saat melakukan autentikasi");
     } finally {
       setLoading(false);
@@ -96,16 +101,19 @@ export function useAuthForm() {
     setError("");
 
     try {
-      const { getRecaptchaToken } = await import("@/lib/recaptcha");
+      const { getTurnstileToken, resetTurnstileWidget } = await import("@/lib/turnstile");
       const { resendSignUpCode } = await import("@/server/auth.functions");
-      const recaptchaToken = await getRecaptchaToken("resend_signup_code");
-      const res = await resendSignUpCode({ data: { email, recaptchaToken } });
+      const turnstileToken = await getTurnstileToken("resend_signup_code");
+      const res = await resendSignUpCode({ data: { email, turnstileToken } });
+      resetTurnstileWidget();
 
       if (res.success) {
         setCooldown(60);
         setCode("");
       }
     } catch (err: any) {
+      const { resetTurnstileWidget } = await import("@/lib/turnstile");
+      resetTurnstileWidget();
       setError(getErrorMessage(err) || "Gagal mengirim ulang kode.");
     } finally {
       setLoading(false);

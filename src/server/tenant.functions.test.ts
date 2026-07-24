@@ -7,9 +7,10 @@ vi.mock("../db", () => ({
 }));
 
 vi.mock("./auth-middleware", () => ({ authMiddleware: vi.fn() }));
-vi.mock("./recaptcha", () => ({ verifyRecaptcha: vi.fn(async () => true) }));
+vi.mock("./turnstile", () => ({ verifyTurnstile: vi.fn(async () => true) }));
 
 import { prisma } from "../db";
+import { verifyTurnstile } from "./turnstile";
 import { createTenant, getTenant, updateTenant } from "./tenant.functions";
 
 const prismaAny = prisma as any;
@@ -18,12 +19,20 @@ const getTenantHandler = getTenant as any;
 const updateTenantHandler = updateTenant as any;
 
 const context = { user: { id: "user-1" }, tenant: { id: "tenant-1", slug: "toko-test" } };
-const data = { slug: "toko-test", name: "Toko Test", tagline: "", avatar: "", whatsapp: "" };
+const data = {
+  slug: "toko-test",
+  name: "Toko Test",
+  tagline: "",
+  avatar: "",
+  whatsapp: "",
+  turnstileToken: "human-token",
+};
 
 beforeEach(() => {
   vi.mocked(prismaAny.tenant.findUnique).mockReset();
   vi.mocked(prismaAny.tenant.create).mockReset();
   vi.mocked(prismaAny.tenant.update).mockReset();
+  vi.mocked(verifyTurnstile).mockResolvedValue(true);
 });
 
 describe("getTenant", () => {
@@ -72,6 +81,7 @@ describe("createTenant", () => {
     vi.mocked(prismaAny.tenant.create).mockResolvedValue(tenant);
 
     await expect(createTenantHandler({ data, context })).resolves.toEqual(tenant);
+    expect(verifyTurnstile).toHaveBeenCalledWith(data.turnstileToken, "onboarding");
     expect(prisma.tenant.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         slug: data.slug,

@@ -11,8 +11,8 @@ const testEnv = {
   SUPABASE_ANON_KEY: "test-anon-key",
   SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key",
   BLOB_READ_WRITE_TOKEN: "test-blob-token",
-  VITE_RECAPTCHA_SITE_KEY: "test-recaptcha-site-key",
-  RECAPTCHA_SECRET_KEY: "test-recaptcha-secret-key",
+  VITE_TURNSTILE_SITE_KEY: "test-turnstile-site-key",
+  TURNSTILE_SECRET_KEY: "test-turnstile-secret-key",
   RESEND_API_KEY: "test-resend-key",
   RESEND_SENDER_EMAIL: "Tokolink Test <test@example.com>",
 };

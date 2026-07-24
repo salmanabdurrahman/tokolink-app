@@ -63,7 +63,7 @@ Each merchant gets a public storefront at `tokolink-v2.vercel.app/{store-slug}`.
 | Auth           | Supabase Auth with email OTP and Google OAuth support                             |
 | Media          | Vercel Blob uploads with server-side image validation                             |
 | Email          | Resend verification and welcome emails                                            |
-| Bot protection | Google reCAPTCHA v3                                                               |
+| Bot protection | Cloudflare Turnstile                                                              |
 | Tests          | Vitest, Testing Library, jsdom, V8 coverage                                       |
 
 ## How It Works
@@ -120,7 +120,7 @@ Tokolink uses consistent patterns across routing, server logic, data access, sta
 - Supabase Auth project
 - Vercel Blob token
 - Resend API key
-- Google reCAPTCHA v3 keys
+- Cloudflare Turnstile keys
 
 ## Local Setup
 
@@ -149,7 +149,7 @@ npm install
 cp .env.example .env
 ```
 
-Fill `.env` with local database, Supabase, Vercel Blob, Resend, and reCAPTCHA credentials.
+Fill `.env` with local database, Supabase, Vercel Blob, Resend, and Turnstile credentials.
 
 ### 4. Prepare database
 
@@ -174,20 +174,21 @@ Open `http://localhost:3000`.
 
 ## Environment Variables
 
-| Variable                    | Purpose                                        |
-| --------------------------- | ---------------------------------------------- |
-| `DATABASE_URL`              | Runtime PostgreSQL connection URL              |
-| `DIRECT_URL`                | Direct PostgreSQL URL for Prisma CLI workflows |
-| `VITE_SUPABASE_URL`         | Public Supabase project URL for browser client |
-| `VITE_SUPABASE_ANON_KEY`    | Public Supabase anon key for browser client    |
-| `SUPABASE_URL`              | Server-side Supabase project URL               |
-| `SUPABASE_ANON_KEY`         | Server-side Supabase anon key                  |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-side Supabase admin key; keep secret    |
-| `BLOB_READ_WRITE_TOKEN`     | Vercel Blob upload token; keep secret          |
-| `VITE_RECAPTCHA_SITE_KEY`   | Public reCAPTCHA site key                      |
-| `RECAPTCHA_SECRET_KEY`      | Server-side reCAPTCHA secret key; keep secret  |
-| `RESEND_API_KEY`            | Resend API key; keep secret                    |
-| `RESEND_SENDER_EMAIL`       | Verified sender identity for email delivery    |
+| Variable                      | Purpose                                               |
+| ----------------------------- | ----------------------------------------------------- |
+| `DATABASE_URL`                | Runtime PostgreSQL connection URL                     |
+| `DIRECT_URL`                  | Direct PostgreSQL URL for Prisma CLI workflows        |
+| `VITE_SUPABASE_URL`           | Public Supabase project URL for browser client        |
+| `VITE_SUPABASE_ANON_KEY`      | Public Supabase anon key for browser client           |
+| `SUPABASE_URL`                | Server-side Supabase project URL                      |
+| `SUPABASE_ANON_KEY`           | Server-side Supabase anon key                         |
+| `SUPABASE_SERVICE_ROLE_KEY`   | Server-side Supabase admin key; keep secret           |
+| `BLOB_READ_WRITE_TOKEN`       | Vercel Blob upload token; keep secret                 |
+| `VITE_TURNSTILE_SITE_KEY`     | Public Cloudflare Turnstile site key                  |
+| `TURNSTILE_SECRET_KEY`        | Server-side Turnstile secret key; keep secret         |
+| `TURNSTILE_ALLOWED_HOSTNAMES` | Optional comma-separated Turnstile hostname allowlist |
+| `RESEND_API_KEY`              | Resend API key; keep secret                           |
+| `RESEND_SENDER_EMAIL`         | Verified sender identity for email delivery           |
 
 Never commit real `.env` files or production credentials.
 
@@ -228,7 +229,7 @@ tokolink-app/
 │   ├── hooks/               # Client hooks for auth/session/device behavior
 │   ├── lib/                 # Utilities, schemas, stores, Supabase clients, OG helpers
 │   ├── routes/              # TanStack Router file routes and API routes
-│   ├── server/              # Server Functions, auth middleware, email, upload, recaptcha
+│   ├── server/              # Server Functions, auth middleware, email, upload, Turnstile
 │   ├── test/                # Test setup and reusable factories
 │   ├── db.ts                # Prisma client singleton
 │   ├── router.tsx           # Router setup
@@ -273,7 +274,7 @@ Tokolink includes several hardening patterns:
 - **Supabase token verification** in auth middleware before protected mutations.
 - **Tenant ownership checks** before updating or deleting tenant-scoped products and links.
 - **Zod validation** for incoming Server Function input.
-- **reCAPTCHA checks** for signup and verification flows.
+- **Invisible Turnstile checks** for signup, OTP resend, and onboarding flows.
 - **OTP brute-force protection** with attempt limits and expiry handling.
 - **Image upload validation** with magic-byte checks and 5MB limit.
 - **OG image SSRF guard** with an allowlist and production loopback/local-network blocking.
@@ -289,7 +290,7 @@ Before deploying:
 2. Configure PostgreSQL/Supabase database connectivity.
 3. Generate/push Prisma schema or apply migrations.
 4. Configure Supabase Auth redirect URLs and providers.
-5. Configure Vercel Blob, Resend sender identity, and reCAPTCHA domain allowlist.
+5. Configure Vercel Blob, Resend sender identity, and Turnstile domain allowlist.
 6. Run `bun run build` locally or in CI.
 
 ## Contributing
