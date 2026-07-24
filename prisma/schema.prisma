@@ -116,15 +116,16 @@ model AuthAuditLog {
 }
 
 model Tenant {
-  id        String   @id @default(uuid()) @db.Uuid
-  slug      String   @unique
-  name      String
-  tagline   String   @default("")
-  avatar    String   @default("")
-  whatsapp  String   @default("")
-  userId    String   @unique @map("user_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(uuid()) @db.Uuid
+  slug             String   @unique
+  name             String
+  tagline          String   @default("")
+  avatar           String   @default("")
+  whatsapp         String   @default("")
+  whatsappTemplate String   @default("") @map("whatsapp_template")
+  userId           String   @unique @map("user_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   originName            String   @default("") @map("origin_name")

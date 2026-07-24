@@ -3,16 +3,17 @@ export type LinkItem = {
   label: string;
   url: string;
   icon?: string | null;
+  sortOrder?: number;
 };
 
 export type ProductVariantOption = {
-  id: string;
+  id?: string;
   name: string;
   priceDelta: number;
 };
 
 export type ProductVariantGroup = {
-  id: string;
+  id?: string;
   name: string;
   options: ProductVariantOption[];
 };
@@ -24,6 +25,7 @@ export type Product = {
   basePrice: number;
   image: string;
   weightGram?: number;
+  sortOrder?: number;
   variantGroups?: ProductVariantGroup[];
 };
 
@@ -43,6 +45,7 @@ export type Tenant = {
   rajaOngkirOriginId?: string;
   rajaOngkirOriginLabel?: string;
   allowedCouriers?: ("jne" | "jnt" | "sicepat" | "anteraja" | "pos" | "tiki" | "ninja")[];
+  whatsappTemplate?: string;
   links: LinkItem[];
   products: Product[];
 };

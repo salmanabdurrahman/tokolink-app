@@ -18,7 +18,8 @@ export function VariantSheet({ product, onClose }: VariantSheetProps) {
     () => {
       const initial: Record<string, ProductVariantOption> = {};
       product.variantGroups?.forEach((g) => {
-        if (g.options?.[0]) initial[g.id] = g.options[0];
+        const groupKey = g.id ?? g.name;
+        if (g.options?.[0]) initial[groupKey] = g.options[0];
       });
       return initial;
     },
@@ -29,15 +30,15 @@ export function VariantSheet({ product, onClose }: VariantSheetProps) {
     Object.values(selectedOptions).reduce((sum, opt) => sum + opt.priceDelta, 0);
 
   const allSelected =
-    product.variantGroups?.every((g) => selectedOptions[g.id] !== undefined) ?? true;
+    product.variantGroups?.every((g) => selectedOptions[g.id ?? g.name] !== undefined) ?? true;
 
   const handleAdd = () => {
     if (!allSelected) return;
     const selectedArray = Object.values(selectedOptions);
-    const optionIds = selectedArray.map((o) => o.id).join(",");
+    const optionIds = selectedArray.map((o) => o.id ?? o.name).join(",");
     const optionNames = selectedArray.map((o) => o.name).join(", ");
     add({
-      key: `${product.id}-${selectedArray.map((o) => o.id).join("-")}`,
+      key: `${product.id}-${selectedArray.map((o) => o.id ?? o.name).join("-")}`,
       productId: product.id,
       productName: product.name,
       variantId: optionIds,
@@ -65,36 +66,41 @@ export function VariantSheet({ product, onClose }: VariantSheetProps) {
         </div>
       </div>
       <div className="mt-4 overflow-y-auto pr-1 space-y-5 flex-1 min-h-0 hide-scrollbar">
-        {product.variantGroups?.map((group) => (
-          <div key={group.id} className="space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Pilih {group.name}
+        {product.variantGroups?.map((group) => {
+          const groupKey = group.id ?? group.name;
+          return (
+            <div key={groupKey} className="space-y-2">
+              <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Pilih {group.name}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {group.options?.map((option) => {
+                  const isSelected = selectedOptions[groupKey]?.id === option.id;
+                  return (
+                    <button
+                      key={option.id ?? option.name}
+                      onClick={() =>
+                        setSelectedOptions((prev) => ({ ...prev, [groupKey]: option }))
+                      }
+                      className={`rounded-full border px-4 py-2 text-sm font-medium transition active:scale-[0.97] cursor-pointer ${
+                        isSelected
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border hover:border-foreground"
+                      }`}
+                    >
+                      {option.name}
+                      {option.priceDelta > 0 && (
+                        <span className="ml-1 text-xs opacity-75">
+                          +{formatIDR(option.priceDelta)}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {group.options?.map((option) => {
-                const isSelected = selectedOptions[group.id]?.id === option.id;
-                return (
-                  <button
-                    key={option.id}
-                    onClick={() => setSelectedOptions((prev) => ({ ...prev, [group.id]: option }))}
-                    className={`rounded-full border px-4 py-2 text-sm font-medium transition active:scale-[0.97] cursor-pointer ${
-                      isSelected
-                        ? "border-foreground bg-foreground text-background"
-                        : "border-border hover:border-foreground"
-                    }`}
-                  >
-                    {option.name}
-                    {option.priceDelta > 0 && (
-                      <span className="ml-1 text-xs opacity-75">
-                        +{formatIDR(option.priceDelta)}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <Button onClick={handleAdd} disabled={!allSelected} className="mt-6 w-full shrink-0 py-3.5">
         Tambah ke keranjang — {formatIDR(price)}

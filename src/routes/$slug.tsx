@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { Product } from "@/lib/types";
 
 import { getTenant } from "@/server/tenant.functions";
@@ -8,6 +8,9 @@ import { StorefrontHeader } from "@/components/storefront/storefront-header";
 import { ProductCard } from "@/components/storefront/product-card";
 import { VariantSheet } from "@/components/storefront/variant-sheet";
 import { FloatingCart } from "@/components/storefront/floating-cart";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/$slug")({
   loader: async ({ params }) => {
@@ -62,6 +65,26 @@ export const Route = createFileRoute("/$slug")({
 function Storefront() {
   const { tenant } = Route.useLoaderData();
   const [selecting, setSelecting] = useState<Product | null>(null);
+  const [query, setQuery] = useState("");
+  const [shareOpen, setShareOpen] = useState(false);
+  const storeUrl = `https://tokolink-v2.vercel.app/${tenant.slug}`;
+  const filteredProducts = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return tenant.products;
+    return tenant.products.filter((product) =>
+      [product.name, product.description].join(" ").toLowerCase().includes(normalized),
+    );
+  }, [query, tenant.products]);
+
+  const copyStoreLink = async () => {
+    try {
+      await navigator.clipboard.writeText(storeUrl);
+      toast.success("Link toko disalin");
+    } catch {
+      toast.error("Gagal menyalin link. QR tetap tersedia.");
+    }
+    setShareOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -95,15 +118,50 @@ function Storefront() {
       </script>
       <StorefrontHeader tenant={tenant} />
       <section className="mx-auto mt-16 max-w-2xl px-4">
-        <div className="mb-6 flex items-baseline justify-between px-2">
-          <h2 className="font-display text-lg font-medium tracking-tight">Katalog</h2>
-          <span className="text-xs text-muted-foreground">{tenant.products.length} produk</span>
+        <div className="sticky top-0 z-20 -mx-4 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
+          <div className="mb-3 flex items-baseline justify-between px-2">
+            <h2 className="font-display text-lg font-medium tracking-tight">Katalog</h2>
+            <span className="text-xs text-muted-foreground">{filteredProducts.length} produk</span>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Cari produk..."
+              className="bg-card"
+            />
+            <Button type="button" variant="outline" onClick={copyStoreLink}>
+              Share
+            </Button>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {tenant.products.map((p, i) => (
-            <ProductCard key={p.id} product={p} delay={i * 0.04} onSelect={() => setSelecting(p)} />
-          ))}
-        </div>
+        {shareOpen && (
+          <div className="mt-4 rounded-2xl border border-border bg-card p-4 text-center">
+            <p className="text-sm font-medium">Link toko disalin</p>
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(storeUrl)}`}
+              alt={`QR code ${tenant.name}`}
+              className="mx-auto mt-3 h-36 w-36 rounded-xl border border-border bg-white p-2"
+            />
+            <p className="mt-2 break-all text-xs text-muted-foreground">{storeUrl}</p>
+          </div>
+        )}
+        {filteredProducts.length === 0 ? (
+          <div className="mt-4 rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+            Produk tidak ditemukan. Coba kata kunci lain.
+          </div>
+        ) : (
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            {filteredProducts.map((p, i) => (
+              <ProductCard
+                key={p.id}
+                product={p}
+                delay={i * 0.04}
+                onSelect={() => setSelecting(p)}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       <div className="mx-auto mt-16 max-w-md px-6 text-center text-xs text-muted-foreground">
@@ -113,7 +171,12 @@ function Storefront() {
         {selecting && <VariantSheet product={selecting} onClose={() => setSelecting(null)} />}
       </AnimatePresence>
 
-      <FloatingCart tenantSlug={tenant.slug} storeName={tenant.name} phone={tenant.whatsapp} />
+      <FloatingCart
+        tenantSlug={tenant.slug}
+        storeName={tenant.name}
+        phone={tenant.whatsapp}
+        whatsappTemplate={tenant.whatsappTemplate ?? ""}
+      />
     </div>
   );
 }

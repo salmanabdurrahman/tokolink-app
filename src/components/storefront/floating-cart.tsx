@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart, buildWhatsAppUrl } from "@/lib/store";
-import { formatIDR } from "@/lib/utils";
+import { formatIDR, formatWhatsAppNumber } from "@/lib/utils";
 import { FallbackImage } from "@/components/fallback-image";
 import { toast } from "sonner";
 import { Sheet } from "@/components/ui/sheet";
@@ -32,15 +32,22 @@ interface FloatingCartProps {
   tenantSlug: string;
   storeName: string;
   phone: string;
+  whatsappTemplate?: string;
 }
 
-export function FloatingCart({ tenantSlug, storeName, phone }: FloatingCartProps) {
+export function FloatingCart({
+  tenantSlug,
+  storeName,
+  phone,
+  whatsappTemplate,
+}: FloatingCartProps) {
   const items = useCart((s) => s.items);
   const totalQty = useCart((s) => s.totalQty());
   const totalPrice = useCart((s) => s.totalPrice());
   const inc = useCart((s) => s.inc);
   const dec = useCart((s) => s.dec);
   const clear = useCart((s) => s.clear);
+  const setTenantSlug = useCart((s) => s.setTenantSlug);
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
@@ -53,10 +60,28 @@ export function FloatingCart({ tenantSlug, storeName, phone }: FloatingCartProps
   const [customer, setCustomer] = useState({ name: "", email: "", whatsapp: "", address: "" });
   const [shipping, setShipping] = useState({ courier: "", service: "", etd: "", cost: 0 });
 
+  useEffect(() => {
+    setTenantSlug(tenantSlug);
+  }, [setTenantSlug, tenantSlug]);
+
   if (totalQty === 0) return null;
 
+  const formattedPhone = formatWhatsAppNumber(phone);
+  const hasWhatsApp = /^62\d{9,15}$/.test(formattedPhone);
+
   const checkoutWhatsApp = () => {
-    const url = buildWhatsAppUrl(phone, storeName, items, totalPrice, note);
+    if (!hasWhatsApp) {
+      toast.error("Nomor WhatsApp toko belum tersedia");
+      return;
+    }
+    const url = buildWhatsAppUrl(
+      formattedPhone,
+      storeName,
+      items,
+      totalPrice,
+      note,
+      whatsappTemplate,
+    );
     window.open(url, "_blank");
     toast.success("Mengarahkan ke WhatsApp...");
   };
@@ -188,15 +213,17 @@ export function FloatingCart({ tenantSlug, storeName, phone }: FloatingCartProps
               </div>
               <div className="flex items-center gap-2 text-sm shrink-0">
                 <button
+                  aria-label={`Kurangi ${i.productName}`}
                   onClick={() => dec(i.key)}
-                  className="h-7 w-7 rounded-full border border-border hover:bg-surface transition cursor-pointer"
+                  className="h-8 w-8 rounded-full border border-border hover:bg-surface transition cursor-pointer"
                 >
                   −
                 </button>
-                <span className="w-4 text-center font-medium">{i.qty}</span>
+                <span className="min-w-6 text-center font-semibold">{i.qty}</span>
                 <button
+                  aria-label={`Tambah ${i.productName}`}
                   onClick={() => inc(i.key)}
-                  className="h-7 w-7 rounded-full border border-border hover:bg-surface transition cursor-pointer"
+                  className="h-8 w-8 rounded-full border border-border bg-surface hover:bg-muted transition cursor-pointer"
                 >
                   +
                 </button>
@@ -214,7 +241,7 @@ export function FloatingCart({ tenantSlug, storeName, phone }: FloatingCartProps
           <Input
             value={customer.whatsapp}
             onChange={(e) =>
-              setCustomer((value) => ({ ...value, whatsapp: e.target.value.replace(/\D/g, "") }))
+              setCustomer((value) => ({ ...value, whatsapp: formatWhatsAppNumber(e.target.value) }))
             }
             placeholder="WhatsApp, contoh 628123456789"
           />
@@ -307,9 +334,15 @@ export function FloatingCart({ tenantSlug, storeName, phone }: FloatingCartProps
         >
           {loading ? "Membuat order..." : "Bayar via Pakasir →"}
         </Button>
-        <Button onClick={checkoutWhatsApp} variant="outline" className="mt-3 w-full shrink-0">
-          Chat WhatsApp →
-        </Button>
+        {hasWhatsApp ? (
+          <Button onClick={checkoutWhatsApp} variant="outline" className="mt-3 w-full shrink-0">
+            Chat WhatsApp →
+          </Button>
+        ) : (
+          <div className="mt-3 rounded-2xl border border-dashed border-border bg-card p-4 text-center text-xs text-muted-foreground">
+            Nomor WhatsApp toko belum diisi. Owner perlu melengkapi nomor WhatsApp di dashboard.
+          </div>
+        )}
         <button
           onClick={() => clear()}
           className="mt-3 w-full text-xs text-muted-foreground hover:text-destructive transition shrink-0 cursor-pointer"

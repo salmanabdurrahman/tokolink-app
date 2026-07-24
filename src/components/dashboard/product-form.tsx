@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import type { Product, ProductVariantGroup } from "@/lib/types";
 import { ImageUpload } from "@/components/ui/image-upload";
@@ -6,11 +6,12 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { createProductSchema } from "@/lib/schemas";
 
 interface ProductFormProps {
   initial: Product | null;
   onClose: () => void;
-  onSubmit: (data: Omit<Product, "id">) => void;
+  onSubmit: (data: Omit<Product, "id">) => void | Promise<void>;
 }
 
 export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
@@ -21,11 +22,41 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
   const [variantGroups, setVariantGroups] = useState<ProductVariantGroup[]>(
     initial?.variantGroups ?? [],
   );
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const initialSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        name: initial?.name ?? "",
+        description: initial?.description ?? "",
+        basePrice: initial?.basePrice ?? 0,
+        image: initial?.image ?? "",
+        variantGroups: initial?.variantGroups ?? [],
+      }),
+    [initial],
+  );
+  const isDirty =
+    initialSnapshot !== JSON.stringify({ name, description, basePrice, image, variantGroups });
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
+
+  const closeForm = () => {
+    if (isDirty && !window.confirm("Perubahan belum disimpan. Tutup form?")) return;
+    onClose();
+  };
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 backdrop-blur-sm sm:items-center p-4"
-      onClick={onClose}
+      onClick={closeForm}
     >
       <motion.div
         initial={{ opacity: 0, y: 50, scale: 0.95 }}
@@ -40,7 +71,7 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
             {initial ? "Edit produk" : "Produk baru"}
           </h2>
           <button
-            onClick={onClose}
+            onClick={closeForm}
             className="text-2xl text-muted-foreground hover:text-foreground transition cursor-pointer"
           >
             ×
@@ -48,21 +79,38 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
         </div>
         <div className="flex-1 overflow-y-auto p-6 space-y-5 min-h-0 hide-scrollbar">
           <form
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              onSubmit({
+              const data = {
                 name,
                 description,
                 basePrice: Number(basePrice),
                 image:
                   image || "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80",
                 variantGroups: variantGroups.length > 0 ? variantGroups : undefined,
-              });
+              };
+              const parsed = createProductSchema.safeParse(data);
+              if (!parsed.success) {
+                const nextErrors: Record<string, string> = {};
+                parsed.error.issues.forEach((issue) => {
+                  nextErrors[issue.path.join(".") || "form"] = issue.message;
+                });
+                setErrors(nextErrors);
+                return;
+              }
+              setErrors({});
+              setSubmitting(true);
+              try {
+                await onSubmit(parsed.data);
+              } finally {
+                setSubmitting(false);
+              }
             }}
             className="space-y-5"
           >
             <Field label="Nama">
               <Input value={name} onChange={(e) => setName(e.target.value)} required />
+              {errors.name && <p className="mt-1 text-xs text-destructive">{errors.name}</p>}
             </Field>
             <Field label="Deskripsi">
               <Textarea
@@ -70,6 +118,9 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
               />
+              {errors.description && (
+                <p className="mt-1 text-xs text-destructive">{errors.description}</p>
+              )}
             </Field>
             <Field label="Harga dasar (Rp)">
               <Input
@@ -78,6 +129,9 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
                 onChange={(e) => setBasePrice(+e.target.value)}
                 required
               />
+              {errors.basePrice && (
+                <p className="mt-1 text-xs text-destructive">{errors.basePrice}</p>
+              )}
             </Field>
             <Field label="Gambar Produk">
               <ImageUpload value={image} onChange={(url) => setImage(url)} />
@@ -208,8 +262,8 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
               </div>
             </div>
 
-            <Button type="submit" className="w-full shrink-0 py-3.5">
-              {initial ? "Simpan perubahan" : "Tambah produk"}
+            <Button type="submit" disabled={submitting} className="w-full shrink-0 py-3.5">
+              {submitting ? "Menyimpan..." : initial ? "Simpan perubahan" : "Tambah produk"}
             </Button>
           </form>
         </div>

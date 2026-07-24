@@ -170,3 +170,32 @@ export const deleteProduct = createServerFn({ method: "POST" })
 
     return { success: true };
   });
+
+export const reorderProducts = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.array(z.string().uuid()).min(1, "Urutan produk tidak boleh kosong"))
+  .handler(async ({ data: ids, context }) => {
+    const tenantId = context.tenant?.id;
+    if (!tenantId) {
+      throw new Error("Toko tidak ditemukan untuk pengguna ini");
+    }
+
+    const products = await prisma.product.findMany({
+      where: { tenantId, id: { in: ids } },
+      select: { id: true },
+    });
+    if (products.length !== ids.length) {
+      throw new Error("Produk tidak ditemukan atau bukan milik toko Anda");
+    }
+
+    await prisma.$transaction(
+      ids.map((id, sortOrder) =>
+        prisma.product.update({
+          where: { id },
+          data: { sortOrder },
+        }),
+      ),
+    );
+
+    return { success: true };
+  });

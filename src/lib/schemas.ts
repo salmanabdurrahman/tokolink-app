@@ -30,6 +30,7 @@ export const updateTenantSchema = createTenantSchema
     originPostalCode: z.string().max(10).optional(),
     rajaOngkirOriginId: z.string().max(80).optional(),
     rajaOngkirOriginLabel: z.string().max(160).optional(),
+    whatsappTemplate: z.string().max(500, "Template WhatsApp maksimal 500 karakter").optional(),
     allowedCouriers: z
       .array(z.enum(["jne", "jnt", "sicepat", "anteraja", "pos", "tiki", "ninja"]))
       .min(1, "Pilih minimal 1 kurir")

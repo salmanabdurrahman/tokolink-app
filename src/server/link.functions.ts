@@ -96,3 +96,32 @@ export const deleteLink = createServerFn({ method: "POST" })
 
     return { success: true };
   });
+
+export const reorderLinks = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.array(z.string().uuid()).min(1, "Urutan tautan tidak boleh kosong"))
+  .handler(async ({ data: ids, context }) => {
+    const tenantId = context.tenant?.id;
+    if (!tenantId) {
+      throw new Error("Toko tidak ditemukan untuk pengguna ini");
+    }
+
+    const links = await prisma.link.findMany({
+      where: { tenantId, id: { in: ids } },
+      select: { id: true },
+    });
+    if (links.length !== ids.length) {
+      throw new Error("Tautan tidak ditemukan atau bukan milik toko Anda");
+    }
+
+    await prisma.$transaction(
+      ids.map((id, sortOrder) =>
+        prisma.link.update({
+          where: { id },
+          data: { sortOrder },
+        }),
+      ),
+    );
+
+    return { success: true };
+  });

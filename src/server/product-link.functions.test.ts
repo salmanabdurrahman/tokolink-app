@@ -17,20 +17,27 @@ vi.mock("../db", () => ({
       delete: vi.fn(),
       create: vi.fn(),
     },
-    $transaction: vi.fn(async (callback) =>
-      callback({
+    $transaction: vi.fn(async (callbackOrQueries) => {
+      if (Array.isArray(callbackOrQueries)) return Promise.all(callbackOrQueries);
+      return callbackOrQueries({
         product: { update: vi.fn() },
         productVariantGroup: { deleteMany: vi.fn() },
-      }),
-    ),
+      });
+    }),
   },
 }));
 
 vi.mock("./auth-middleware", () => ({ authMiddleware: vi.fn() }));
 
 import { prisma } from "../db";
-import { addLink, deleteLink, getLinks, updateLink } from "./link.functions";
-import { createProduct, deleteProduct, getProducts, updateProduct } from "./product.functions";
+import { addLink, deleteLink, getLinks, reorderLinks, updateLink } from "./link.functions";
+import {
+  createProduct,
+  deleteProduct,
+  getProducts,
+  reorderProducts,
+  updateProduct,
+} from "./product.functions";
 
 const prismaAny = prisma as any;
 const addLinkHandler = addLink as any;
@@ -41,6 +48,8 @@ const getProductsHandler = getProducts as any;
 const createProductHandler = createProduct as any;
 const updateLinkHandler = updateLink as any;
 const deleteLinkHandler = deleteLink as any;
+const reorderLinkHandler = reorderLinks as any;
+const reorderProductHandler = reorderProducts as any;
 
 const tenantContext = { tenant: { id: "tenant-1" } };
 const noTenantContext = { user: { id: "user-1" } };
@@ -197,6 +206,48 @@ describe("addLink", () => {
         data: expect.objectContaining({ sortOrder: 0 }),
       }),
     );
+  });
+});
+
+describe("reorder product/link", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("persists product sortOrder for tenant-owned products", async () => {
+    const ids = ["11111111-1111-4111-8111-111111111111", "22222222-2222-4222-8222-222222222222"];
+    vi.mocked(prismaAny.product.findMany).mockResolvedValue(ids.map((id) => ({ id })));
+    vi.mocked(prismaAny.product.update).mockResolvedValue({});
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (queries: any[]) =>
+      Promise.all(queries),
+    );
+
+    await expect(reorderProductHandler({ data: ids, context: tenantContext })).resolves.toEqual({
+      success: true,
+    });
+
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      where: { tenantId: "tenant-1", id: { in: ids } },
+      select: { id: true },
+    });
+    expect(prisma.product.update).toHaveBeenNthCalledWith(1, {
+      where: { id: ids[0] },
+      data: { sortOrder: 0 },
+    });
+    expect(prisma.product.update).toHaveBeenNthCalledWith(2, {
+      where: { id: ids[1] },
+      data: { sortOrder: 1 },
+    });
+  });
+
+  it("rejects reorder when some links are not tenant-owned", async () => {
+    const ids = ["11111111-1111-4111-8111-111111111111", "22222222-2222-4222-8222-222222222222"];
+    vi.mocked(prismaAny.link.findMany).mockResolvedValue([{ id: ids[0] }]);
+
+    await expect(reorderLinkHandler({ data: ids, context: tenantContext })).rejects.toThrow(
+      "Tautan tidak ditemukan atau bukan milik toko Anda",
+    );
+    expect(prisma.link.update).not.toHaveBeenCalled();
   });
 });
 

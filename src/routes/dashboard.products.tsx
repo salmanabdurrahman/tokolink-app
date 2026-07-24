@@ -19,9 +19,12 @@ function ProductsPage() {
   const tenant = useTenant((s) => s.tenant);
   const add = useTenant((s) => s.addProduct);
   const remove = useTenant((s) => s.removeProduct);
+  const reorderProducts = useTenant((s) => s.reorderProducts);
   const [editing, setEditing] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   if (!tenant) {
     return (
@@ -32,6 +35,22 @@ function ProductsPage() {
   }
 
   const products = tenant.products;
+
+  const moveProduct = async (targetId: string) => {
+    if (!draggingId || draggingId === targetId) return;
+    const from = products.findIndex((product) => product.id === draggingId);
+    const to = products.findIndex((product) => product.id === targetId);
+    if (from < 0 || to < 0) return;
+    const next = [...products];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    try {
+      await reorderProducts(next.map((product) => product.id));
+      toast.success("Urutan produk disimpan");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan urutan produk");
+    }
+  };
 
   const headerAction = (
     <Button
@@ -48,34 +67,74 @@ function ProductsPage() {
     <div className="space-y-10 bg-background text-foreground animate-fade-in">
       <PageHeader label="Manajemen" title="Produk" action={headerAction} />
 
-      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {products.map((p) => (
-          <ProductCard
-            key={p.id}
-            product={p}
-            onEdit={() => {
-              setEditing(p);
+      {error && (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      {products.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center">
+          <h2 className="font-display text-xl font-medium">Belum ada produk</h2>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+            Tambahkan produk pertama agar pembeli bisa mulai checkout dari storefront.
+          </p>
+          <Button
+            onClick={() => {
+              setEditing(null);
               setShowForm(true);
             }}
-            onDelete={() => setDeletingProduct(p)}
-          />
-        ))}
-      </ul>
+            className="mt-4"
+          >
+            + Produk baru
+          </Button>
+        </div>
+      ) : (
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {products.map((p) => (
+            <div
+              key={p.id}
+              draggable
+              onDragStart={() => setDraggingId(p.id)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => moveProduct(p.id)}
+              onDragEnd={() => setDraggingId(null)}
+              className={draggingId === p.id ? "opacity-60" : ""}
+            >
+              <ProductCard
+                product={p}
+                onEdit={() => {
+                  setEditing(p);
+                  setShowForm(true);
+                }}
+                onDelete={() => setDeletingProduct(p)}
+              />
+            </div>
+          ))}
+        </ul>
+      )}
 
       <AnimatePresence>
         {showForm && (
           <ProductForm
             initial={editing}
             onClose={() => setShowForm(false)}
-            onSubmit={(data) => {
-              if (editing) {
-                useTenant.getState().updateProduct(editing.id, data);
-                toast.success(`Produk "${data.name}" berhasil diperbarui`);
-              } else {
-                add(data);
-                toast.success(`Produk "${data.name}" berhasil ditambahkan`);
+            onSubmit={async (data) => {
+              setError("");
+              try {
+                if (editing) {
+                  await useTenant.getState().updateProduct(editing.id, data);
+                  toast.success(`Produk "${data.name}" berhasil diperbarui`);
+                } else {
+                  await add(data);
+                  toast.success(`Produk "${data.name}" berhasil ditambahkan`);
+                }
+                setShowForm(false);
+              } catch (err) {
+                const message = err instanceof Error ? err.message : "Gagal menyimpan produk";
+                setError(message);
+                toast.error(message);
               }
-              setShowForm(false);
             }}
           />
         )}
@@ -86,10 +145,14 @@ function ProductsPage() {
           <DeleteConfirmModal
             product={deletingProduct}
             onClose={() => setDeletingProduct(null)}
-            onConfirm={() => {
-              remove(deletingProduct.id);
-              toast.success(`Produk "${deletingProduct.name}" berhasil dihapus`);
-              setDeletingProduct(null);
+            onConfirm={async () => {
+              try {
+                await remove(deletingProduct.id);
+                toast.success(`Produk "${deletingProduct.name}" berhasil dihapus`);
+                setDeletingProduct(null);
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : "Gagal menghapus produk");
+              }
             }}
           />
         )}

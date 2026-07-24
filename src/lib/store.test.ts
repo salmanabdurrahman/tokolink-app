@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildWhatsAppUrl, useCart } from "./store";
+import { formatWhatsAppNumber } from "./utils";
 import type { CartItem } from "./types";
 
 const items: CartItem[] = [
@@ -45,6 +46,22 @@ describe("buildWhatsAppUrl", () => {
     expect(text).not.toContain("*Catatan:*");
   });
 
+  it("uses custom WhatsApp template when provided", () => {
+    const url = buildWhatsAppUrl(
+      "628123456789",
+      "Toko Kopi",
+      items,
+      48000,
+      "Tanpa es ya",
+      "Halo, saya mau pesan dari promo offline.",
+    );
+    const text = new URL(url).searchParams.get("text") ?? "";
+
+    expect(text).toContain("Halo, saya mau pesan dari promo offline.");
+    expect(text).toContain("▪ 2x Kopi Susu (Large)");
+    expect(text).not.toContain("Mohon info instruksi pembayarannya");
+  });
+
   it("handles empty items list and missing variant gracefully", () => {
     const noVariantItem: CartItem = {
       key: "roti",
@@ -62,9 +79,20 @@ describe("buildWhatsAppUrl", () => {
   });
 });
 
+describe("formatWhatsAppNumber", () => {
+  it("normalizes Indonesian local numbers", () => {
+    expect(formatWhatsAppNumber("0812-3456-7890")).toBe("6281234567890");
+    expect(formatWhatsAppNumber("81234567890")).toBe("6281234567890");
+    expect(formatWhatsAppNumber("6281234567890")).toBe("6281234567890");
+  });
+});
+
 describe("useCart", () => {
   beforeEach(() => {
-    act(() => useCart.getState().clear());
+    act(() => {
+      useCart.getState().setTenantSlug("tenant-a");
+      useCart.getState().clear();
+    });
   });
 
   it("starts empty", () => {
@@ -73,6 +101,18 @@ describe("useCart", () => {
     expect(result.current.items).toHaveLength(0);
     expect(result.current.totalQty()).toBe(0);
     expect(result.current.totalPrice()).toBe(0);
+  });
+
+  it("clears persisted cart when storefront tenant changes", () => {
+    const { result } = renderHook(() => useCart());
+
+    act(() => result.current.add(items[0]));
+    expect(result.current.items).toHaveLength(1);
+
+    act(() => result.current.setTenantSlug("tenant-b"));
+
+    expect(result.current.items).toHaveLength(0);
+    expect(result.current.tenantSlug).toBe("tenant-b");
   });
 
   it("adds item and increments quantity for duplicate key", () => {

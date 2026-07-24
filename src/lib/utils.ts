@@ -29,3 +29,10 @@ export function getErrorMessage(err: any): string {
   }
   return msg;
 }
+
+export function formatWhatsAppNumber(value: string) {
+  const digits = value.replace(/\D/g, "");
+  if (digits.startsWith("0")) return `62${digits.slice(1)}`;
+  if (digits.startsWith("8")) return `62${digits}`;
+  return digits;
+}

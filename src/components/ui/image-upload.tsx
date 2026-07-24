@@ -15,9 +15,11 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [lastFile, setLastFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const processFile = async (file: File) => {
+    setLastFile(file);
     setError("");
     setLoading(true);
     setStatus("Memvalidasi gambar...");
@@ -28,13 +30,13 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
         throw new Error(validation.error || "Validasi gagal");
       }
 
-      setStatus("Mengompresi gambar ke WebP (80%)...");
+      setStatus("Mengompresi gambar ke WebP (40%)...");
       const webpBlob = await compressToWebP(file, 0.8);
 
-      setStatus("Menyiapkan file upload...");
+      setStatus("Menyiapkan file upload (60%)...");
       const base64 = await blobToBase64(webpBlob);
 
-      setStatus("Mengunggah gambar ke CDN...");
+      setStatus("Mengunggah gambar ke CDN (80%)...");
       const result = await uploadImage({
         data: {
           name: file.name.endsWith(".webp") ? file.name : `${file.name.split(".")[0]}.webp`,
@@ -43,7 +45,7 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
       });
 
       onChange(result.url);
-      setStatus("");
+      setStatus("Upload selesai (100%)");
     } catch (err: any) {
       console.error(err);
       const { getErrorMessage } = await import("@/lib/utils");
@@ -164,9 +166,20 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
         )}
       </div>
       {error && (
-        <div className="flex items-center gap-2 text-destructive text-xs font-medium px-1">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          <span>{error}</span>
+        <div className="flex items-center justify-between gap-3 text-destructive text-xs font-medium px-1">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+          {lastFile && (
+            <button
+              type="button"
+              onClick={() => processFile(lastFile)}
+              className="shrink-0 text-foreground underline underline-offset-4"
+            >
+              Coba lagi
+            </button>
+          )}
         </div>
       )}
     </div>
