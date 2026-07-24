@@ -44,11 +44,10 @@ export function useAuthForm() {
     setError("");
 
     try {
-      const { getRecaptchaToken } = await import("@/lib/recaptcha");
-      const recaptchaToken = await getRecaptchaToken(mode === "signup" ? "signup" : "login");
-
       if (mode === "signup") {
+        const { getRecaptchaToken } = await import("@/lib/recaptcha");
         const { registerUser } = await import("@/server/auth.functions");
+        const recaptchaToken = await getRecaptchaToken("signup");
         const res = await registerUser({ data: { email, password, recaptchaToken } });
         if (res.success) {
           setMode("otp");
@@ -101,9 +100,8 @@ export function useAuthForm() {
 
     try {
       const { getRecaptchaToken } = await import("@/lib/recaptcha");
-      const recaptchaToken = await getRecaptchaToken("onboarding");
-
       const { resendSignUpCode } = await import("@/server/auth.functions");
+      const recaptchaToken = await getRecaptchaToken("resend_signup_code");
       const res = await resendSignUpCode({ data: { email, recaptchaToken } });
 
       if (res.success) {

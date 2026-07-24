@@ -32,3 +32,4 @@ src/generated
 *.njsproj
 *.sln
 *.sw?
+.pi/

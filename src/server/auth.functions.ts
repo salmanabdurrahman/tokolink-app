@@ -280,7 +280,7 @@ export const resendSignUpCode = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { email, recaptchaToken } = data;
 
-    const isHuman = await verifyRecaptcha(recaptchaToken, "onboarding");
+    const isHuman = await verifyRecaptcha(recaptchaToken, "resend_signup_code");
     if (!isHuman) {
       throw new Error("Verifikasi bot gagal (reCAPTCHA)");
     }

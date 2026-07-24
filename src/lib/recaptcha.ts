@@ -4,6 +4,31 @@ declare global {
   }
 }
 
+function waitForGrecaptcha(maxWaitMs = 10_000, pollMs = 200): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof window !== "undefined" && window.grecaptcha) {
+      resolve();
+      return;
+    }
+
+    const start = Date.now();
+
+    const poll = () => {
+      if (window.grecaptcha) {
+        resolve();
+        return;
+      }
+      if (Date.now() - start >= maxWaitMs) {
+        reject(new Error("reCAPTCHA script load timeout"));
+        return;
+      }
+      setTimeout(poll, pollMs);
+    };
+
+    poll();
+  });
+}
+
 export async function getRecaptchaToken(action: string): Promise<string> {
   const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
   if (!siteKey) {
@@ -11,13 +36,14 @@ export async function getRecaptchaToken(action: string): Promise<string> {
     return "disabled";
   }
 
-  return new Promise((resolve) => {
-    if (typeof window === "undefined" || !window.grecaptcha) {
-      console.warn("window.grecaptcha not loaded yet, skipping");
-      resolve("not-loaded");
-      return;
-    }
+  try {
+    await waitForGrecaptcha();
+  } catch {
+    console.warn("reCAPTCHA script not loaded within timeout, skipping");
+    return "not-loaded";
+  }
 
+  return new Promise((resolve) => {
     window.grecaptcha.ready(() => {
       window.grecaptcha
         .execute(siteKey, { action })
