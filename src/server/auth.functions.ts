@@ -6,6 +6,7 @@ import { sendVerificationEmail, sendWelcomeEmail } from "./email";
 import crypto from "crypto";
 import { z } from "zod";
 import { parseCookie } from "../lib/cookies";
+import { enforceAuthRateLimit, hashOtp, logAuthAbuse, normalizeEmail } from "./auth-abuse";
 
 export const getSessionUser = createServerFn({ method: "GET" }).handler(
   async ({ request }: any) => {
@@ -69,14 +70,14 @@ export const syncSession = createServerFn({ method: "POST" })
       where: { supabaseId: supaUser.id },
       create: {
         supabaseId: supaUser.id,
-        email: supaUser.email!,
+        email: normalizeEmail(supaUser.email!),
         name,
         avatarUrl,
         provider,
         emailVerified: provider !== "email" ? new Date() : null,
       },
       update: {
-        email: supaUser.email!,
+        email: normalizeEmail(supaUser.email!),
         name: name || undefined,
         avatarUrl: avatarUrl || undefined,
         provider,
@@ -114,12 +115,12 @@ async function generateAndSendOTP(email: string) {
     where: { email },
     create: {
       email,
-      code,
+      codeHash: hashOtp(code),
       expiresAt,
       attempts: 0,
     },
     update: {
-      code,
+      codeHash: hashOtp(code),
       expiresAt,
       attempts: 0,
       createdAt: new Date(),
@@ -131,8 +132,11 @@ async function generateAndSendOTP(email: string) {
 
 export const registerUser = createServerFn({ method: "POST" })
   .validator(registerSchema)
-  .handler(async ({ data }) => {
-    const { email, password, turnstileToken } = data;
+  .handler(async ({ data, request }: any) => {
+    const email = normalizeEmail(data.email);
+    const { password, turnstileToken } = data;
+
+    await enforceAuthRateLimit({ event: "signup", email, request });
 
     const isHuman = await verifyTurnstile(turnstileToken, "signup");
     if (!isHuman) {
@@ -153,6 +157,7 @@ export const registerUser = createServerFn({ method: "POST" })
       });
 
       await generateAndSendOTP(email);
+      await logAuthAbuse({ event: "signup", email, request, outcome: "success" });
       return { success: true, message: "Kode verifikasi telah dikirim ulang." };
     }
 
@@ -181,6 +186,7 @@ export const registerUser = createServerFn({ method: "POST" })
       });
 
       await generateAndSendOTP(email);
+      await logAuthAbuse({ event: "signup", email, request, outcome: "success" });
       return { success: true, message: "Kode verifikasi telah dikirim." };
     } catch (err: any) {
       throw new Error(err.message || "Gagal melakukan registrasi.");
@@ -189,8 +195,11 @@ export const registerUser = createServerFn({ method: "POST" })
 
 export const verifySignUpCode = createServerFn({ method: "POST" })
   .validator(verifyCodeSchema)
-  .handler(async ({ data }) => {
-    const { email, code } = data;
+  .handler(async ({ data, request }: any) => {
+    const email = normalizeEmail(data.email);
+    const { code } = data;
+
+    await enforceAuthRateLimit({ event: "verify_signup_code", email, request });
 
     const record = await prisma.verificationCode.findUnique({
       where: { email },
@@ -215,7 +224,8 @@ export const verifySignUpCode = createServerFn({ method: "POST" })
       data: { attempts: newAttempts },
     });
 
-    if (record.code !== code) {
+    if (record.codeHash !== hashOtp(code)) {
+      await logAuthAbuse({ event: "verify_signup_code", email, request, outcome: "failed" });
       throw new Error(`Kode verifikasi salah. Sisa percobaan: ${5 - newAttempts}`);
     }
 
@@ -244,6 +254,8 @@ export const verifySignUpCode = createServerFn({ method: "POST" })
       where: { email },
     });
 
+    await logAuthAbuse({ event: "verify_signup_code", email, request, outcome: "success" });
+
     sendWelcomeEmail(email, user.name || email).catch((err) => {
       console.error("Failed to send welcome email:", err);
     });
@@ -253,8 +265,11 @@ export const verifySignUpCode = createServerFn({ method: "POST" })
 
 export const resendSignUpCode = createServerFn({ method: "POST" })
   .validator(resendSchema)
-  .handler(async ({ data }) => {
-    const { email, turnstileToken } = data;
+  .handler(async ({ data, request }: any) => {
+    const email = normalizeEmail(data.email);
+    const { turnstileToken } = data;
+
+    await enforceAuthRateLimit({ event: "resend_signup_code", email, request });
 
     const isHuman = await verifyTurnstile(turnstileToken, "resend_signup_code");
     if (!isHuman) {
@@ -285,5 +300,6 @@ export const resendSignUpCode = createServerFn({ method: "POST" })
     }
 
     await generateAndSendOTP(email);
+    await logAuthAbuse({ event: "resend_signup_code", email, request, outcome: "success" });
     return { success: true, message: "Kode verifikasi baru dikirim." };
   });

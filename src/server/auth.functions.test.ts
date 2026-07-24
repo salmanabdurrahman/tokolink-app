@@ -14,6 +14,13 @@ vi.mock("../db", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    authRateLimit: {
+      count: vi.fn(),
+      create: vi.fn(),
+    },
+    authAuditLog: {
+      create: vi.fn(),
+    },
   },
 }));
 
@@ -72,6 +79,10 @@ beforeEach(() => {
   vi.mocked(prismaAny.verificationCode.upsert).mockReset();
   vi.mocked(prismaAny.verificationCode.update).mockReset();
   vi.mocked(prismaAny.verificationCode.delete).mockReset();
+  vi.mocked(prismaAny.authRateLimit.count).mockReset();
+  vi.mocked(prismaAny.authRateLimit.count).mockResolvedValue(0);
+  vi.mocked(prismaAny.authRateLimit.create).mockReset();
+  vi.mocked(prismaAny.authAuditLog.create).mockReset();
   vi.mocked(supabaseAdmin.auth.admin.createUser).mockReset();
   vi.mocked(supabaseAdmin.auth.admin.updateUserById).mockReset();
   vi.mocked(supabaseAdmin.auth.getUser).mockReset();
@@ -100,8 +111,12 @@ describe("registerUser", () => {
     expect(prisma.verificationCode.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { email },
-        create: expect.objectContaining({ email, attempts: 0 }),
-        update: expect.objectContaining({ attempts: 0, createdAt: expect.any(Date) }),
+        create: expect.objectContaining({ email, codeHash: expect.any(String), attempts: 0 }),
+        update: expect.objectContaining({
+          codeHash: expect.any(String),
+          attempts: 0,
+          createdAt: expect.any(Date),
+        }),
       }),
     );
     expect(sendVerificationEmail).toHaveBeenCalledWith(email, expect.stringMatching(/^\d{6}$/));
@@ -162,7 +177,7 @@ describe("verifySignUpCode", () => {
   it("confirms email, deletes OTP, and returns success", async () => {
     vi.mocked(prismaAny.verificationCode.findUnique).mockResolvedValue({
       email,
-      code: "123456",
+      codeHash: "934a0e55ff9d8433503dbbe187c09046d089c8e32642d3f06551a8ac932a093e",
       attempts: 0,
       expiresAt: new Date(Date.now() + 60_000),
     });
@@ -189,7 +204,7 @@ describe("verifySignUpCode", () => {
 
     vi.mocked(prismaAny.verificationCode.findUnique).mockResolvedValueOnce({
       email,
-      code: "123456",
+      codeHash: "934a0e55ff9d8433503dbbe187c09046d089c8e32642d3f06551a8ac932a093e",
       attempts: 0,
       expiresAt: new Date(Date.now() - 1_000),
     });
@@ -201,7 +216,7 @@ describe("verifySignUpCode", () => {
   it("increments attempts for wrong code and deletes after max attempts", async () => {
     vi.mocked(prismaAny.verificationCode.findUnique).mockResolvedValueOnce({
       email,
-      code: "123456",
+      codeHash: "934a0e55ff9d8433503dbbe187c09046d089c8e32642d3f06551a8ac932a093e",
       attempts: 1,
       expiresAt: new Date(Date.now() + 60_000),
     });
@@ -215,7 +230,7 @@ describe("verifySignUpCode", () => {
 
     vi.mocked(prismaAny.verificationCode.findUnique).mockResolvedValueOnce({
       email,
-      code: "123456",
+      codeHash: "934a0e55ff9d8433503dbbe187c09046d089c8e32642d3f06551a8ac932a093e",
       attempts: 5,
       expiresAt: new Date(Date.now() + 60_000),
     });
@@ -228,7 +243,7 @@ describe("verifySignUpCode", () => {
   it("surfaces Supabase confirm failure", async () => {
     vi.mocked(prismaAny.verificationCode.findUnique).mockResolvedValue({
       email,
-      code: "123456",
+      codeHash: "934a0e55ff9d8433503dbbe187c09046d089c8e32642d3f06551a8ac932a093e",
       attempts: 0,
       expiresAt: new Date(Date.now() + 60_000),
     });

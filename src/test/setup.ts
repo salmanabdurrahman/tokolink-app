@@ -10,6 +10,7 @@ const testEnv = {
   SUPABASE_URL: "https://example.supabase.co",
   SUPABASE_ANON_KEY: "test-anon-key",
   SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key",
+  OTP_HASH_SECRET: "test-otp-hash-secret",
   BLOB_READ_WRITE_TOKEN: "test-blob-token",
   R2_ACCOUNT_ID: "test-account-id",
   R2_ACCESS_KEY_ID: "test-access-key-id",
@@ -57,6 +58,9 @@ vi.mock("@/db", () => {
       productVariantOption: model(),
       link: model(),
       verificationCode: model(),
+      authRateLimit: model(),
+      authAuditLog: model(),
+      media: model(),
       $transaction: vi.fn(async (callback) => {
         if (typeof callback === "function") return callback({});
         return callback;

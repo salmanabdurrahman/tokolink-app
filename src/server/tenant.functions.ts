@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "../db";
 import { authMiddleware } from "./auth-middleware";
 import { createTenantSchema, updateTenantSchema } from "../lib/schemas";
+import { enforceAuthRateLimit, logAuthAbuse } from "./auth-abuse";
+import { deleteTenantMediaByUrl } from "./media-cleanup";
 import { z } from "zod";
 
 export const getTenant = createServerFn({ method: "GET" })
@@ -68,8 +70,10 @@ export const getMyTenant = createServerFn({ method: "GET" })
 export const createTenant = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(createTenantSchema)
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context, request }: any) => {
     const userId = context.user.id;
+
+    await enforceAuthRateLimit({ event: "onboarding", userId, request });
 
     const { verifyTurnstile } = await import("./turnstile");
     const isValid = await verifyTurnstile(data.turnstileToken, "onboarding");
@@ -104,6 +108,8 @@ export const createTenant = createServerFn({ method: "POST" })
       },
     });
 
+    await logAuthAbuse({ event: "onboarding", userId, request, outcome: "success" });
+
     return tenant;
   });
 
@@ -125,10 +131,15 @@ export const updateTenant = createServerFn({ method: "POST" })
       }
     }
 
+    const oldAvatar = context.tenant?.avatar;
     const tenant = await prisma.tenant.update({
       where: { id: tenantId },
       data,
     });
+
+    if (data.avatar !== undefined && data.avatar !== oldAvatar) {
+      await deleteTenantMediaByUrl(tenantId, oldAvatar);
+    }
 
     return tenant;
   });

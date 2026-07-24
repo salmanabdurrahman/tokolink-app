@@ -1,4 +1,4 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 
@@ -111,8 +111,24 @@ export async function putObject({
   };
 }
 
+export async function deleteObject(key: string) {
+  const config = getR2Config();
+  if (!config) {
+    throw new Error("Konfigurasi R2 belum lengkap. Tambahkan env R2 untuk hapus gambar.");
+  }
+
+  const client = getS3Client(config);
+  await client.send(
+    new DeleteObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+    }),
+  );
+}
+
 export const storage = {
   putObject,
+  deleteObject,
 };
 
 export function setStorageS3ClientForTest(client: S3Client | null) {

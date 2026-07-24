@@ -158,6 +158,8 @@ bun run db:generate
 bun run db:push
 ```
 
+Schema updates add auth abuse and media metadata tables. Run `bun run db:push` locally after pulling schema changes.
+
 Use migrations during schema development when needed:
 
 ```bash
@@ -183,6 +185,7 @@ Open `http://localhost:3000`.
 | `SUPABASE_URL`                | Server-side Supabase project URL                      |
 | `SUPABASE_ANON_KEY`           | Server-side Supabase anon key                         |
 | `SUPABASE_SERVICE_ROLE_KEY`   | Server-side Supabase admin key; keep secret           |
+| `OTP_HASH_SECRET`             | Server-side HMAC secret for OTP hashes; keep secret   |
 | `BLOB_READ_WRITE_TOKEN`       | Legacy Vercel Blob token for rollback/migration only  |
 | `R2_ACCOUNT_ID`               | Cloudflare account ID for R2 S3-compatible endpoint   |
 | `R2_ACCESS_KEY_ID`            | R2 access key ID; keep secret                         |
@@ -301,8 +304,8 @@ Tokolink includes several hardening patterns:
 - **Tenant ownership checks** before updating or deleting tenant-scoped products and links.
 - **Zod validation** for incoming Server Function input.
 - **Invisible Turnstile checks** for signup, OTP resend, and onboarding flows.
-- **OTP brute-force protection** with attempt limits and expiry handling.
-- **Image upload validation** with magic-byte checks and 5MB limit.
+- **OTP brute-force protection** with server-side rate limits, hashed OTP storage, attempt limits, resend cooldown, and expiry handling.
+- **Image upload validation** with filename extension checks, magic-byte checks, dimension guard, malware-scan hook, media metadata, and 5MB pre-decode limit.
 - **R2 object uploads** with tenant-scoped keys, immutable public cache headers, and public custom-domain URLs.
 - **OG image SSRF guard** with an allowlist for legacy Blob, R2 public domain, and production loopback/local-network blocking.
 - **Secret hygiene** through `.env.example` templates and local `.env` usage.

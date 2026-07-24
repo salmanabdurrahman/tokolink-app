@@ -3,11 +3,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../db", () => ({
   prisma: {
     tenant: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
+    authRateLimit: { count: vi.fn(), create: vi.fn() },
+    authAuditLog: { create: vi.fn() },
+    media: { findFirst: vi.fn(), delete: vi.fn() },
   },
 }));
 
 vi.mock("./auth-middleware", () => ({ authMiddleware: vi.fn() }));
 vi.mock("./turnstile", () => ({ verifyTurnstile: vi.fn(async () => true) }));
+vi.mock("./storage", () => ({ storage: { deleteObject: vi.fn() } }));
 
 import { prisma } from "../db";
 import { verifyTurnstile } from "./turnstile";
@@ -32,6 +36,12 @@ beforeEach(() => {
   vi.mocked(prismaAny.tenant.findUnique).mockReset();
   vi.mocked(prismaAny.tenant.create).mockReset();
   vi.mocked(prismaAny.tenant.update).mockReset();
+  vi.mocked(prismaAny.authRateLimit.count).mockReset();
+  vi.mocked(prismaAny.authRateLimit.count).mockResolvedValue(0);
+  vi.mocked(prismaAny.authRateLimit.create).mockReset();
+  vi.mocked(prismaAny.authAuditLog.create).mockReset();
+  vi.mocked(prismaAny.media.findFirst).mockReset();
+  vi.mocked(prismaAny.media.delete).mockReset();
   vi.mocked(verifyTurnstile).mockResolvedValue(true);
 });
 

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "../db";
 import { authMiddleware } from "./auth-middleware";
 import { createProductSchema, updateProductSchema } from "../lib/schemas";
+import { deleteTenantMediaByUrl } from "./media-cleanup";
 import { z } from "zod";
 
 export const getProducts = createServerFn({ method: "GET" })
@@ -93,6 +94,8 @@ export const updateProduct = createServerFn({ method: "POST" })
       throw new Error("Produk tidak ditemukan atau bukan milik toko Anda");
     }
 
+    const shouldDeleteOldImage = data.image !== undefined && data.image !== existingProduct.image;
+
     const updatedProduct = await prisma.$transaction(async (tx) => {
       if (data.variantGroups !== undefined) {
         await tx.productVariantGroup.deleteMany({
@@ -136,6 +139,10 @@ export const updateProduct = createServerFn({ method: "POST" })
       });
     });
 
+    if (shouldDeleteOldImage) {
+      await deleteTenantMediaByUrl(tenantId, existingProduct.image);
+    }
+
     return updatedProduct;
   });
 
@@ -158,6 +165,8 @@ export const deleteProduct = createServerFn({ method: "POST" })
     await prisma.product.delete({
       where: { id },
     });
+
+    await deleteTenantMediaByUrl(tenantId, existingProduct.image);
 
     return { success: true };
   });

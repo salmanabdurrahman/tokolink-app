@@ -25,12 +25,38 @@ model User {
 model VerificationCode {
   id        String   @id @default(uuid()) @db.Uuid
   email     String   @unique
-  code      String
+  codeHash  String   @map("code_hash")
   attempts  Int      @default(0)
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("verification_codes")
+}
+
+model AuthRateLimit {
+  id        String   @id @default(uuid()) @db.Uuid
+  event     String
+  scopeKey  String   @map("scope_key")
+  emailHash String   @default("") @map("email_hash")
+  ipHash    String   @default("") @map("ip_hash")
+  userHash  String   @default("") @map("user_hash")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([event, scopeKey, createdAt])
+  @@map("auth_rate_limits")
+}
+
+model AuthAuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  event     String
+  emailHash String   @default("") @map("email_hash")
+  ipHash    String   @default("") @map("ip_hash")
+  userHash  String   @default("") @map("user_hash")
+  outcome   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([event, createdAt])
+  @@map("auth_audit_logs")
 }
 
 model Tenant {
@@ -47,6 +73,7 @@ model Tenant {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   products  Product[]
   links     Link[]
+  media     Media[]
 
   @@index([slug])
   @@map("tenants")
@@ -65,9 +92,30 @@ model Product {
 
   tenant        Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   variantGroups ProductVariantGroup[]
+  media         Media[]
 
   @@index([tenantId])
   @@map("products")
+}
+
+model Media {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique
+  url       String
+  size      Int
+  mime      String
+  ownerType String   @map("owner_type")
+  ownerId   String   @map("owner_id") @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  productId String?  @map("product_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([ownerType, ownerId])
+  @@map("media")
 }
 
 model ProductVariantGroup {
