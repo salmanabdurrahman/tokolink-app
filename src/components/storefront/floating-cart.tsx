@@ -8,13 +8,15 @@ import { Sheet } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 interface FloatingCartProps {
+  tenantSlug: string;
   storeName: string;
   phone: string;
 }
 
-export function FloatingCart({ storeName, phone }: FloatingCartProps) {
+export function FloatingCart({ tenantSlug, storeName, phone }: FloatingCartProps) {
   const items = useCart((s) => s.items);
   const totalQty = useCart((s) => s.totalQty());
   const totalPrice = useCart((s) => s.totalPrice());
@@ -23,16 +25,43 @@ export function FloatingCart({ storeName, phone }: FloatingCartProps) {
   const clear = useCart((s) => s.clear);
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [customer, setCustomer] = useState({ name: "", email: "", whatsapp: "", address: "" });
+  const [shipping, setShipping] = useState({ courier: "jne", service: "REG", etd: "", cost: 0 });
 
   if (totalQty === 0) return null;
 
-  const checkout = () => {
+  const checkoutWhatsApp = () => {
     const url = buildWhatsAppUrl(phone, storeName, items, totalPrice, note);
     window.open(url, "_blank");
     toast.success("Mengarahkan ke WhatsApp...");
-    clear();
-    setNote("");
-    setOpen(false);
+  };
+
+  const checkoutPakasir = async () => {
+    try {
+      setLoading(true);
+      const { createCheckoutOrder } = await import("@/server/order.functions");
+      const result = await createCheckoutOrder({
+        data: {
+          tenantSlug,
+          items: items.map((item) => ({
+            productId: item.productId,
+            variantOptionIds: item.variantId ? item.variantId.split(",") : [],
+            qty: item.qty,
+          })),
+          customer,
+          shipping: { ...shipping, cost: Number(shipping.cost) || 0 },
+        },
+      });
+      toast.success("Order dibuat. Mengarahkan ke pembayaran...");
+      clear();
+      setNote("");
+      window.location.href = result.paymentUrl;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Checkout gagal. Coba lagi.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -91,8 +120,55 @@ export function FloatingCart({ storeName, phone }: FloatingCartProps) {
             </li>
           ))}
         </ul>
+        <div className="mt-4 grid gap-3 shrink-0">
+          <Label>Data pembeli</Label>
+          <Input
+            value={customer.name}
+            onChange={(e) => setCustomer((value) => ({ ...value, name: e.target.value }))}
+            placeholder="Nama lengkap"
+          />
+          <Input
+            value={customer.whatsapp}
+            onChange={(e) => setCustomer((value) => ({ ...value, whatsapp: e.target.value }))}
+            placeholder="WhatsApp, contoh 628123456789"
+          />
+          <Input
+            value={customer.email}
+            onChange={(e) => setCustomer((value) => ({ ...value, email: e.target.value }))}
+            placeholder="Email receipt (opsional)"
+          />
+          <Textarea
+            value={customer.address}
+            onChange={(e) => setCustomer((value) => ({ ...value, address: e.target.value }))}
+            placeholder="Alamat pengiriman"
+            rows={2}
+          />
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3 shrink-0">
+          <Input
+            value={shipping.courier}
+            onChange={(e) => setShipping((value) => ({ ...value, courier: e.target.value }))}
+            placeholder="Kurir"
+          />
+          <Input
+            value={shipping.service}
+            onChange={(e) => setShipping((value) => ({ ...value, service: e.target.value }))}
+            placeholder="Layanan"
+          />
+          <Input
+            value={shipping.etd}
+            onChange={(e) => setShipping((value) => ({ ...value, etd: e.target.value }))}
+            placeholder="Estimasi"
+          />
+          <Input
+            type="number"
+            value={shipping.cost}
+            onChange={(e) => setShipping((value) => ({ ...value, cost: Number(e.target.value) }))}
+            placeholder="Ongkir"
+          />
+        </div>
         <div className="mt-4 space-y-1.5 shrink-0">
-          <Label htmlFor="order-note">Catatan Pesanan (opsional)</Label>
+          <Label htmlFor="order-note">Catatan WhatsApp (opsional)</Label>
           <Textarea
             id="order-note"
             value={note}
@@ -103,12 +179,22 @@ export function FloatingCart({ storeName, phone }: FloatingCartProps) {
         </div>
 
         <div className="mt-4 flex items-center justify-between border-t border-border pt-4 shrink-0">
-          <span className="text-sm text-muted-foreground">Total</span>
-          <span className="font-display text-2xl font-medium">{formatIDR(totalPrice)}</span>
+          <span className="text-sm text-muted-foreground">Total + ongkir</span>
+          <span className="font-display text-2xl font-medium">
+            {formatIDR(totalPrice + (Number(shipping.cost) || 0))}
+          </span>
         </div>
 
-        <Button onClick={checkout} variant="accent" className="mt-4 w-full shrink-0 py-4">
-          Checkout via WhatsApp →
+        <Button
+          onClick={checkoutPakasir}
+          variant="accent"
+          disabled={loading}
+          className="mt-4 w-full shrink-0 py-4"
+        >
+          {loading ? "Membuat order..." : "Bayar via Pakasir →"}
+        </Button>
+        <Button onClick={checkoutWhatsApp} variant="outline" className="mt-3 w-full shrink-0">
+          Chat WhatsApp →
         </Button>
         <button
           onClick={() => clear()}

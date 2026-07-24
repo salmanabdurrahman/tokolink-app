@@ -130,6 +130,56 @@ Tim Tokolink
   }
 }
 
+export async function sendOrderReceiptEmail(email: string, orderNumber: string, total: number) {
+  const subject = `Receipt Tokolink ${orderNumber}`;
+  const text = `Pembayaran order ${orderNumber} sudah terkonfirmasi. Total: Rp${total.toLocaleString("id-ID")}.`;
+
+  if (!resend) {
+    console.log("==================================================");
+    console.log(`[DEV RESEND FALLBACK] Send order receipt to: ${email}`);
+    console.log(`[DEV RESEND FALLBACK] Subject: ${subject}`);
+    console.log("==================================================");
+    return;
+  }
+
+  const { error } = await resend.emails.send({
+    from: SENDER,
+    to: email,
+    subject,
+    text,
+    html: `<p>Pembayaran order <strong>${orderNumber}</strong> sudah terkonfirmasi.</p><p>Total: <strong>Rp${total.toLocaleString("id-ID")}</strong></p>`,
+  });
+
+  if (error) throw new Error(`Gagal mengirim receipt order: ${error.message}`);
+}
+
+export async function sendTenantOrderNotificationEmail(
+  email: string,
+  orderNumber: string,
+  total: number,
+) {
+  const subject = `Order baru dibayar: ${orderNumber}`;
+  const text = `Order ${orderNumber} sudah dibayar. Total: Rp${total.toLocaleString("id-ID")}. Silakan proses fulfillment.`;
+
+  if (!resend) {
+    console.log("==================================================");
+    console.log(`[DEV RESEND FALLBACK] Send tenant order notification to: ${email}`);
+    console.log(`[DEV RESEND FALLBACK] Subject: ${subject}`);
+    console.log("==================================================");
+    return;
+  }
+
+  const { error } = await resend.emails.send({
+    from: SENDER,
+    to: email,
+    subject,
+    text,
+    html: `<p>Order <strong>${orderNumber}</strong> sudah dibayar.</p><p>Total: <strong>Rp${total.toLocaleString("id-ID")}</strong></p><p>Silakan proses fulfillment.</p>`,
+  });
+
+  if (error) throw new Error(`Gagal mengirim notifikasi order: ${error.message}`);
+}
+
 export async function sendWelcomeEmail(email: string, name: string) {
   const subject = "Selamat Datang di Tokolink! 🚀";
 

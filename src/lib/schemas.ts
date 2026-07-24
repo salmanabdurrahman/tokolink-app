@@ -50,3 +50,38 @@ export const createLinkSchema = z.object({
 });
 
 export const updateLinkSchema = createLinkSchema.partial();
+
+export const checkoutItemSchema = z.object({
+  productId: z.string().uuid(),
+  variantOptionIds: z.array(z.string().uuid()).default([]),
+  qty: z.number().int().min(1, "Jumlah minimal 1").max(99, "Jumlah maksimal 99"),
+});
+
+export const checkoutCustomerSchema = z.object({
+  name: z.string().min(2, "Nama minimal 2 karakter").max(80, "Nama maksimal 80 karakter"),
+  email: z.string().email("Email tidak valid").or(z.literal("")).default(""),
+  whatsapp: z
+    .string()
+    .regex(/^62\d{9,15}$/, "Nomor WhatsApp harus diawali dengan 62 (contoh: 628123456789)"),
+  address: z.string().min(5, "Alamat harus diisi").max(300, "Alamat maksimal 300 karakter"),
+  province: z.string().max(80).default(""),
+  city: z.string().max(80).default(""),
+  district: z.string().max(80).default(""),
+  postalCode: z.string().max(10).default(""),
+  rajaOngkirDestinationId: z.string().max(80).default(""),
+  rajaOngkirDestinationLabel: z.string().max(160).default(""),
+});
+
+export const checkoutShippingSchema = z.object({
+  courier: z.string().min(1, "Kurir harus diisi").max(40),
+  service: z.string().min(1, "Layanan harus diisi").max(80),
+  etd: z.string().max(80).default(""),
+  cost: z.number().int().min(0, "Ongkir tidak boleh negatif"),
+});
+
+export const checkoutSchema = z.object({
+  tenantSlug: tenantSlugSchema,
+  items: z.array(checkoutItemSchema).min(1, "Keranjang masih kosong"),
+  customer: checkoutCustomerSchema,
+  shipping: checkoutShippingSchema,
+});

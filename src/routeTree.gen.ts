@@ -16,9 +16,11 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as OrdersOrderNumberRouteImport } from './routes/orders.$orderNumber'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardProductsRouteImport } from './routes/dashboard.products'
 import { Route as DashboardLinksRouteImport } from './routes/dashboard.links'
+import { Route as ApiPakasirWebhookRouteImport } from './routes/api.pakasir.webhook'
 import { Route as ApiOgSlugRouteImport } from './routes/api.og.$slug'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -56,6 +58,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const OrdersOrderNumberRoute = OrdersOrderNumberRouteImport.update({
+  id: '/orders/$orderNumber',
+  path: '/orders/$orderNumber',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -70,6 +77,11 @@ const DashboardLinksRoute = DashboardLinksRouteImport.update({
   id: '/links',
   path: '/links',
   getParentRoute: () => DashboardRoute,
+} as any)
+const ApiPakasirWebhookRoute = ApiPakasirWebhookRouteImport.update({
+  id: '/api/pakasir/webhook',
+  path: '/api/pakasir/webhook',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOgSlugRoute = ApiOgSlugRouteImport.update({
   id: '/api/og/$slug',
@@ -87,8 +99,10 @@ export interface FileRoutesByFullPath {
   '/dashboard/links': typeof DashboardLinksRoute
   '/dashboard/products': typeof DashboardProductsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/orders/$orderNumber': typeof OrdersOrderNumberRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/og/$slug': typeof ApiOgSlugRoute
+  '/api/pakasir/webhook': typeof ApiPakasirWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -99,8 +113,10 @@ export interface FileRoutesByTo {
   '/dashboard/links': typeof DashboardLinksRoute
   '/dashboard/products': typeof DashboardProductsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/orders/$orderNumber': typeof OrdersOrderNumberRoute
   '/dashboard': typeof DashboardIndexRoute
   '/api/og/$slug': typeof ApiOgSlugRoute
+  '/api/pakasir/webhook': typeof ApiPakasirWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -113,8 +129,10 @@ export interface FileRoutesById {
   '/dashboard/links': typeof DashboardLinksRoute
   '/dashboard/products': typeof DashboardProductsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/orders/$orderNumber': typeof OrdersOrderNumberRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/og/$slug': typeof ApiOgSlugRoute
+  '/api/pakasir/webhook': typeof ApiPakasirWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -128,8 +146,10 @@ export interface FileRouteTypes {
     | '/dashboard/links'
     | '/dashboard/products'
     | '/dashboard/settings'
+    | '/orders/$orderNumber'
     | '/dashboard/'
     | '/api/og/$slug'
+    | '/api/pakasir/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -140,8 +160,10 @@ export interface FileRouteTypes {
     | '/dashboard/links'
     | '/dashboard/products'
     | '/dashboard/settings'
+    | '/orders/$orderNumber'
     | '/dashboard'
     | '/api/og/$slug'
+    | '/api/pakasir/webhook'
   id:
     | '__root__'
     | '/'
@@ -153,8 +175,10 @@ export interface FileRouteTypes {
     | '/dashboard/links'
     | '/dashboard/products'
     | '/dashboard/settings'
+    | '/orders/$orderNumber'
     | '/dashboard/'
     | '/api/og/$slug'
+    | '/api/pakasir/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -164,7 +188,9 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  OrdersOrderNumberRoute: typeof OrdersOrderNumberRoute
   ApiOgSlugRoute: typeof ApiOgSlugRoute
+  ApiPakasirWebhookRoute: typeof ApiPakasirWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -218,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/orders/$orderNumber': {
+      id: '/orders/$orderNumber'
+      path: '/orders/$orderNumber'
+      fullPath: '/orders/$orderNumber'
+      preLoaderRoute: typeof OrdersOrderNumberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/settings': {
       id: '/dashboard/settings'
       path: '/settings'
@@ -238,6 +271,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/links'
       preLoaderRoute: typeof DashboardLinksRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/api/pakasir/webhook': {
+      id: '/api/pakasir/webhook'
+      path: '/api/pakasir/webhook'
+      fullPath: '/api/pakasir/webhook'
+      preLoaderRoute: typeof ApiPakasirWebhookRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/og/$slug': {
       id: '/api/og/$slug'
@@ -274,7 +314,9 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  OrdersOrderNumberRoute: OrdersOrderNumberRoute,
   ApiOgSlugRoute: ApiOgSlugRoute,
+  ApiPakasirWebhookRoute: ApiPakasirWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

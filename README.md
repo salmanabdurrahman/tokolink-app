@@ -210,6 +210,10 @@ Open `http://localhost:3000`.
 | `VITE_TURNSTILE_SITE_KEY`     | Public Cloudflare Turnstile site key                                      |
 | `TURNSTILE_SECRET_KEY`        | Server-side Turnstile secret key; keep secret                             |
 | `TURNSTILE_ALLOWED_HOSTNAMES` | Optional comma-separated Turnstile hostname allowlist                     |
+| `PAKASIR_PROJECT_SLUG`        | Pakasir project slug for checkout/payment URLs                            |
+| `PAKASIR_API_KEY`             | Pakasir API key for server-side transaction checks; keep secret           |
+| `PAKASIR_BASE_URL`            | Optional Pakasir base URL, defaults to `https://app.pakasir.com`          |
+| `SITE_URL`                    | Public app URL used for Pakasir redirect links                            |
 | `RESEND_API_KEY`              | Resend API key; keep secret                                               |
 | `RESEND_SENDER_EMAIL`         | Verified sender identity for email delivery                               |
 

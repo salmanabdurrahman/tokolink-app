@@ -113,7 +113,7 @@ function Storefront() {
         {selecting && <VariantSheet product={selecting} onClose={() => setSelecting(null)} />}
       </AnimatePresence>
 
-      <FloatingCart storeName={tenant.name} phone={tenant.whatsapp} />
+      <FloatingCart tenantSlug={tenant.slug} storeName={tenant.name} phone={tenant.whatsapp} />
     </div>
   );
 }
