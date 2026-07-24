@@ -1,9 +1,12 @@
+import type { Tenant, User } from "@prisma/client";
 import { create } from "zustand";
 
+export type AuthUser = Partial<User> & { tenant?: Partial<Tenant> | null };
+
 type AuthState = {
-  user: any | null;
+  user: AuthUser | null;
   isLoading: boolean;
-  setUser: (user: any) => void;
+  setUser: (user: AuthUser | null) => void;
   setLoading: (loading: boolean) => void;
   signOut: () => Promise<void>;
 };

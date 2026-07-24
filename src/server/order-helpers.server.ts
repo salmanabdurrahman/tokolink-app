@@ -1,6 +1,11 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../db";
 import { sendOrderReceiptEmail, sendTenantOrderNotificationEmail } from "./email";
 import { WITHDRAWAL_HOLD_DAYS } from "../lib/commerce-policy";
+
+function toPrismaJson(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value ?? null)) as Prisma.InputJsonValue;
+}
 
 export async function markOrderPaid(orderNumber: string, rawPayload: unknown, method = "") {
   const availableAt = new Date(Date.now() + WITHDRAWAL_HOLD_DAYS * 24 * 60 * 60 * 1000);
@@ -23,7 +28,7 @@ export async function markOrderPaid(orderNumber: string, rawPayload: unknown, me
         status: "PAID",
         method,
         paidAt: new Date(),
-        rawPayload: rawPayload as any,
+        rawPayload: toPrismaJson(rawPayload),
       },
     });
     await tx.ledgerEntry.createMany({
@@ -80,7 +85,7 @@ export async function markOrderCanceled(orderNumber: string, rawPayload: unknown
     if (order.status !== "PENDING_PAYMENT") return order;
     await tx.payment.update({
       where: { orderId: order.id },
-      data: { status: "CANCELED", rawPayload: rawPayload as any },
+      data: { status: "CANCELED", rawPayload: toPrismaJson(rawPayload) },
     });
     return tx.order.update({
       where: { id: order.id },

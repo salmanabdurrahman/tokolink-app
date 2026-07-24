@@ -46,7 +46,7 @@ export function useSession() {
       }
     }
 
-    supabase.auth.getSession().then(({ data }: any) => {
+    supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
       handleSession(data.session);
     });
 

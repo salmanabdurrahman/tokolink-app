@@ -8,42 +8,51 @@ import { parseCookie } from "../lib/cookies";
 import { enforceAuthRateLimit, hashOtp, logAuthAbuse, normalizeEmail } from "./auth-abuse";
 import { recordMetric } from "../lib/metrics.server";
 
-export const getSessionUser = createServerFn({ method: "GET" }).handler(
-  async ({ request }: any) => {
-    const cookieHeader = request.headers.get("cookie") ?? "";
-    const token = parseCookie(cookieHeader, "sb-access-token");
-    if (!token) return null;
+type ServerFnRequestContext = { request?: Request };
+type ServerFnDataContext<TData> = ServerFnRequestContext & { data: TData };
 
-    try {
-      const {
-        data: { user: supaUser },
-        error,
-      } = await supabaseAdmin.auth.getUser(token);
-      if (error || !supaUser) return null;
+function withRequest<TContext>(context: TContext) {
+  return context as TContext & ServerFnRequestContext;
+}
 
-      const user = await prisma.user.findUnique({
-        where: { supabaseId: supaUser.id },
-        include: { tenant: true },
-      });
-      return user;
-    } catch (e) {
-      console.error("Error fetching session user:", e);
-      return null;
-    }
-  },
-);
+const syncSessionSchema = z
+  .object({
+    name: z.string().optional(),
+    avatarUrl: z.string().optional(),
+  })
+  .optional();
+
+export const getSessionUser = createServerFn({ method: "GET" }).handler(async (context) => {
+  const { request } = withRequest(context);
+  const cookieHeader = request?.headers.get("cookie") ?? "";
+  const token = parseCookie(cookieHeader, "sb-access-token");
+  if (!token) return null;
+
+  try {
+    const {
+      data: { user: supaUser },
+      error,
+    } = await supabaseAdmin.auth.getUser(token);
+    if (error || !supaUser) return null;
+
+    const user = await prisma.user.findUnique({
+      where: { supabaseId: supaUser.id },
+      include: { tenant: true },
+    });
+    return user;
+  } catch (e) {
+    console.error("Error fetching session user:", e);
+    return null;
+  }
+});
 
 export const syncSession = createServerFn({ method: "POST" })
-  .validator(
-    z
-      .object({
-        name: z.string().optional(),
-        avatarUrl: z.string().optional(),
-      })
-      .optional(),
-  )
-  .handler(async ({ data, request }: any) => {
-    const cookieHeader = request.headers.get("cookie") ?? "";
+  .validator(syncSessionSchema)
+  .handler(async (context) => {
+    const { data, request } = withRequest(context) as ServerFnDataContext<
+      z.infer<typeof syncSessionSchema>
+    >;
+    const cookieHeader = request?.headers.get("cookie") ?? "";
     const token = parseCookie(cookieHeader, "sb-access-token");
     if (!token) {
       throw new Error("Tidak terautentikasi: Tidak ada token sesi");
@@ -130,7 +139,10 @@ async function generateAndSendOTP(email: string) {
 
 export const registerUser = createServerFn({ method: "POST" })
   .validator(registerSchema)
-  .handler(async ({ data, request }: any) => {
+  .handler(async (context) => {
+    const { data, request } = withRequest(context) as ServerFnDataContext<
+      z.infer<typeof registerSchema>
+    >;
     const email = normalizeEmail(data.email);
     const { password } = data;
 
@@ -183,15 +195,19 @@ export const registerUser = createServerFn({ method: "POST" })
       await logAuthAbuse({ event: "signup", email, request, outcome: "success" });
       recordMetric("signup_success");
       return { success: true, message: "Kode verifikasi telah dikirim." };
-    } catch (err: any) {
-      recordMetric("signup_fail", { reason: err?.message });
-      throw new Error(err.message || "Gagal melakukan registrasi.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Gagal melakukan registrasi.";
+      recordMetric("signup_fail", { reason: message });
+      throw new Error(message || "Gagal melakukan registrasi.");
     }
   });
 
 export const verifySignUpCode = createServerFn({ method: "POST" })
   .validator(verifyCodeSchema)
-  .handler(async ({ data, request }: any) => {
+  .handler(async (context) => {
+    const { data, request } = withRequest(context) as ServerFnDataContext<
+      z.infer<typeof verifyCodeSchema>
+    >;
     const email = normalizeEmail(data.email);
     const { code } = data;
 
@@ -262,7 +278,10 @@ export const verifySignUpCode = createServerFn({ method: "POST" })
 
 export const resendSignUpCode = createServerFn({ method: "POST" })
   .validator(resendSchema)
-  .handler(async ({ data, request }: any) => {
+  .handler(async (context) => {
+    const { data, request } = withRequest(context) as ServerFnDataContext<
+      z.infer<typeof resendSchema>
+    >;
     const email = normalizeEmail(data.email);
 
     await enforceAuthRateLimit({ event: "resend_signup_code", email, request });

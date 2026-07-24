@@ -56,7 +56,7 @@ export function useAuthForm() {
         });
         if (signInError) throw signInError;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getErrorMessage(err) || "Terjadi kesalahan saat melakukan autentikasi");
     } finally {
       setLoading(false);
@@ -81,7 +81,7 @@ export function useAuthForm() {
         });
         if (signInError) throw signInError;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getErrorMessage(err) || "Kode verifikasi salah.");
     } finally {
       setLoading(false);
@@ -101,7 +101,7 @@ export function useAuthForm() {
         setCooldown(60);
         setCode("");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getErrorMessage(err) || "Gagal mengirim ulang kode.");
     } finally {
       setLoading(false);
@@ -120,7 +120,7 @@ export function useAuthForm() {
         },
       });
       if (googleError) throw googleError;
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getErrorMessage(err) || "Gagal masuk menggunakan Google");
       setLoading(false);
     }
