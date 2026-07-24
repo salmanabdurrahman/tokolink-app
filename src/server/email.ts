@@ -180,6 +180,58 @@ export async function sendTenantOrderNotificationEmail(
   if (error) throw new Error(`Gagal mengirim notifikasi order: ${error.message}`);
 }
 
+export async function sendWithdrawalRequestEmail(email: string, amount: number) {
+  const subject = "Request pencairan Tokolink diterima";
+  const text = `Request pencairan sebesar Rp${amount.toLocaleString("id-ID")} sudah diterima. Payout diproses manual oleh tim Tokolink.`;
+
+  if (!resend) {
+    console.log("==================================================");
+    console.log(`[DEV RESEND FALLBACK] Send withdrawal request notification to: ${email}`);
+    console.log(`[DEV RESEND FALLBACK] Subject: ${subject}`);
+    console.log("==================================================");
+    return;
+  }
+
+  const { error } = await resend.emails.send({
+    from: SENDER,
+    to: email,
+    subject,
+    text,
+    html: `<p>Request pencairan sebesar <strong>Rp${amount.toLocaleString("id-ID")}</strong> sudah diterima.</p><p>Payout diproses manual oleh tim Tokolink.</p>`,
+  });
+
+  if (error) throw new Error(`Gagal mengirim email pencairan: ${error.message}`);
+}
+
+export async function sendWithdrawalStatusEmail(email: string, amount: number, status: string) {
+  const statusLabel: Record<string, string> = {
+    REQUESTED: "diminta",
+    PROCESSING: "diproses",
+    PAID: "dibayar",
+    REJECTED: "ditolak",
+  };
+  const subject = `Status pencairan Tokolink: ${statusLabel[status] || status}`;
+  const text = `Status pencairan Rp${amount.toLocaleString("id-ID")} sekarang ${statusLabel[status] || status}.`;
+
+  if (!resend) {
+    console.log("==================================================");
+    console.log(`[DEV RESEND FALLBACK] Send withdrawal status notification to: ${email}`);
+    console.log(`[DEV RESEND FALLBACK] Subject: ${subject}`);
+    console.log("==================================================");
+    return;
+  }
+
+  const { error } = await resend.emails.send({
+    from: SENDER,
+    to: email,
+    subject,
+    text,
+    html: `<p>Status pencairan <strong>Rp${amount.toLocaleString("id-ID")}</strong> sekarang <strong>${statusLabel[status] || status}</strong>.</p>`,
+  });
+
+  if (error) throw new Error(`Gagal mengirim email status pencairan: ${error.message}`);
+}
+
 export async function sendWelcomeEmail(email: string, name: string) {
   const subject = "Selamat Datang di Tokolink! 🚀";
 

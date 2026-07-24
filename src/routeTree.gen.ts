@@ -17,6 +17,7 @@ import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as OrdersOrderNumberRouteImport } from './routes/orders.$orderNumber'
+import { Route as DashboardWithdrawalsRouteImport } from './routes/dashboard.withdrawals'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardProductsRouteImport } from './routes/dashboard.products'
 import { Route as DashboardOrdersRouteImport } from './routes/dashboard.orders'
@@ -64,6 +65,11 @@ const OrdersOrderNumberRoute = OrdersOrderNumberRouteImport.update({
   path: '/orders/$orderNumber',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardWithdrawalsRoute = DashboardWithdrawalsRouteImport.update({
+  id: '/withdrawals',
+  path: '/withdrawals',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/orders': typeof DashboardOrdersRoute
   '/dashboard/products': typeof DashboardProductsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/withdrawals': typeof DashboardWithdrawalsRoute
   '/orders/$orderNumber': typeof OrdersOrderNumberRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/og/$slug': typeof ApiOgSlugRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/dashboard/orders': typeof DashboardOrdersRoute
   '/dashboard/products': typeof DashboardProductsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/withdrawals': typeof DashboardWithdrawalsRoute
   '/orders/$orderNumber': typeof OrdersOrderNumberRoute
   '/dashboard': typeof DashboardIndexRoute
   '/api/og/$slug': typeof ApiOgSlugRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/dashboard/orders': typeof DashboardOrdersRoute
   '/dashboard/products': typeof DashboardProductsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/withdrawals': typeof DashboardWithdrawalsRoute
   '/orders/$orderNumber': typeof OrdersOrderNumberRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/og/$slug': typeof ApiOgSlugRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/dashboard/orders'
     | '/dashboard/products'
     | '/dashboard/settings'
+    | '/dashboard/withdrawals'
     | '/orders/$orderNumber'
     | '/dashboard/'
     | '/api/og/$slug'
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/dashboard/orders'
     | '/dashboard/products'
     | '/dashboard/settings'
+    | '/dashboard/withdrawals'
     | '/orders/$orderNumber'
     | '/dashboard'
     | '/api/og/$slug'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/dashboard/orders'
     | '/dashboard/products'
     | '/dashboard/settings'
+    | '/dashboard/withdrawals'
     | '/orders/$orderNumber'
     | '/dashboard/'
     | '/api/og/$slug'
@@ -263,6 +275,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersOrderNumberRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/withdrawals': {
+      id: '/dashboard/withdrawals'
+      path: '/withdrawals'
+      fullPath: '/dashboard/withdrawals'
+      preLoaderRoute: typeof DashboardWithdrawalsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/settings': {
       id: '/dashboard/settings'
       path: '/settings'
@@ -313,6 +332,7 @@ interface DashboardRouteChildren {
   DashboardOrdersRoute: typeof DashboardOrdersRoute
   DashboardProductsRoute: typeof DashboardProductsRoute
   DashboardSettingsRoute: typeof DashboardSettingsRoute
+  DashboardWithdrawalsRoute: typeof DashboardWithdrawalsRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
@@ -321,6 +341,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardOrdersRoute: DashboardOrdersRoute,
   DashboardProductsRoute: DashboardProductsRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
+  DashboardWithdrawalsRoute: DashboardWithdrawalsRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
 

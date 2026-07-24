@@ -345,22 +345,25 @@ model Payment {
 }
 
 model LedgerEntry {
-  id          String            @id @default(uuid()) @db.Uuid
-  tenantId    String            @map("tenant_id") @db.Uuid
-  orderId     String?           @map("order_id") @db.Uuid
-  type        LedgerEntryType
-  amount      Int
-  availableAt DateTime?         @map("available_at")
-  status      LedgerEntryStatus @default(PENDING)
-  note        String            @default("")
-  createdAt   DateTime          @default(now()) @map("created_at")
+  id                  String            @id @default(uuid()) @db.Uuid
+  tenantId            String            @map("tenant_id") @db.Uuid
+  orderId             String?           @map("order_id") @db.Uuid
+  withdrawalRequestId String?           @map("withdrawal_request_id") @db.Uuid
+  type                LedgerEntryType
+  amount              Int
+  availableAt         DateTime?         @map("available_at")
+  status              LedgerEntryStatus @default(PENDING)
+  note                String            @default("")
+  createdAt           DateTime          @default(now()) @map("created_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  order  Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  order             Order?             @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  withdrawalRequest WithdrawalRequest? @relation(fields: [withdrawalRequestId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, status, availableAt])
   @@index([tenantId, createdAt])
   @@index([orderId])
+  @@index([withdrawalRequestId])
   @@map("ledger_entries")
 }
 
@@ -375,7 +378,8 @@ model WithdrawalRequest {
   createdAt   DateTime         @default(now()) @map("created_at")
   updatedAt   DateTime         @updatedAt @map("updated_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ledgerEntries LedgerEntry[]
 
   @@index([tenantId, status, requestedAt])
   @@map("withdrawal_requests")

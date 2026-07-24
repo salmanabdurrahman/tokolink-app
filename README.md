@@ -76,6 +76,7 @@ Each merchant gets a public storefront at `tokolink-v2.vercel.app/{store-slug}`.
 5. Protected Server Functions validate input with Zod, enforce auth middleware, and check tenant ownership before writes.
 6. Public storefront route loads tenant data by slug and renders links, products, variants, and cart UI.
 7. Checkout builds a localized WhatsApp order URL with item lines and total IDR price.
+8. Paid orders create ledger entries for merchant balance, platform fee, and withdrawal eligibility. See [payout policy](docs/payout-policy.md).
 
 ## Project Patterns
 
