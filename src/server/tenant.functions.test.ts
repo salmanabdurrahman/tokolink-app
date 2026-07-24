@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../db", () => ({
   prisma: {
     tenant: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
+    order: { count: vi.fn() },
+    product: { count: vi.fn() },
+    link: { count: vi.fn() },
     authRateLimit: { count: vi.fn(), create: vi.fn() },
     authAuditLog: { create: vi.fn() },
     media: { findFirst: vi.fn(), delete: vi.fn() },
@@ -13,10 +16,11 @@ vi.mock("./auth-middleware", () => ({ authMiddleware: vi.fn() }));
 vi.mock("./storage", () => ({ storage: { deleteObject: vi.fn() } }));
 
 import { prisma } from "../db";
-import { createTenant, getTenant, updateTenant } from "./tenant.functions";
+import { createTenant, getDashboardData, getTenant, updateTenant } from "./tenant.functions";
 
 const prismaAny = prisma as any;
 const createTenantHandler = createTenant as any;
+const getDashboardDataHandler = getDashboardData as any;
 const getTenantHandler = getTenant as any;
 const updateTenantHandler = updateTenant as any;
 
@@ -33,6 +37,9 @@ beforeEach(() => {
   vi.mocked(prismaAny.tenant.findUnique).mockReset();
   vi.mocked(prismaAny.tenant.create).mockReset();
   vi.mocked(prismaAny.tenant.update).mockReset();
+  vi.mocked(prismaAny.order.count).mockReset();
+  vi.mocked(prismaAny.product.count).mockReset();
+  vi.mocked(prismaAny.link.count).mockReset();
   vi.mocked(prismaAny.authRateLimit.count).mockReset();
   vi.mocked(prismaAny.authRateLimit.count).mockResolvedValue(0);
   vi.mocked(prismaAny.authRateLimit.create).mockReset();
@@ -59,6 +66,33 @@ describe("getTenant", () => {
     await expect(getTenantHandler({ data: "invalid-slug" })).rejects.toThrow(
       'Toko dengan slug "invalid-slug" tidak ditemukan',
     );
+  });
+});
+
+describe("getDashboardData", () => {
+  it("loads tenant summary and counts with one server function", async () => {
+    const mockTenant = { slug: "toko-test", name: "Toko Test" };
+    vi.mocked(prismaAny.tenant.findUnique).mockResolvedValue(mockTenant);
+    vi.mocked(prismaAny.order.count).mockResolvedValue(2);
+    vi.mocked(prismaAny.product.count).mockResolvedValue(4);
+    vi.mocked(prismaAny.link.count).mockResolvedValue(3);
+
+    await expect(getDashboardDataHandler({ context })).resolves.toEqual({
+      tenant: { ...mockTenant, links: [], products: [] },
+      orderCount: 2,
+      productCount: 4,
+      linkCount: 3,
+    });
+
+    expect(prisma.tenant.findUnique).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+      select: expect.objectContaining({ slug: true, name: true }),
+    });
+    expect(prisma.order.count).toHaveBeenCalledWith({
+      where: { tenantId: "tenant-1", status: "PAID" },
+    });
+    expect(prisma.product.count).toHaveBeenCalledWith({ where: { tenantId: "tenant-1" } });
+    expect(prisma.link.count).toHaveBeenCalledWith({ where: { tenantId: "tenant-1" } });
   });
 });
 

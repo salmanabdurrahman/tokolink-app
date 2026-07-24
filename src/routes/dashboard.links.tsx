@@ -4,16 +4,28 @@ import { useTenant } from "@/lib/store";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { LinkForm } from "@/components/dashboard/link-form";
+import { getMyTenantLinks } from "@/server/tenant.functions";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/dashboard/links")({
+  loader: async () => {
+    try {
+      return { tenant: await getMyTenantLinks({}) };
+    } catch {
+      return { tenant: null };
+    }
+  },
   component: LinksPage,
 });
 
 function LinksPage() {
-  const tenant = useTenant((s) => s.tenant);
+  const { tenant: loadedTenant } = Route.useLoaderData();
+  const storeTenant = useTenant((s) => s.tenant);
+  const setTenant = useTenant((s) => s.setTenant);
+  const [hasHydratedTenant, setHasHydratedTenant] = useState(false);
+  const tenant = hasHydratedTenant ? storeTenant : loadedTenant;
   const add = useTenant((s) => s.addLink);
   const update = useTenant((s) => s.updateLink);
   const remove = useTenant((s) => s.removeLink);
@@ -23,15 +35,22 @@ function LinksPage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const tenantLinks = tenant?.links;
 
   useEffect(() => {
-    if (!tenant) return;
+    if (!loadedTenant) return;
+    setTenant(loadedTenant as any);
+    setHasHydratedTenant(true);
+  }, [loadedTenant, setTenant]);
+
+  useEffect(() => {
+    if (!tenantLinks) return;
     setDrafts(
       Object.fromEntries(
-        tenant.links.map((link) => [link.id, { label: link.label, url: link.url }]),
+        tenantLinks.map((link) => [link.id, { label: link.label, url: link.url }]),
       ),
     );
-  }, [tenant]);
+  }, [tenantLinks]);
 
   if (!tenant) {
     return (

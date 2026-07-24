@@ -1,9 +1,8 @@
-import { Prisma } from "@prisma/client";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { prisma } from "../db";
 import { authMiddleware } from "./auth-middleware";
-import { sendWithdrawalRequestEmail, sendWithdrawalStatusEmail } from "./email";
+import { sendWithdrawalRequestEmail } from "./email";
 import { recordMetric } from "../lib/metrics.server";
 
 export const PLATFORM_FEE_RATE = 0.015;
@@ -116,7 +115,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         });
         return request;
       },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      { isolationLevel: "Serializable" },
     );
 
     if (withdrawal.tenant.user.email) {
@@ -128,52 +127,3 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
     recordMetric("withdrawal_request", { tenantId });
     return withdrawal;
   });
-
-export async function updateWithdrawalStatus(
-  withdrawalId: string,
-  status: "PROCESSING" | "PAID" | "REJECTED",
-  note = "",
-) {
-  const withdrawal = await prisma.$transaction(async (tx) => {
-    const request = await tx.withdrawalRequest.findUnique({
-      where: { id: withdrawalId },
-      include: { tenant: { include: { user: true } } },
-    });
-    if (!request) throw new Error("Request pencairan tidak ditemukan");
-
-    const updated = await tx.withdrawalRequest.update({
-      where: { id: withdrawalId },
-      data: {
-        status,
-        note,
-        processedAt: status === "PROCESSING" ? null : new Date(),
-      },
-      include: { tenant: { include: { user: true } } },
-    });
-
-    if (status === "PAID") {
-      await tx.ledgerEntry.updateMany({
-        where: { withdrawalRequestId: withdrawalId, type: "WITHDRAWAL" },
-        data: { status: "SETTLED" },
-      });
-    }
-    if (status === "REJECTED") {
-      await tx.ledgerEntry.updateMany({
-        where: { withdrawalRequestId: withdrawalId, type: "WITHDRAWAL" },
-        data: { status: "CANCELED" },
-      });
-    }
-
-    return updated;
-  });
-
-  if (withdrawal.tenant.user.email) {
-    await sendWithdrawalStatusEmail(
-      withdrawal.tenant.user.email,
-      withdrawal.amount,
-      withdrawal.status,
-    ).catch((error) => console.error("[WITHDRAWAL] Failed to send status email", error));
-  }
-
-  return withdrawal;
-}

@@ -5,15 +5,12 @@ import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { motion, AnimatePresence } from "framer-motion";
 import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
-import { getMyTenant } from "@/server/tenant.functions";
+import { getDashboardData } from "@/server/tenant.functions";
 
 export const Route = createFileRoute("/dashboard")({
   loader: async () => {
     try {
-      const tenant = await getMyTenant({});
-      const { getTenantOrderCount } = await import("@/server/order.functions");
-      const orderCount = tenant ? await getTenantOrderCount({}).catch(() => 0) : 0;
-      return { tenant, orderCount };
+      return await getDashboardData({});
     } catch {
       return { tenant: null, orderCount: 0 };
     }

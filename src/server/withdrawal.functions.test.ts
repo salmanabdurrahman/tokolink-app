@@ -38,11 +38,11 @@ vi.mock("./email", () => ({
 
 import { prisma } from "../db";
 import { sendWithdrawalRequestEmail, sendWithdrawalStatusEmail } from "./email";
+import { updateWithdrawalStatus } from "./withdrawal-admin.server";
 import {
   getTenantWithdrawalSummary,
   requestWithdrawal,
   requestWithdrawalSchema,
-  updateWithdrawalStatus,
 } from "./withdrawal.functions";
 
 const prismaAny = prisma as any;

@@ -10,13 +10,25 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { updateTenantSchema } from "@/lib/schemas";
 import { formatWhatsAppNumber } from "@/lib/utils";
+import { getMyTenantSettings } from "@/server/tenant.functions";
 
 export const Route = createFileRoute("/dashboard/settings")({
+  loader: async () => {
+    try {
+      return { tenant: await getMyTenantSettings({}) };
+    } catch {
+      return { tenant: null };
+    }
+  },
   component: SettingsPage,
 });
 
 function SettingsPage() {
-  const tenant = useTenant((s) => s.tenant);
+  const { tenant: loadedTenant } = Route.useLoaderData();
+  const storeTenant = useTenant((s) => s.tenant);
+  const setTenant = useTenant((s) => s.setTenant);
+  const [hasHydratedTenant, setHasHydratedTenant] = useState(false);
+  const tenant = hasHydratedTenant ? storeTenant : loadedTenant;
   const updateSettings = useTenant((s) => s.updateSettings);
 
   const [name, setName] = useState(tenant?.name ?? "");
@@ -36,6 +48,12 @@ function SettingsPage() {
   const [searchingOrigin, setSearchingOrigin] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!loadedTenant) return;
+    setTenant(loadedTenant as any);
+    setHasHydratedTenant(true);
+  }, [loadedTenant, setTenant]);
 
   useEffect(() => {
     if (tenant) {

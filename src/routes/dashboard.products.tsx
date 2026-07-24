@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTenant } from "@/lib/store";
 import type { Product } from "@/lib/types";
 import { AnimatePresence } from "framer-motion";
@@ -10,21 +10,39 @@ import { ProductCard } from "@/components/dashboard/product-card";
 import { DeleteConfirmModal } from "@/components/dashboard/delete-confirm-modal";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { getMyTenantProducts } from "@/server/tenant.functions";
 
 export const Route = createFileRoute("/dashboard/products")({
+  loader: async () => {
+    try {
+      return { tenant: await getMyTenantProducts({}) };
+    } catch {
+      return { tenant: null };
+    }
+  },
   component: ProductsPage,
 });
 
 function ProductsPage() {
-  const tenant = useTenant((s) => s.tenant);
+  const { tenant: loadedTenant } = Route.useLoaderData();
+  const storeTenant = useTenant((s) => s.tenant);
+  const setTenant = useTenant((s) => s.setTenant);
   const add = useTenant((s) => s.addProduct);
   const remove = useTenant((s) => s.removeProduct);
   const reorderProducts = useTenant((s) => s.reorderProducts);
+  const [hasHydratedTenant, setHasHydratedTenant] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const tenant = hasHydratedTenant ? storeTenant : loadedTenant;
+
+  useEffect(() => {
+    if (!loadedTenant) return;
+    setTenant(loadedTenant as any);
+    setHasHydratedTenant(true);
+  }, [loadedTenant, setTenant]);
 
   if (!tenant) {
     return (

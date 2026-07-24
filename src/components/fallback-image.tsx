@@ -13,6 +13,8 @@ export function FallbackImage({
   alt,
   fallbackText,
   className = "",
+  loading = "lazy",
+  decoding = "async",
   ...props
 }: FallbackImageProps) {
   const [isError, setIsError] = useState(false);
@@ -69,6 +71,8 @@ export function FallbackImage({
       ref={imgRef}
       src={src}
       alt={alt}
+      loading={loading}
+      decoding={decoding}
       onLoad={() => setIsLoaded(true)}
       onError={() => setIsError(true)}
       className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"} ${className}`}

@@ -368,6 +368,7 @@ Before deploying:
 - [Testing](docs/testing.md) — test layers, mocks, factories, coverage, and CI gate.
 - [Troubleshooting](docs/troubleshooting.md) — Prisma, Supabase cookies, R2 public URL, Turnstile localhost, Pakasir webhook, RajaOngkir, and email issues.
 - [Payout policy](docs/payout-policy.md) — platform fee, balance hold, minimum withdrawal, and manual payout processing.
+- [Performance baseline](docs/performance-baseline.md) — bundle guardrails, route data-flow audit, production TTFB spot checks, and Lighthouse targets.
 - [Preview deploy checklist](docs/preview-deploy-checklist.md) — checks before preview promotion.
 
 ## Contributing

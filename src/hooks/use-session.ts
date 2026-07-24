@@ -1,28 +1,45 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/store";
 import { syncSession } from "../server/auth.functions";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 export function useSession() {
-  const { user, setUser, setLoading } = useAuth();
+  const { setUser, setLoading } = useAuth();
+  const lastTokenRef = useRef<string | null>(null);
+  const syncPromiseRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     async function handleSession(session: Session | null) {
       if (session) {
-        document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in}; SameSite=Lax; Secure`;
+        const token = session.access_token;
+        document.cookie = `sb-access-token=${token}; path=/; max-age=${session.expires_in}; SameSite=Lax; Secure`;
 
-        try {
-          setLoading(true);
-          const dbUser = await syncSession({});
-          setUser(dbUser);
-        } catch (err) {
-          console.error("Failed to sync session with Prisma:", err);
-          setUser(null);
-        } finally {
-          setLoading(false);
+        if (lastTokenRef.current === token) {
+          if (syncPromiseRef.current) await syncPromiseRef.current;
+          return;
         }
+
+        lastTokenRef.current = token;
+        setLoading(true);
+        const syncPromise = syncSession({})
+          .then((dbUser) => {
+            setUser(dbUser);
+          })
+          .catch((err) => {
+            console.error("Failed to sync session with Prisma:", err);
+            lastTokenRef.current = null;
+            setUser(null);
+          })
+          .finally(() => {
+            syncPromiseRef.current = null;
+            setLoading(false);
+          });
+        syncPromiseRef.current = syncPromise;
+        await syncPromise;
       } else {
+        lastTokenRef.current = null;
+        syncPromiseRef.current = null;
         document.cookie = `sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax; Secure`;
         setUser(null);
         setLoading(false);

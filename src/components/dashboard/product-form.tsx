@@ -36,8 +36,11 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
       }),
     [initial],
   );
-  const isDirty =
-    initialSnapshot !== JSON.stringify({ name, description, basePrice, image, variantGroups });
+  const currentSnapshot = useMemo(
+    () => JSON.stringify({ name, description, basePrice, image, variantGroups }),
+    [basePrice, description, image, name, variantGroups],
+  );
+  const isDirty = initialSnapshot !== currentSnapshot;
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {

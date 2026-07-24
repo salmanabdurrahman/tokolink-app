@@ -53,7 +53,7 @@ describe("tenant order dashboard functions", () => {
     vi.clearAllMocks();
   });
 
-  it("lists orders scoped to tenant with payment, items, and ledger", async () => {
+  it("lists orders scoped to tenant with payment and items", async () => {
     vi.mocked(prismaAny.order.findMany).mockResolvedValue([{ id: orderId }]);
 
     await expect(getTenantOrdersHandler({ context: tenantContext })).resolves.toEqual([
@@ -63,7 +63,7 @@ describe("tenant order dashboard functions", () => {
     expect(prisma.order.findMany).toHaveBeenCalledWith({
       where: { tenantId: "tenant-1" },
       orderBy: { createdAt: "desc" },
-      include: { items: true, payment: true, ledgerEntries: true },
+      include: { items: true, payment: true },
       take: 50,
     });
   });

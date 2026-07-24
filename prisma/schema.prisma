@@ -190,6 +190,7 @@ model Media {
   product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
+  @@index([tenantId, url])
   @@index([ownerType, ownerId])
   @@map("media")
 }
@@ -204,6 +205,7 @@ model ProductVariantGroup {
   options ProductVariantOption[]
 
   @@index([productId])
+  @@index([productId, sortOrder])
   @@map("product_variant_groups")
 }
 
@@ -217,6 +219,7 @@ model ProductVariantOption {
   group ProductVariantGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@index([groupId])
+  @@index([groupId, sortOrder])
   @@map("product_variant_options")
 }
 
@@ -362,6 +365,7 @@ model LedgerEntry {
   withdrawalRequest WithdrawalRequest? @relation(fields: [withdrawalRequestId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, status, availableAt])
+  @@index([tenantId, type, status, availableAt])
   @@index([tenantId, createdAt])
   @@index([orderId])
   @@index([withdrawalRequestId])

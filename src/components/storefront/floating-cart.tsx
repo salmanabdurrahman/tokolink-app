@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCart, buildWhatsAppUrl } from "@/lib/store";
 import { formatIDR, formatWhatsAppNumber } from "@/lib/utils";
 import { FallbackImage } from "@/components/fallback-image";
@@ -42,8 +42,11 @@ export function FloatingCart({
   whatsappTemplate,
 }: FloatingCartProps) {
   const items = useCart((s) => s.items);
-  const totalQty = useCart((s) => s.totalQty());
-  const totalPrice = useCart((s) => s.totalPrice());
+  const totalQty = useMemo(() => items.reduce((sum, item) => sum + item.qty, 0), [items]);
+  const totalPrice = useMemo(
+    () => items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0),
+    [items],
+  );
   const inc = useCart((s) => s.inc);
   const dec = useCart((s) => s.dec);
   const clear = useCart((s) => s.clear);

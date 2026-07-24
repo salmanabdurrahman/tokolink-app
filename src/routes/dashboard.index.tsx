@@ -1,26 +1,26 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useTenant } from "@/lib/store";
 import { PageHeader } from "@/components/layout/page-header";
-import { Spinner } from "@/components/ui/spinner";
+import { getDashboardData } from "@/server/tenant.functions";
 
 export const Route = createFileRoute("/dashboard/")({
+  loader: async () => {
+    try {
+      return await getDashboardData({});
+    } catch {
+      return { tenant: null, productCount: 0, linkCount: 0 };
+    }
+  },
   component: Overview,
 });
 
 function Overview() {
-  const tenant = useTenant((s) => s.tenant);
+  const { tenant, productCount, linkCount } = Route.useLoaderData();
 
-  if (!tenant) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Spinner size="md" />
-      </div>
-    );
-  }
+  if (!tenant) return null;
 
   const stats = [
-    { label: "Produk aktif", value: tenant.products.length },
-    { label: "Tautan", value: tenant.links.length },
+    { label: "Produk aktif", value: productCount },
+    { label: "Tautan", value: linkCount },
     { label: "Status WA", value: tenant.whatsapp ? "Terhubung" : "Belum" },
   ];
 

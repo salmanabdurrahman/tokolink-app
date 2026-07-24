@@ -40,7 +40,7 @@ export const getTenantOrders = createServerFn({ method: "GET" })
     return prisma.order.findMany({
       where: { tenantId },
       orderBy: { createdAt: "desc" },
-      include: { items: true, payment: true, ledgerEntries: true },
+      include: { items: true, payment: true },
       take: 50,
     });
   });
