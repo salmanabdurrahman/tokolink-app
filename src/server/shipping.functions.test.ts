@@ -50,15 +50,18 @@ describe("shipping functions", () => {
 
   it("calculates minimum total weight from product weights and qty", () => {
     expect(calculateShippingWeightGram([{ weightGram: 0, qty: 2 }])).toBe(2);
-    expect(calculateShippingWeightGram([{ weightGram: 250, qty: 2 }, { weightGram: 500, qty: 1 }])).toBe(1000);
+    expect(
+      calculateShippingWeightGram([
+        { weightGram: 250, qty: 2 },
+        { weightGram: 500, qty: 1 },
+      ]),
+    ).toBe(1000);
   });
 
   it("requires tenant origin before quoting shipping", async () => {
     mockTenant({ rajaOngkirOriginId: null });
 
-    await expect(handler({ data: input })).rejects.toThrow(
-      "Toko belum mengatur origin pengiriman",
-    );
+    await expect(handler({ data: input })).rejects.toThrow("Toko belum mengatur origin pengiriman");
     expect(calculateDomesticCost).not.toHaveBeenCalled();
   });
 
@@ -82,7 +85,9 @@ describe("shipping functions", () => {
     await handler({ data: input });
 
     expect(calculateDomesticCost).toHaveBeenCalledWith(
-      expect.objectContaining({ couriers: ["jne", "jnt", "sicepat", "anteraja", "pos", "tiki", "ninja"] }),
+      expect.objectContaining({
+        couriers: ["jne", "jnt", "sicepat", "anteraja", "pos", "tiki", "ninja"],
+      }),
     );
   });
 

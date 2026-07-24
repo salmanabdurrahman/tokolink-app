@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { prisma } from "../db";
+import { getOgTenantBySlug } from "../server/catalog.queries.server";
 import fs from "node:fs";
 import path from "node:path";
 import { isSupportedOgImage } from "../lib/og";
@@ -55,15 +55,7 @@ export const Route = createFileRoute("/api/og/$slug")({
           const { ImageResponse } = await import("@vercel/og");
           const fontData = await getFont();
 
-          const tenant = await prisma.tenant.findUnique({
-            where: { slug: params.slug },
-            include: {
-              products: {
-                take: 3,
-                orderBy: { createdAt: "desc" },
-              },
-            },
-          });
+          const tenant = await getOgTenantBySlug(params.slug);
 
           if (!tenant) {
             return Response.redirect(FALLBACK_OG, 302);

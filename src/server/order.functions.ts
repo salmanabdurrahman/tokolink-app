@@ -1,13 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { prisma } from "../db";
-import { checkoutSchema } from "../lib/schemas";
-import { createCheckoutOrderData } from "./checkout.server";
 import { authMiddleware } from "./auth-middleware";
-
-export const createCheckoutOrder = createServerFn({ method: "POST" })
-  .validator(checkoutSchema)
-  .handler(async ({ data }) => createCheckoutOrderData(data));
+import { requireOwnedRecord, requireTenant } from "./tenant-context.server";
 
 function maskPublicTrackingNumber(value: string) {
   if (value.length <= 6) return "••••";
@@ -59,8 +54,7 @@ export const getOrderStatus = createServerFn({ method: "GET" })
 export const getTenantOrders = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) throw new Error("Toko tidak ditemukan untuk pengguna ini");
+    const tenantId = requireTenant(context);
 
     return prisma.order.findMany({
       where: { tenantId },
@@ -73,8 +67,7 @@ export const getTenantOrders = createServerFn({ method: "GET" })
 export const getTenantOrderCount = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) throw new Error("Toko tidak ditemukan untuk pengguna ini");
+    const tenantId = requireTenant(context);
 
     return prisma.order.count({ where: { tenantId, status: "PAID" } });
   });
@@ -83,26 +76,24 @@ export const getTenantOrder = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator(z.string().uuid())
   .handler(async ({ data: orderId, context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) throw new Error("Toko tidak ditemukan untuk pengguna ini");
+    const tenantId = requireTenant(context);
 
-    const order = await prisma.order.findFirst({
-      where: { id: orderId, tenantId },
+    return requireOwnedRecord(prisma, "order", orderId, tenantId, {
       include: { items: true, payment: true, ledgerEntries: true },
     });
-    if (!order) throw new Error("Order tidak ditemukan");
-    return order;
   });
 
 export const updateOrderTracking = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(updateOrderTrackingSchema)
   .handler(async ({ data, context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) throw new Error("Toko tidak ditemukan untuk pengguna ini");
+    const tenantId = requireTenant(context);
 
-    const order = await prisma.order.findFirst({ where: { id: data.orderId, tenantId } });
-    if (!order) throw new Error("Order tidak ditemukan");
+    const order = (await requireOwnedRecord(prisma, "order", data.orderId, tenantId)) as {
+      id: string;
+      status: string;
+      shippedAt: Date | null;
+    };
     if (order.status !== "PAID" && order.status !== "SHIPPED") {
       throw new Error("Resi hanya bisa diisi setelah order dibayar");
     }
@@ -122,11 +113,13 @@ export const updateTenantOrderStatus = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(updateTenantOrderStatusSchema)
   .handler(async ({ data, context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) throw new Error("Toko tidak ditemukan untuk pengguna ini");
+    const tenantId = requireTenant(context);
 
-    const order = await prisma.order.findFirst({ where: { id: data.orderId, tenantId } });
-    if (!order) throw new Error("Order tidak ditemukan");
+    const order = (await requireOwnedRecord(prisma, "order", data.orderId, tenantId)) as {
+      id: string;
+      status: string;
+      shippedAt: Date | null;
+    };
 
     if (data.status === "COMPLETED") {
       if (order.status !== "SHIPPED")

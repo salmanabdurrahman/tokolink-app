@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "../db";
 import { authMiddleware } from "./auth-middleware";
 import { createLinkSchema, updateLinkSchema } from "../lib/schemas";
+import { requireOwnedRecord, requireTenant } from "./tenant-context.server";
 import { z } from "zod";
 
 export const getLinks = createServerFn({ method: "GET" })
@@ -17,10 +18,7 @@ export const addLink = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(createLinkSchema)
   .handler(async ({ data, context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) {
-      throw new Error("Toko tidak ditemukan untuk pengguna ini");
-    }
+    const tenantId = requireTenant(context);
 
     const maxLink = await prisma.link.findFirst({
       where: { tenantId },
@@ -50,17 +48,9 @@ export const updateLink = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data: { id, data }, context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) {
-      throw new Error("Toko tidak ditemukan untuk pengguna ini");
-    }
+    const tenantId = requireTenant(context);
 
-    const existingLink = await prisma.link.findFirst({
-      where: { id, tenantId },
-    });
-    if (!existingLink) {
-      throw new Error("Tautan tidak ditemukan atau bukan milik toko Anda");
-    }
+    await requireOwnedRecord(prisma, "link", id, tenantId);
 
     const updatedLink = await prisma.link.update({
       where: { id },
@@ -78,17 +68,9 @@ export const deleteLink = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(z.string().uuid())
   .handler(async ({ data: id, context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) {
-      throw new Error("Toko tidak ditemukan untuk pengguna ini");
-    }
+    const tenantId = requireTenant(context);
 
-    const existingLink = await prisma.link.findFirst({
-      where: { id, tenantId },
-    });
-    if (!existingLink) {
-      throw new Error("Tautan tidak ditemukan atau bukan milik toko Anda");
-    }
+    await requireOwnedRecord(prisma, "link", id, tenantId);
 
     await prisma.link.delete({
       where: { id },
@@ -101,10 +83,7 @@ export const reorderLinks = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(z.array(z.string().uuid()).min(1, "Urutan tautan tidak boleh kosong"))
   .handler(async ({ data: ids, context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) {
-      throw new Error("Toko tidak ditemukan untuk pengguna ini");
-    }
+    const tenantId = requireTenant(context);
 
     const links = await prisma.link.findMany({
       where: { tenantId, id: { in: ids } },

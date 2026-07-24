@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { prisma } from "../db";
+import { listSitemapTenants } from "../server/catalog.queries.server";
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
@@ -7,12 +7,7 @@ export const Route = createFileRoute("/sitemap.xml")({
       GET: async () => {
         let tenants: Array<{ slug: string; updatedAt: Date }> = [];
         try {
-          tenants = await prisma.tenant.findMany({
-            select: {
-              slug: true,
-              updatedAt: true,
-            },
-          });
+          tenants = await listSitemapTenants();
         } catch (err) {
           console.error("Failed to fetch tenants for sitemap:", err);
         }

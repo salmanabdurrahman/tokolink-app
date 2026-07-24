@@ -3,6 +3,7 @@ import { prisma } from "../db";
 import { authMiddleware } from "./auth-middleware";
 import { scanMediaBuffer } from "./media-scan";
 import { createMediaKey, storage } from "./storage";
+import { requireTenant } from "./tenant-context.server";
 import { z } from "zod";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -103,10 +104,7 @@ export const uploadImage = createServerFn({ method: "POST" })
       throw new Error("Gambar tidak lolos pemeriksaan keamanan.");
     }
 
-    const tenantId = context.tenant?.id;
-    if (!tenantId) {
-      throw new Error("Toko belum tersedia untuk upload gambar.");
-    }
+    const tenantId = requireTenant(context, "Toko belum tersedia untuk upload gambar.");
 
     const contentType = "image/webp";
     const key = createMediaKey({ tenantId, filename: data.name });

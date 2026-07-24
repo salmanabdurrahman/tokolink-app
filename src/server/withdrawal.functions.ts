@@ -4,6 +4,7 @@ import { prisma } from "../db";
 import { authMiddleware } from "./auth-middleware";
 import { sendWithdrawalRequestEmail } from "./email";
 import { recordMetric } from "../lib/metrics.server";
+import { requireTenant } from "./tenant-context.server";
 
 export const PLATFORM_FEE_RATE = 0.015;
 export const WITHDRAWAL_HOLD_DAYS = 2;
@@ -46,8 +47,7 @@ async function calculateAvailableBalance(tx: typeof prisma, tenantId: string, no
 export const getTenantWithdrawalSummary = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) throw new Error("Toko tidak ditemukan untuk pengguna ini");
+    const tenantId = requireTenant(context);
 
     const now = getNow();
     const [availableBalance, pendingBalance, withdrawals] = await Promise.all([
@@ -85,8 +85,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(requestWithdrawalSchema)
   .handler(async ({ data, context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) throw new Error("Toko tidak ditemukan untuk pengguna ini");
+    const tenantId = requireTenant(context);
 
     const withdrawal = await prisma.$transaction(
       async (tx) => {

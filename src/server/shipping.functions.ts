@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { prisma } from "../db";
 import { calculateDomesticCost, searchDomesticDestination, trackWaybill } from "./rajaongkir";
+import { getShippingCatalogBySlug } from "./catalog.queries.server";
 
 const DEFAULT_ALLOWED_COURIERS = ["jne", "jnt", "sicepat", "anteraja", "pos", "tiki", "ninja"];
 const destinationCache = new Map<
@@ -52,10 +52,10 @@ export const searchRajaOngkirDestinations = createServerFn({ method: "GET" })
 export const getRajaOngkirShippingCosts = createServerFn({ method: "POST" })
   .validator(shippingCostSchema)
   .handler(async ({ data }) => {
-    const tenant = await prisma.tenant.findUnique({
-      where: { slug: data.tenantSlug },
-      include: { products: { where: { id: { in: data.items.map((item) => item.productId) } } } },
-    });
+    const tenant = await getShippingCatalogBySlug(
+      data.tenantSlug,
+      data.items.map((item) => item.productId),
+    );
 
     if (!tenant) throw new Error("Toko tidak ditemukan");
     if (!tenant.rajaOngkirOriginId) {

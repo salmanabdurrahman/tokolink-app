@@ -3,6 +3,8 @@ import { prisma } from "../db";
 import { authMiddleware } from "./auth-middleware";
 import { createProductSchema, updateProductSchema } from "../lib/schemas";
 import { deleteTenantMediaByUrl } from "./media-cleanup";
+import { productVariantInclude } from "./catalog.queries.server";
+import { requireOwnedRecord, requireTenant } from "./tenant-context.server";
 import { z } from "zod";
 
 export const getProducts = createServerFn({ method: "GET" })
@@ -11,16 +13,7 @@ export const getProducts = createServerFn({ method: "GET" })
     return await prisma.product.findMany({
       where: { tenantId },
       orderBy: { sortOrder: "asc" },
-      include: {
-        variantGroups: {
-          orderBy: { sortOrder: "asc" },
-          include: {
-            options: {
-              orderBy: { sortOrder: "asc" },
-            },
-          },
-        },
-      },
+      include: productVariantInclude,
     });
   });
 
@@ -28,10 +21,7 @@ export const createProduct = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(createProductSchema)
   .handler(async ({ data, context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) {
-      throw new Error("Toko tidak ditemukan untuk pengguna ini");
-    }
+    const tenantId = requireTenant(context);
 
     const maxProduct = await prisma.product.findFirst({
       where: { tenantId },
@@ -82,17 +72,11 @@ export const updateProduct = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data: { id, data }, context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) {
-      throw new Error("Toko tidak ditemukan untuk pengguna ini");
-    }
+    const tenantId = requireTenant(context);
 
-    const existingProduct = await prisma.product.findFirst({
-      where: { id, tenantId },
-    });
-    if (!existingProduct) {
-      throw new Error("Produk tidak ditemukan atau bukan milik toko Anda");
-    }
+    const existingProduct = (await requireOwnedRecord(prisma, "product", id, tenantId)) as {
+      image: string;
+    };
 
     const shouldDeleteOldImage = data.image !== undefined && data.image !== existingProduct.image;
 
@@ -126,16 +110,7 @@ export const updateProduct = createServerFn({ method: "POST" })
               }
             : undefined,
         },
-        include: {
-          variantGroups: {
-            orderBy: { sortOrder: "asc" },
-            include: {
-              options: {
-                orderBy: { sortOrder: "asc" },
-              },
-            },
-          },
-        },
+        include: productVariantInclude,
       });
     });
 
@@ -150,17 +125,11 @@ export const deleteProduct = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(z.string().uuid())
   .handler(async ({ data: id, context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) {
-      throw new Error("Toko tidak ditemukan untuk pengguna ini");
-    }
+    const tenantId = requireTenant(context);
 
-    const existingProduct = await prisma.product.findFirst({
-      where: { id, tenantId },
-    });
-    if (!existingProduct) {
-      throw new Error("Produk tidak ditemukan atau bukan milik toko Anda");
-    }
+    const existingProduct = (await requireOwnedRecord(prisma, "product", id, tenantId)) as {
+      image: string;
+    };
 
     await prisma.product.delete({
       where: { id },
@@ -175,10 +144,7 @@ export const reorderProducts = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(z.array(z.string().uuid()).min(1, "Urutan produk tidak boleh kosong"))
   .handler(async ({ data: ids, context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) {
-      throw new Error("Toko tidak ditemukan untuk pengguna ini");
-    }
+    const tenantId = requireTenant(context);
 
     const products = await prisma.product.findMany({
       where: { tenantId, id: { in: ids } },

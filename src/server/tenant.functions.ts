@@ -4,32 +4,21 @@ import { authMiddleware } from "./auth-middleware";
 import { createTenantSchema, updateTenantSchema } from "../lib/schemas";
 import { enforceAuthRateLimit, logAuthAbuse } from "./auth-abuse";
 import { deleteTenantMediaByUrl } from "./media-cleanup";
+import {
+  getStorefrontCatalogBySlug,
+  tenantCatalogInclude,
+  tenantIdentitySelect,
+  tenantLinkInclude,
+  tenantProductInclude,
+  withEmptyCatalog,
+} from "./catalog.queries.server";
+import { requireTenant } from "./tenant-context.server";
 import { z } from "zod";
 
 export const getTenant = createServerFn({ method: "GET" })
   .validator(z.string())
   .handler(async ({ data: slug }) => {
-    const tenant = await prisma.tenant.findUnique({
-      where: { slug },
-      include: {
-        links: {
-          orderBy: { sortOrder: "asc" },
-        },
-        products: {
-          orderBy: { sortOrder: "asc" },
-          include: {
-            variantGroups: {
-              orderBy: { sortOrder: "asc" },
-              include: {
-                options: {
-                  orderBy: { sortOrder: "asc" },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+    const tenant = await getStorefrontCatalogBySlug(slug);
 
     if (!tenant) {
       throw new Error(`Toko dengan slug "${slug}" tidak ditemukan`);
@@ -37,56 +26,6 @@ export const getTenant = createServerFn({ method: "GET" })
 
     return tenant;
   });
-
-const tenantIdentitySelect = {
-  slug: true,
-  name: true,
-  tagline: true,
-  avatar: true,
-  whatsapp: true,
-  whatsappTemplate: true,
-  originName: true,
-  originPhone: true,
-  originAddress: true,
-  originProvince: true,
-  originCity: true,
-  originDistrict: true,
-  originPostalCode: true,
-  rajaOngkirOriginId: true,
-  rajaOngkirOriginLabel: true,
-  allowedCouriers: true,
-} as const;
-
-const tenantProductInclude = {
-  products: {
-    orderBy: { sortOrder: "asc" },
-    include: {
-      variantGroups: {
-        orderBy: { sortOrder: "asc" },
-        include: {
-          options: {
-            orderBy: { sortOrder: "asc" },
-          },
-        },
-      },
-    },
-  },
-} as const;
-
-const tenantLinkInclude = {
-  links: {
-    orderBy: { sortOrder: "asc" },
-  },
-} as const;
-
-const tenantCatalogInclude = {
-  ...tenantLinkInclude,
-  ...tenantProductInclude,
-} as const;
-
-function withEmptyCatalog<T extends object>(tenant: T | null) {
-  return tenant ? { ...tenant, links: [], products: [] } : null;
-}
 
 export const getMyTenant = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -205,10 +144,7 @@ export const updateTenant = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(updateTenantSchema)
   .handler(async ({ data, context }) => {
-    const tenantId = context.tenant?.id;
-    if (!tenantId) {
-      throw new Error("Toko tidak ditemukan untuk pengguna ini");
-    }
+    const tenantId = requireTenant(context);
 
     if (data.slug && data.slug !== context.tenant?.slug) {
       const existingSlug = await prisma.tenant.findUnique({

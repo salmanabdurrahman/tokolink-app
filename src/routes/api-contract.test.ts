@@ -14,7 +14,10 @@ vi.mock("../db", () => ({ prisma: { $queryRaw: vi.fn() } }));
 import { prisma } from "../db";
 import { createCheckoutOrderData } from "../server/checkout.server";
 import { enforceAuthRateLimit } from "../server/auth-abuse";
-import { getRajaOngkirShippingCosts, searchRajaOngkirDestinations } from "../server/shipping.functions";
+import {
+  getRajaOngkirShippingCosts,
+  searchRajaOngkirDestinations,
+} from "../server/shipping.functions";
 import { Route as CheckoutRoute } from "./api.checkout";
 import { Route as HealthRoute } from "./api.health";
 import { Route as CostsRoute } from "./api.shipping.costs";
@@ -41,9 +44,18 @@ describe("API route contracts", () => {
     process.env.PAKASIR_API_KEY = "test-pakasir-key";
     process.env.RAJAONGKIR_API_KEY = "test-rajaongkir-key";
     vi.mocked(enforceAuthRateLimit).mockResolvedValue(undefined as never);
-    vi.mocked(createCheckoutOrderData).mockResolvedValue({ orderNumber: "TL1", paymentUrl: "https://pay.test", total: 36000 } as never);
-    vi.mocked(getRajaOngkirShippingCosts).mockResolvedValue({ weightGram: 1000, options: [] } as never);
-    vi.mocked(searchRajaOngkirDestinations).mockResolvedValue([{ id: "dest-1", label: "Jakarta" }] as never);
+    vi.mocked(createCheckoutOrderData).mockResolvedValue({
+      orderNumber: "TL1",
+      paymentUrl: "https://pay.test",
+      total: 36000,
+    } as never);
+    vi.mocked(getRajaOngkirShippingCosts).mockResolvedValue({
+      weightGram: 1000,
+      options: [],
+    } as never);
+    vi.mocked(searchRajaOngkirDestinations).mockResolvedValue([
+      { id: "dest-1", label: "Jakarta" },
+    ] as never);
     vi.mocked(prismaAny.$queryRaw).mockResolvedValue([{ ok: 1 }]);
   });
 
@@ -51,7 +63,9 @@ describe("API route contracts", () => {
     const response = await checkoutPost({
       request: jsonRequest({
         tenantSlug: "kopi-ibu",
-        items: [{ productId: "11111111-1111-4111-8111-111111111111", variantOptionIds: [], qty: 1 }],
+        items: [
+          { productId: "11111111-1111-4111-8111-111111111111", variantOptionIds: [], qty: 1 },
+        ],
         customer: {
           name: "Budi",
           whatsapp: "6281234567890",
@@ -64,7 +78,10 @@ describe("API route contracts", () => {
 
     expect(response.status).toBe(200);
     await expect(json(response)).resolves.toMatchObject({ orderNumber: "TL1", total: 36000 });
-    expect(enforceAuthRateLimit).toHaveBeenCalledWith({ event: "checkout", request: expect.any(Request) });
+    expect(enforceAuthRateLimit).toHaveBeenCalledWith({
+      event: "checkout",
+      request: expect.any(Request),
+    });
     expect(createCheckoutOrderData).toHaveBeenCalled();
   });
 
@@ -77,12 +94,19 @@ describe("API route contracts", () => {
   });
 
   it("api.shipping.costs rate limits and returns shipping JSON", async () => {
-    const response = await costsPost({ request: jsonRequest({ tenantSlug: "kopi-ibu", destinationId: "dest-1", items: [] }) });
+    const response = await costsPost({
+      request: jsonRequest({ tenantSlug: "kopi-ibu", destinationId: "dest-1", items: [] }),
+    });
 
     expect(response.status).toBe(200);
     await expect(json(response)).resolves.toMatchObject({ weightGram: 1000 });
-    expect(enforceAuthRateLimit).toHaveBeenCalledWith({ event: "shipping_costs", request: expect.any(Request) });
-    expect(getRajaOngkirShippingCosts).toHaveBeenCalledWith({ data: { tenantSlug: "kopi-ibu", destinationId: "dest-1", items: [] } });
+    expect(enforceAuthRateLimit).toHaveBeenCalledWith({
+      event: "shipping_costs",
+      request: expect.any(Request),
+    });
+    expect(getRajaOngkirShippingCosts).toHaveBeenCalledWith({
+      data: { tenantSlug: "kopi-ibu", destinationId: "dest-1", items: [] },
+    });
   });
 
   it("api.shipping.destinations rate limits and returns destination JSON", async () => {
@@ -90,8 +114,13 @@ describe("API route contracts", () => {
 
     expect(response.status).toBe(200);
     await expect(json(response)).resolves.toEqual([{ id: "dest-1", label: "Jakarta" }]);
-    expect(enforceAuthRateLimit).toHaveBeenCalledWith({ event: "shipping_destinations", request: expect.any(Request) });
-    expect(searchRajaOngkirDestinations).toHaveBeenCalledWith({ data: { search: "jak", limit: 5 } });
+    expect(enforceAuthRateLimit).toHaveBeenCalledWith({
+      event: "shipping_destinations",
+      request: expect.any(Request),
+    });
+    expect(searchRajaOngkirDestinations).toHaveBeenCalledWith({
+      data: { search: "jak", limit: 5 },
+    });
   });
 
   it("api.health returns no-store 200 when DB and env are ready", async () => {
@@ -99,7 +128,10 @@ describe("API route contracts", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
-    await expect(json(response)).resolves.toMatchObject({ ok: true, checks: { db: "ok", env: "ok", storage: "configured" } });
+    await expect(json(response)).resolves.toMatchObject({
+      ok: true,
+      checks: { db: "ok", env: "ok", storage: "configured" },
+    });
   });
 
   it("api.health returns 503 when DB fails", async () => {
