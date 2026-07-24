@@ -133,7 +133,6 @@ export function DashboardSidebar({
         <Link
           to="/$slug"
           params={{ slug: tenant?.slug || "" }}
-          target="_blank"
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40 transition duration-200"
         >
           <ExternalLink className="h-5 w-5 shrink-0" />

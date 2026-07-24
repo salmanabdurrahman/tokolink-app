@@ -82,8 +82,8 @@ export function FloatingCart({
       note,
       whatsappTemplate,
     );
-    window.open(url, "_blank");
     toast.success("Mengarahkan ke WhatsApp...");
+    window.location.assign(url);
   };
 
   const searchDestination = async () => {
@@ -174,7 +174,8 @@ export function FloatingCart({
       toast.success("Order dibuat. Mengarahkan ke pembayaran...");
       clear();
       setNote("");
-      window.location.href = result.paymentUrl;
+      if (!result.paymentUrl) throw new Error("Link pembayaran tidak tersedia");
+      window.location.assign(result.paymentUrl);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Checkout gagal. Coba lagi.");
     } finally {

@@ -130,7 +130,7 @@ function OrderStatusPage() {
             <Button
               variant="accent"
               className="w-full"
-              onClick={() => (window.location.href = paymentUrl)}
+              onClick={() => window.location.assign(paymentUrl)}
             >
               <PackageCheck className="h-4 w-4" /> Bayar sekarang
             </Button>
@@ -138,7 +138,7 @@ function OrderStatusPage() {
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => window.open(whatsappUrl, "_blank")}
+            onClick={() => window.location.assign(whatsappUrl)}
           >
             <MessageCircle className="h-4 w-4" /> Chat tenant
           </Button>
@@ -146,7 +146,7 @@ function OrderStatusPage() {
             <Button
               variant="ghost"
               className="w-full sm:col-span-2"
-              onClick={() => (window.location.href = `mailto:${order.customerEmail}`)}
+              onClick={() => window.location.assign(`mailto:${order.customerEmail}`)}
             >
               <Mail className="h-4 w-4" /> Email receipt dikirim setelah pembayaran terkonfirmasi
             </Button>

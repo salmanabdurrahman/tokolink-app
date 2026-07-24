@@ -32,8 +32,6 @@ function Overview() {
           URL toko-mu:{" "}
           <a
             href={`https://tokolink-v2.vercel.app/${tenant.slug}`}
-            target="_blank"
-            rel="noreferrer"
             className="text-foreground font-semibold hover:underline"
           >
             tokolink-v2.vercel.app/{tenant.slug} ↗

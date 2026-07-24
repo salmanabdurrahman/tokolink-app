@@ -11,12 +11,7 @@ export function Footer() {
           </p>
         </div>
         <div className="flex flex-wrap gap-8 text-sm">
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noreferrer"
-            className="text-muted-foreground hover:text-foreground"
-          >
+          <a href="https://github.com" className="text-muted-foreground hover:text-foreground">
             GitHub ↗
           </a>
         </div>

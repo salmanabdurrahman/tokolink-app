@@ -6,8 +6,9 @@ export const Route = createFileRoute("/api/checkout")({
       POST: async ({ request }) => {
         try {
           const data = await request.json();
-          const { createCheckoutOrder } = await import("../server/order.functions");
-          const result = await createCheckoutOrder({ data });
+          const { checkoutSchema } = await import("../lib/schemas");
+          const { createCheckoutOrderData } = await import("../server/checkout.server");
+          const result = await createCheckoutOrderData(checkoutSchema.parse(data));
           return Response.json(result);
         } catch (error) {
           return Response.json(

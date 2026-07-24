@@ -279,8 +279,6 @@ function OrdersPage() {
                   </div>
                   <a
                     href={`https://wa.me/${selectedOrder.customerWhatsapp.replace(/\D/g, "")}`}
-                    target="_blank"
-                    rel="noreferrer"
                     className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-foreground underline decoration-accent underline-offset-4"
                   >
                     <MessageCircle className="h-4 w-4" /> Hubungi WhatsApp

@@ -98,7 +98,7 @@ function SettingsPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => window.open(`/${tenant.slug}`, "_blank")}
+              onClick={() => window.location.assign(`/${tenant.slug}`)}
             >
               Preview storefront
             </Button>
