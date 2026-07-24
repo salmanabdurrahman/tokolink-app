@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/analytics";
+import { getPublicUrl } from "@/lib/site-url";
 
 export const Route = createFileRoute("/$slug")({
   loader: async ({ params }) => {
@@ -25,9 +26,7 @@ export const Route = createFileRoute("/$slug")({
   },
   head: ({ loaderData }) => {
     const tenant = loaderData?.tenant;
-    const ogImage = tenant
-      ? `https://tokolink-v2.vercel.app/api/og/${tenant.slug}`
-      : "https://tokolink-v2.vercel.app/og-main.png";
+    const ogImage = tenant ? getPublicUrl(`/api/og/${tenant.slug}`) : getPublicUrl("/og-main.png");
 
     return {
       meta: [
@@ -42,14 +41,14 @@ export const Route = createFileRoute("/$slug")({
           content: tenant?.tagline || "Kunjungi toko kami di Tokolink.",
         },
         { property: "og:type", content: "website" },
-        { property: "og:url", content: `https://tokolink-v2.vercel.app/${tenant?.slug || ""}` },
+        { property: "og:url", content: getPublicUrl(`/${tenant?.slug || ""}`) },
         { property: "og:image", content: ogImage },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:image", content: ogImage },
       ],
-      links: [{ rel: "canonical", href: `https://tokolink-v2.vercel.app/${tenant?.slug || ""}` }],
+      links: [{ rel: "canonical", href: getPublicUrl(`/${tenant?.slug || ""}`) }],
     };
   },
   component: Storefront,
@@ -68,7 +67,7 @@ function Storefront() {
   const [selecting, setSelecting] = useState<Product | null>(null);
   const [query, setQuery] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
-  const storeUrl = `https://tokolink-v2.vercel.app/${tenant.slug}`;
+  const storeUrl = getPublicUrl(`/${tenant.slug}`);
   const filteredProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return tenant.products;
@@ -98,7 +97,7 @@ function Storefront() {
           description: tenant.tagline,
           image: tenant.avatar,
           telephone: tenant.whatsapp,
-          url: `https://tokolink-v2.vercel.app/${tenant.slug}`,
+          url: getPublicUrl(`/${tenant.slug}`),
           priceRange: "$$",
           itemListElement: tenant.products.map((p, idx) => ({
             "@type": "ListItem",

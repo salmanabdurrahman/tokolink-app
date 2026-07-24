@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MessageCircle, PackageCheck } from "lucide-react";
 import { buildWhatsAppUrl } from "../lib/store";
+import { orderStatusLabels, paymentStatusLabels } from "../lib/status-labels";
 import { formatIDR } from "../lib/utils";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -25,14 +26,11 @@ export const Route = createFileRoute("/orders/$orderNumber")({
 });
 
 function statusLabel(status: string) {
-  const labels: Record<string, string> = {
-    PENDING_PAYMENT: "Menunggu pembayaran",
-    PAID: "Sudah dibayar",
-    SHIPPED: "Dikirim",
-    COMPLETED: "Selesai",
-    CANCELED: "Dibatalkan",
-  };
-  return labels[status] || status;
+  return orderStatusLabels[status as keyof typeof orderStatusLabels] || status;
+}
+
+function paymentLabel(status = "") {
+  return paymentStatusLabels[status as keyof typeof paymentStatusLabels] || status || "PENDING";
 }
 
 function OrderStatusPage() {
@@ -75,7 +73,7 @@ function OrderStatusPage() {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Pembayaran</span>
-            <span className="font-medium">{order.payment?.status || "PENDING"}</span>
+            <span className="font-medium">{paymentLabel(order.payment?.status)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Kurir</span>

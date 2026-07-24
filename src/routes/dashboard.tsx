@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { getDashboardData } from "@/server/tenant.functions";
+import { getPublicUrl } from "@/lib/site-url";
 
 export const Route = createFileRoute("/dashboard")({
   loader: async () => {
@@ -20,13 +21,13 @@ export const Route = createFileRoute("/dashboard")({
       { title: "Dashboard — Tokolink" },
       { property: "og:title", content: "Dashboard — Tokolink" },
       { property: "og:description", content: "Kelola toko online UMKM Anda." },
-      { property: "og:image", content: "https://tokolink-v2.vercel.app/og-auth.png" },
+      { property: "og:image", content: getPublicUrl("/og-auth.png") },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "https://tokolink-v2.vercel.app/og-auth.png" },
+      { name: "twitter:image", content: getPublicUrl("/og-auth.png") },
     ],
-    links: [{ rel: "canonical", href: "https://tokolink-v2.vercel.app/dashboard" }],
+    links: [{ rel: "canonical", href: getPublicUrl("/dashboard") }],
   }),
   component: DashboardLayout,
 });

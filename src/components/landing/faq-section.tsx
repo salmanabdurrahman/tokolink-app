@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { getPublicHostname } from "@/lib/site-url";
 
 const fadeUp = {
   initial: { y: 24, opacity: 0 },
@@ -8,6 +9,8 @@ const fadeUp = {
 };
 
 export function FaqSection() {
+  const publicHostname = getPublicHostname();
+
   return (
     <section id="faq" className="border-t border-border px-6 py-32">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-16 md:grid-cols-[1fr_2fr]">
@@ -29,7 +32,7 @@ export function FaqSection() {
             },
             {
               q: "Bagaimana dengan custom domain?",
-              a: "Belum, Untuk sekarang kamu dapat slug tokolink-v2.vercel.app/slug.",
+              a: `Belum. Untuk sekarang kamu dapat slug ${publicHostname}/slug.`,
             },
             {
               q: "Bisa dipakai untuk produk dengan banyak varian?",

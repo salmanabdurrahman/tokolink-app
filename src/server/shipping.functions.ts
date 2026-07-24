@@ -2,8 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { calculateDomesticCost, searchDomesticDestination, trackWaybill } from "./rajaongkir";
 import { getShippingCatalogBySlug } from "./catalog.queries.server";
-
-const DEFAULT_ALLOWED_COURIERS = ["jne", "jnt", "sicepat", "anteraja", "pos", "tiki", "ninja"];
+import { DEFAULT_COURIERS } from "../lib/commerce-policy";
 const destinationCache = new Map<
   string,
   { expiresAt: number; data: Awaited<ReturnType<typeof searchDomesticDestination>> }
@@ -72,9 +71,7 @@ export const getRajaOngkirShippingCosts = createServerFn({ method: "POST" })
         qty: item.qty,
       })),
     );
-    const couriers = tenant.allowedCouriers.length
-      ? tenant.allowedCouriers
-      : DEFAULT_ALLOWED_COURIERS;
+    const couriers = tenant.allowedCouriers.length ? tenant.allowedCouriers : [...DEFAULT_COURIERS];
 
     const costs = await calculateDomesticCost({
       origin: tenant.rajaOngkirOriginId,

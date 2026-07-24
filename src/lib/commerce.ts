@@ -1,3 +1,4 @@
+import { formatCurrencyCompact } from "./formatters";
 import type { CartItem } from "./types";
 
 export function buildWhatsAppUrl(
@@ -12,13 +13,13 @@ export function buildWhatsAppUrl(
   const lines = [
     template?.trim() || defaultIntro,
     ...items.map((i) => {
-      const priceFormatted = (i.unitPrice * i.qty).toLocaleString("id-ID");
+      const priceFormatted = formatCurrencyCompact(i.unitPrice * i.qty);
       const variantText = i.variantName ? ` (${i.variantName})` : "";
-      return `▪ ${i.qty}x ${i.productName}${variantText}\n  Rp${priceFormatted}`;
+      return `▪ ${i.qty}x ${i.productName}${variantText}\n  ${priceFormatted}`;
     }),
     "",
     note ? `*Catatan:*\n${note}\n` : "",
-    `*Total Pesanan: Rp${total.toLocaleString("id-ID")}*\n`,
+    `*Total Pesanan: ${formatCurrencyCompact(total)}*\n`,
     template?.trim() ? "" : `Mohon info instruksi pembayarannya ya. Terima kasih! 🙏`,
   ].filter(Boolean);
 

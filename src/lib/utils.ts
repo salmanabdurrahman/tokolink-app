@@ -1,20 +1,16 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { formatCurrency } from "./formatters";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const formatIDR = (n: number) =>
-  new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(n);
+export const formatIDR = formatCurrency;
 
-export function getErrorMessage(err: any): string {
+export function getErrorMessage(err: unknown): string {
   if (!err) return "";
-  const msg = err.message || String(err);
+  const msg = err instanceof Error ? err.message : String(err);
   if (typeof msg === "string" && msg.trim().startsWith("[")) {
     try {
       const parsed = JSON.parse(msg);

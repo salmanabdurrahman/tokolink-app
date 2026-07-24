@@ -5,10 +5,13 @@ import { authMiddleware } from "./auth-middleware";
 import { sendWithdrawalRequestEmail } from "./email";
 import { recordMetric } from "../lib/metrics.server";
 import { requireTenant } from "./tenant-context.server";
+import {
+  MIN_WITHDRAWAL_AMOUNT,
+  PLATFORM_FEE_RATE,
+  WITHDRAWAL_HOLD_DAYS,
+} from "../lib/commerce-policy";
 
-export const PLATFORM_FEE_RATE = 0.015;
-export const WITHDRAWAL_HOLD_DAYS = 2;
-export const MIN_WITHDRAWAL_AMOUNT = 50_000;
+export { MIN_WITHDRAWAL_AMOUNT, PLATFORM_FEE_RATE, WITHDRAWAL_HOLD_DAYS };
 
 export const requestWithdrawalSchema = z.object({
   amount: z.number().int().min(MIN_WITHDRAWAL_AMOUNT, "Minimum pencairan Rp50.000"),

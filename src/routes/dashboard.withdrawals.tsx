@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { formatDateTimeIndonesia, formatPercentIndonesia } from "@/lib/formatters";
 import { formatIDR } from "@/lib/utils";
+import { withdrawalStatusLabels } from "@/lib/status-labels";
 
 export const Route = createFileRoute("/dashboard/withdrawals")({
   loader: async () => {
@@ -32,20 +34,12 @@ export const Route = createFileRoute("/dashboard/withdrawals")({
 });
 
 function statusLabel(status: string) {
-  const labels: Record<string, string> = {
-    REQUESTED: "Diminta",
-    PROCESSING: "Diproses",
-    PAID: "Dibayar",
-    REJECTED: "Ditolak",
-  };
-  return labels[status] || status;
+  return withdrawalStatusLabels[status as keyof typeof withdrawalStatusLabels] || status;
 }
 
 function formatDate(value?: string | Date | null) {
   if (!value) return "-";
-  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(
-    new Date(value),
-  );
+  return formatDateTimeIndonesia(value);
 }
 
 function WithdrawalsPage() {
@@ -104,7 +98,7 @@ function WithdrawalsPage() {
             Policy
           </p>
           <h2 className="mt-3 font-display text-4xl font-light tracking-tight">
-            {(summary.feeRate * 100).toLocaleString("id-ID")}%
+            {formatPercentIndonesia(summary.feeRate * 100)}
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Fee dari subtotal produk. Minimum pencairan {formatIDR(summary.minimumWithdrawal)}.

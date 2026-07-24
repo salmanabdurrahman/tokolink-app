@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { listSitemapTenants } from "../server/catalog.queries.server";
+import { getPublicSiteUrl } from "../lib/site-url";
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           console.error("Failed to fetch tenants for sitemap:", err);
         }
 
-        const baseUrl = "https://tokolink-v2.vercel.app";
+        const baseUrl = getPublicSiteUrl();
 
         const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

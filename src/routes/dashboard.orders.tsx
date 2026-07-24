@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { formatDateTimeIndonesia } from "@/lib/formatters";
 import { formatIDR } from "@/lib/utils";
+import { orderStatusLabels, paymentStatusLabels } from "@/lib/status-labels";
 
 export const Route = createFileRoute("/dashboard/orders")({
   loader: async () => {
@@ -23,32 +25,16 @@ export const Route = createFileRoute("/dashboard/orders")({
 });
 
 function statusLabel(status: string) {
-  const labels: Record<string, string> = {
-    PENDING_PAYMENT: "Menunggu pembayaran",
-    PAID: "Sudah dibayar",
-    SHIPPED: "Dikirim",
-    COMPLETED: "Selesai",
-    CANCELED: "Dibatalkan",
-  };
-  return labels[status] || status;
+  return orderStatusLabels[status as keyof typeof orderStatusLabels] || status;
 }
 
 function paymentLabel(status = "") {
-  const labels: Record<string, string> = {
-    PENDING: "Menunggu",
-    PAID: "Lunas",
-    FAILED: "Gagal",
-    EXPIRED: "Kedaluwarsa",
-    CANCELED: "Dibatalkan",
-  };
-  return labels[status] || status || "-";
+  return paymentStatusLabels[status as keyof typeof paymentStatusLabels] || status || "-";
 }
 
 function formatDate(value?: string | Date | null) {
   if (!value) return "-";
-  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(
-    new Date(value),
-  );
+  return formatDateTimeIndonesia(value);
 }
 
 function getWithdrawalDate(value?: string | Date | null) {

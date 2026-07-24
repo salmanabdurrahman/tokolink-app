@@ -1,5 +1,6 @@
 import { prisma } from "../db";
 import { checkoutSchema } from "../lib/schemas";
+import { getPublicUrlServer } from "../lib/config.server";
 import { getCheckoutCatalogBySlug } from "./catalog.queries.server";
 import {
   PLATFORM_FEE_RATE,
@@ -20,13 +21,6 @@ function makeOrderNumber() {
   return `TL${date}${random}`;
 }
 
-function getSiteUrl() {
-  return (process.env.SITE_URL || process.env.VITE_SITE_URL || "http://localhost:3000").replace(
-    /\/$/,
-    "",
-  );
-}
-
 export async function createCheckoutOrderData(data: CheckoutInput) {
   const tenant = await getCheckoutCatalogBySlug(
     data.tenantSlug,
@@ -43,7 +37,7 @@ export async function createCheckoutOrderData(data: CheckoutInput) {
   const platformFee = Math.ceil(subtotal * PLATFORM_FEE_RATE);
   const total = subtotal + shippingCost;
   const orderNumber = makeOrderNumber();
-  const redirectUrl = `${getSiteUrl()}/orders/${orderNumber}`;
+  const redirectUrl = getPublicUrlServer(`/orders/${orderNumber}`);
   const paymentUrl = buildPakasirPayUrl(orderNumber, total, redirectUrl);
 
   const order = await createCheckoutOrderRecord({

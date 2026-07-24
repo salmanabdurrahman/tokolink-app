@@ -1,4 +1,7 @@
 import { Resend } from "resend";
+import { formatCurrencyCompact } from "../lib/formatters";
+import { getPublicUrlServer } from "../lib/config.server";
+import { withdrawalStatusLabels } from "../lib/status-labels";
 
 const resendApiKey = process.env.RESEND_API_KEY || "";
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -132,7 +135,8 @@ Tim Tokolink
 
 export async function sendOrderReceiptEmail(email: string, orderNumber: string, total: number) {
   const subject = `Receipt Tokolink ${orderNumber}`;
-  const text = `Pembayaran order ${orderNumber} sudah terkonfirmasi. Total: Rp${total.toLocaleString("id-ID")}.`;
+  const totalLabel = formatCurrencyCompact(total);
+  const text = `Pembayaran order ${orderNumber} sudah terkonfirmasi. Total: ${totalLabel}.`;
 
   if (!resend) {
     console.log("==================================================");
@@ -147,7 +151,7 @@ export async function sendOrderReceiptEmail(email: string, orderNumber: string, 
     to: email,
     subject,
     text,
-    html: `<p>Pembayaran order <strong>${orderNumber}</strong> sudah terkonfirmasi.</p><p>Total: <strong>Rp${total.toLocaleString("id-ID")}</strong></p>`,
+    html: `<p>Pembayaran order <strong>${orderNumber}</strong> sudah terkonfirmasi.</p><p>Total: <strong>${totalLabel}</strong></p>`,
   });
 
   if (error) throw new Error(`Gagal mengirim receipt order: ${error.message}`);
@@ -159,7 +163,8 @@ export async function sendTenantOrderNotificationEmail(
   total: number,
 ) {
   const subject = `Order baru dibayar: ${orderNumber}`;
-  const text = `Order ${orderNumber} sudah dibayar. Total: Rp${total.toLocaleString("id-ID")}. Silakan proses fulfillment.`;
+  const totalLabel = formatCurrencyCompact(total);
+  const text = `Order ${orderNumber} sudah dibayar. Total: ${totalLabel}. Silakan proses fulfillment.`;
 
   if (!resend) {
     console.log("==================================================");
@@ -174,7 +179,7 @@ export async function sendTenantOrderNotificationEmail(
     to: email,
     subject,
     text,
-    html: `<p>Order <strong>${orderNumber}</strong> sudah dibayar.</p><p>Total: <strong>Rp${total.toLocaleString("id-ID")}</strong></p><p>Silakan proses fulfillment.</p>`,
+    html: `<p>Order <strong>${orderNumber}</strong> sudah dibayar.</p><p>Total: <strong>${totalLabel}</strong></p><p>Silakan proses fulfillment.</p>`,
   });
 
   if (error) throw new Error(`Gagal mengirim notifikasi order: ${error.message}`);
@@ -182,7 +187,8 @@ export async function sendTenantOrderNotificationEmail(
 
 export async function sendWithdrawalRequestEmail(email: string, amount: number) {
   const subject = "Request pencairan Tokolink diterima";
-  const text = `Request pencairan sebesar Rp${amount.toLocaleString("id-ID")} sudah diterima. Payout diproses manual oleh tim Tokolink.`;
+  const amountLabel = formatCurrencyCompact(amount);
+  const text = `Request pencairan sebesar ${amountLabel} sudah diterima. Payout diproses manual oleh tim Tokolink.`;
 
   if (!resend) {
     console.log("==================================================");
@@ -197,21 +203,18 @@ export async function sendWithdrawalRequestEmail(email: string, amount: number) 
     to: email,
     subject,
     text,
-    html: `<p>Request pencairan sebesar <strong>Rp${amount.toLocaleString("id-ID")}</strong> sudah diterima.</p><p>Payout diproses manual oleh tim Tokolink.</p>`,
+    html: `<p>Request pencairan sebesar <strong>${amountLabel}</strong> sudah diterima.</p><p>Payout diproses manual oleh tim Tokolink.</p>`,
   });
 
   if (error) throw new Error(`Gagal mengirim email pencairan: ${error.message}`);
 }
 
 export async function sendWithdrawalStatusEmail(email: string, amount: number, status: string) {
-  const statusLabel: Record<string, string> = {
-    REQUESTED: "diminta",
-    PROCESSING: "diproses",
-    PAID: "dibayar",
-    REJECTED: "ditolak",
-  };
-  const subject = `Status pencairan Tokolink: ${statusLabel[status] || status}`;
-  const text = `Status pencairan Rp${amount.toLocaleString("id-ID")} sekarang ${statusLabel[status] || status}.`;
+  const statusLabel =
+    withdrawalStatusLabels[status as keyof typeof withdrawalStatusLabels] || status;
+  const amountLabel = formatCurrencyCompact(amount);
+  const subject = `Status pencairan Tokolink: ${statusLabel}`;
+  const text = `Status pencairan ${amountLabel} sekarang ${statusLabel}.`;
 
   if (!resend) {
     console.log("==================================================");
@@ -226,7 +229,7 @@ export async function sendWithdrawalStatusEmail(email: string, amount: number, s
     to: email,
     subject,
     text,
-    html: `<p>Status pencairan <strong>Rp${amount.toLocaleString("id-ID")}</strong> sekarang <strong>${statusLabel[status] || status}</strong>.</p>`,
+    html: `<p>Status pencairan <strong>${amountLabel}</strong> sekarang <strong>${statusLabel}</strong>.</p>`,
   });
 
   if (error) throw new Error(`Gagal mengirim email status pencairan: ${error.message}`);
@@ -355,7 +358,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
           </div>
 
           <div class="btn-wrapper">
-            <a href="https://tokolink-v2.vercel.app/dashboard" class="btn">Mulai Kelola Toko</a>
+            <a href="${getPublicUrlServer("/dashboard")}" class="btn">Mulai Kelola Toko</a>
           </div>
 
           <p>Jika Anda memiliki pertanyaan atau butuh bantuan dalam mengatur toko Anda, silakan hubungi tim dukungan kami.</p>

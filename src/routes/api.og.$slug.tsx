@@ -3,9 +3,9 @@ import { getOgTenantBySlug } from "../server/catalog.queries.server";
 import fs from "node:fs";
 import path from "node:path";
 import { isSupportedOgImage } from "../lib/og";
+import { getPublicHostname, getPublicUrl } from "../lib/site-url";
 
-const SITE_URL = "https://tokolink-v2.vercel.app";
-const FALLBACK_OG = `${SITE_URL}/og-main.png`;
+const FALLBACK_OG = getPublicUrl("/og-main.png");
 
 let cachedFont: ArrayBuffer | null = null;
 
@@ -212,7 +212,7 @@ export const Route = createFileRoute("/api/og/$slug")({
                   }}
                 >
                   <span style={{ color: "#888", fontSize: "16px", display: "flex" }}>
-                    Powered by tokolink-v2.vercel.app
+                    Powered by {getPublicHostname()}
                   </span>
                 </div>
 
@@ -227,7 +227,7 @@ export const Route = createFileRoute("/api/og/$slug")({
                     display: "flex",
                   }}
                 >
-                  tokolink-v2.vercel.app/{tenant.slug}
+                  {getPublicHostname()}/{tenant.slug}
                 </div>
               </div>
             </div>

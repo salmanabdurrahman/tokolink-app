@@ -1,7 +1,6 @@
 import { prisma } from "../db";
 import { sendOrderReceiptEmail, sendTenantOrderNotificationEmail } from "./email";
-
-const WITHDRAWAL_HOLD_DAYS = 2;
+import { WITHDRAWAL_HOLD_DAYS } from "../lib/commerce-policy";
 
 export async function markOrderPaid(orderNumber: string, rawPayload: unknown, method = "") {
   const availableAt = new Date(Date.now() + WITHDRAWAL_HOLD_DAYS * 24 * 60 * 60 * 1000);

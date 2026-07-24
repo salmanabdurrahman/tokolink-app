@@ -1,3 +1,5 @@
+import { DEFAULT_PUBLIC_SITE_URL, getPublicHostname } from "./site-url";
+
 function isR2PublicHost(hostname: string) {
   const publicBaseUrl = process.env.R2_PUBLIC_BASE_URL;
   if (!publicBaseUrl) return false;
@@ -20,7 +22,10 @@ export function isSafeImageUrl(url: string | null | undefined): boolean {
     if (hostname.endsWith(".public.blob.vercel-storage.com")) return true;
     if (isR2PublicHost(hostname)) return true;
     if (hostname === "api.dicebear.com") return true;
-    if (hostname === "tokolink-v2.vercel.app") return true;
+    const publicHostname = getPublicHostname();
+    const defaultHostname = new URL(DEFAULT_PUBLIC_SITE_URL).hostname;
+    if (hostname === defaultHostname) return true;
+    if (hostname === publicHostname && !["localhost", "127.0.0.1"].includes(hostname)) return true;
 
     if (process.env.NODE_ENV !== "production") {
       if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.startsWith("192.168.")) {

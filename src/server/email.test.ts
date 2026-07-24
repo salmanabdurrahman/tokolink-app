@@ -103,8 +103,8 @@ describe("email payloads", () => {
     expect(sendMock).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "tenant@example.com",
-        subject: "Status pencairan Tokolink: dibayar",
-        text: expect.stringContaining("sekarang dibayar"),
+        subject: "Status pencairan Tokolink: Dibayar",
+        text: expect.stringContaining("sekarang Dibayar"),
       }),
     );
   });

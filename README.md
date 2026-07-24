@@ -217,7 +217,8 @@ Open `http://localhost:3000`.
 | `PAKASIR_API_KEY`             | Pakasir API key for server-side transaction checks; keep secret                      |
 | `PAKASIR_BASE_URL`            | Optional Pakasir base URL, defaults to `https://app.pakasir.com`                     |
 | `SITE_URL`                    | Server-side public app URL used for Pakasir redirect/webhook links                   |
-| `VITE_SITE_URL`               | Optional browser-exposed public app URL fallback                                     |
+| `VITE_PUBLIC_SITE_URL`        | Browser-exposed public app URL for canonical links, OG, sitemap, email links         |
+| `VITE_SITE_URL`               | Legacy browser-exposed public app URL fallback                                       |
 | `RAJAONGKIR_API_KEY`          | RajaOngkir API key for server-side destination, cost, and waybill calls; keep secret |
 | `RAJAONGKIR_BASE_URL`         | Optional RajaOngkir base URL, defaults to `https://rajaongkir.komerce.id/api/v1`     |
 | `RESEND_API_KEY`              | Resend API key; keep secret                                                          |

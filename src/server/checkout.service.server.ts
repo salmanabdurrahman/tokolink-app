@@ -3,8 +3,9 @@ import { calculateDomesticCost, type RajaOngkirCostOption } from "./rajaongkir";
 import type { getCheckoutCatalogBySlug } from "./catalog.queries.server";
 import type { z } from "zod";
 import type { checkoutSchema } from "../lib/schemas";
+import { PLATFORM_FEE_RATE } from "../lib/commerce-policy";
 
-export const PLATFORM_FEE_RATE = 0.015;
+export { PLATFORM_FEE_RATE };
 
 type CheckoutInput = z.infer<typeof checkoutSchema>;
 type CheckoutTenant = NonNullable<Awaited<ReturnType<typeof getCheckoutCatalogBySlug>>>;

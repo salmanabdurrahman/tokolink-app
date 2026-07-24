@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout/page-header";
 import { getDashboardData } from "@/server/tenant.functions";
+import { getPublicHostname, getPublicUrl } from "@/lib/site-url";
 
 export const Route = createFileRoute("/dashboard/")({
   loader: async () => {
@@ -18,6 +19,9 @@ function Overview() {
 
   if (!tenant) return null;
 
+  const publicHostname = getPublicHostname();
+  const storeUrl = getPublicUrl(`/${tenant.slug}`);
+
   const stats = [
     { label: "Produk aktif", value: productCount },
     { label: "Tautan", value: linkCount },
@@ -30,11 +34,8 @@ function Overview() {
         <PageHeader label="Overview" title={`Halo, ${tenant.name}.`} />
         <p className="text-sm text-muted-foreground">
           URL toko-mu:{" "}
-          <a
-            href={`https://tokolink-v2.vercel.app/${tenant.slug}`}
-            className="text-foreground font-semibold hover:underline"
-          >
-            tokolink-v2.vercel.app/{tenant.slug} ↗
+          <a href={storeUrl} className="text-foreground font-semibold hover:underline">
+            {publicHostname}/{tenant.slug} ↗
           </a>
         </p>
       </div>

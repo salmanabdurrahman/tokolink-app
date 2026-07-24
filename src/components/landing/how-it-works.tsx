@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { getPublicHostname } from "@/lib/site-url";
 
 const fadeUp = {
   initial: { y: 24, opacity: 0 },
@@ -8,6 +9,8 @@ const fadeUp = {
 };
 
 export function HowItWorks() {
+  const publicHostname = getPublicHostname();
+
   return (
     <section id="how" className="px-6 py-32 relative overflow-hidden">
       <div className="mx-auto max-w-6xl">
@@ -25,7 +28,7 @@ export function HowItWorks() {
             {
               step: "01",
               title: "Daftar & klaim slug",
-              copy: "tokolink-v2.vercel.app/nama-toko-kamu. Gratis, 30 detik.",
+              copy: `${publicHostname}/nama-toko-kamu. Gratis, 30 detik.`,
             },
             {
               step: "02",

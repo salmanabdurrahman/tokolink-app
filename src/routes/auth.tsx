@@ -5,6 +5,7 @@ import { TokolinkLogo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getPublicUrl } from "@/lib/site-url";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -15,13 +16,13 @@ export const Route = createFileRoute("/auth")({
         property: "og:description",
         content: "Masuk ke Tokolink untuk mengelola toko online UMKM Anda.",
       },
-      { property: "og:image", content: "https://tokolink-v2.vercel.app/og-auth.png" },
+      { property: "og:image", content: getPublicUrl("/og-auth.png") },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "https://tokolink-v2.vercel.app/og-auth.png" },
+      { name: "twitter:image", content: getPublicUrl("/og-auth.png") },
     ],
-    links: [{ rel: "canonical", href: "https://tokolink-v2.vercel.app/auth" }],
+    links: [{ rel: "canonical", href: getPublicUrl("/auth") }],
   }),
   component: AuthPage,
 });
