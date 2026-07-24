@@ -5,12 +5,7 @@ import { verifyRecaptcha } from "./recaptcha";
 import { sendVerificationEmail, sendWelcomeEmail } from "./email";
 import crypto from "crypto";
 import { z } from "zod";
-
-function parseCookie(cookieString: string, name: string): string | null {
-  const match = cookieString.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  if (match) return decodeURIComponent(match[2]);
-  return null;
-}
+import { parseCookie } from "../lib/cookies";
 
 export const getSessionUser = createServerFn({ method: "GET" }).handler(
   async ({ request }: any) => {

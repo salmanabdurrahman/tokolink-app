@@ -1,12 +1,7 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { supabaseAdmin } from "../lib/supabase.server";
 import { prisma } from "../db";
-
-function parseCookie(cookieString: string, name: string): string | null {
-  const match = cookieString.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  if (match) return decodeURIComponent(match[2]);
-  return null;
-}
+import { parseCookie } from "../lib/cookies";
 
 export const authMiddleware = createMiddleware().server(async ({ next, request }) => {
   const cookieHeader = request.headers.get("cookie") ?? "";
