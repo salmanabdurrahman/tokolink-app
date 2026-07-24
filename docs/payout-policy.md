@@ -7,16 +7,19 @@ Tokolink keeps merchant balance from ledger entries, not from mutable balance fi
 - Platform fee is 1.5% of product subtotal.
 - Shipping cost is excluded from platform fee.
 - Fee is snapshotted on each order and recorded as a ledger entry.
+- Fee percentage is defined in shared commerce policy constants.
 
 ## Balance availability
 
 - Paid order ledger entries become available after H+2 from payment time.
+- Hold duration is defined in shared commerce policy constants.
 - Canceled, refunded, or disputed orders are excluded from available balance.
 - Requested or processing withdrawals reduce available balance to prevent double withdrawal.
 
 ## Withdrawal
 
 - Minimum withdrawal amount is Rp50.000.
+- Minimum amount is defined in shared commerce policy constants.
 - Merchants can request withdrawal from dashboard.
 - Withdrawal statuses: requested, processing, paid, rejected.
 - MVP payout processing is manual outside Tokolink system.

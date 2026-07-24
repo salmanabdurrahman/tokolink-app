@@ -49,16 +49,16 @@ If existing pattern conflicts with desired change, stop and explain trade-off be
 - Framer Motion for small UI transitions
 - Prisma ORM with PostgreSQL
 - Supabase Auth
-- Vercel Blob for media uploads
+- Cloudflare R2 for media uploads via S3-compatible adapter
 - Resend for email
-- Google reCAPTCHA v3
+- Cloudflare Turnstile helper/verifier (not enforced end-to-end until client token wiring is active)
 - Vitest + Testing Library + jsdom
 
 ## Directory Map
 
 ```text
 src/routes/             TanStack Router file routes and API routes
-src/server/             Server Functions, auth middleware, email, upload, recaptcha
+src/server/             Server Functions, auth middleware, email, upload, storage, provider clients
 src/lib/                schemas, stores, utils, Supabase clients, OG helpers, types
 src/components/ui/      local reusable UI primitives
 src/components/layout/  shared navigation/layout components
@@ -222,7 +222,7 @@ bun run test:coverage
 - Never hardcode secrets.
 - Never commit `.env` with real values.
 - Keep service-role keys server-only.
-- Never expose `SUPABASE_SERVICE_ROLE_KEY`, `BLOB_READ_WRITE_TOKEN`, `RESEND_API_KEY`, or reCAPTCHA secret to browser code.
+- Never expose `SUPABASE_SERVICE_ROLE_KEY`, `R2_SECRET_ACCESS_KEY`, `PAKASIR_API_KEY`, `RAJAONGKIR_API_KEY`, `RESEND_API_KEY`, `OTP_HASH_SECRET`, or Turnstile secret to browser code.
 - Keep upload validation: magic bytes, size limit, safe blob path.
 - Keep OG image SSRF guard and host allowlist.
 - Keep OTP expiry and attempt limits.

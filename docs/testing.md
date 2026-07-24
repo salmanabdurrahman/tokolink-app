@@ -15,6 +15,18 @@ bun run build
 
 Use `bun run test` for normal local checks. Use `bun run test:coverage` when changing server logic, data access, validation, stores, checkout, payment, shipping, or ledger behavior.
 
+Targeted examples:
+
+```bash
+bun run test -- src/server/checkout.server.test.ts
+bun run test -- src/server/shipping.functions.test.ts
+bun run test -- src/routes/-api-contract.test.ts
+bun run test -- src/components/storefront/floating-cart.test.tsx
+bun run test -- src/hooks/use-session.test.tsx
+```
+
+Use targeted commands first while refactoring one layer, then run broader checks before finishing broad diffs.
+
 ## Test layout
 
 - Tests live near source files as `*.test.ts` or `*.test.tsx`.
@@ -34,15 +46,15 @@ Use unit tests for helpers with no DB/network dependency:
 - OG URL safety in `src/lib/og.ts`
 - cart and WhatsApp helpers in `src/lib/store.ts`
 
-### Server handlers
+### Server handlers and services
 
 Mock external boundaries and assert public behavior:
 
 - auth/session sync
 - tenant creation/update
 - product/link ownership guards
-- checkout order creation
-- shipping cost validation
+- checkout order creation and order item snapshots
+- shipping quote revalidation and cost validation
 - order dashboard actions
 - withdrawal requests
 
@@ -68,6 +80,15 @@ Provider clients should be tested with mocked `fetch`/SDK calls:
 - Pakasir transaction create/detail/cancel
 - RajaOngkir destination/cost/waybill
 - Resend email payloads
+
+### Hooks and client stores
+
+Use hook/store tests for client-side state boundaries:
+
+- session sync and auth redirects
+- dashboard tenant hydration via `useLoadedTenant(...)`
+- split auth/tenant/cart store actions
+- cart persistence and WhatsApp helper output
 
 ### UI behavior
 
@@ -99,6 +120,17 @@ Keep mocks local to test files unless reused by many tests. Reset mocks between 
 ## Coverage
 
 Coverage threshold starts pragmatic so critical flows can be covered first. Add targeted coverage when behavior changes. Do not chase coverage with brittle implementation tests.
+
+## Refactor safety checklist
+
+Before splitting or moving code:
+
+1. Add/confirm focused test for behavior being moved.
+2. Move one concern per diff.
+3. Keep public API/Server Function inputs and Indonesian error messages stable.
+4. Re-run targeted test for moved behavior.
+5. Run `bun run typecheck` and `bun run lint` for broad route/server/store changes.
+6. Run `bun run build` when route boundaries, server-only imports, or generated bundles may be affected.
 
 ## CI quality gate
 

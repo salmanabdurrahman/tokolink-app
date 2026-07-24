@@ -18,7 +18,7 @@ Use this checklist before merging or promoting a preview deploy.
 - `/robots.txt` points to current sitemap URL.
 - Public storefront loads, product search works, share/QR works, cart opens.
 - Checkout creates pending order with mocked/sandbox Pakasir flow when available.
-- Dashboard auth/onboarding remains protected by Turnstile in production env.
+- Auth/onboarding abuse controls remain active via server-side rate limits; Turnstile enforcement is not required until client token wiring is enabled end-to-end.
 
 ## Manual smoke
 

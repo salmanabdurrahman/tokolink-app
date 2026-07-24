@@ -40,7 +40,8 @@ Security controls are layered across middleware, Server Functions, validation, p
 
 - Pakasir API key stays server-only.
 - Checkout totals are calculated server-side from DB product/variant data.
-- Checkout re-queries RajaOngkir and accepts only matching origin, destination, courier, service, weight, and cost.
+- Checkout re-queries RajaOngkir on the server using tenant origin, buyer destination, calculated item weight, and selected courier.
+- Checkout accepts only a provider quote whose courier, service, and cost match the buyer selection; otherwise buyer must recalculate shipping.
 - Pakasir webhook payload is not trusted as final proof.
 - Webhook handler verifies `order_id` and amount, then double-checks with Pakasir Transaction Detail API.
 - Duplicate webhooks are handled idempotently.
@@ -50,15 +51,15 @@ Security controls are layered across middleware, Server Functions, validation, p
 
 - RajaOngkir API key stays server-only.
 - Storefront calls server functions for destination search, cost, and waybill checks.
-- Tenant origin, buyer destination, courier, service, weight, and cost are validated before checkout.
+- Tenant origin, buyer destination, allowed courier, selected service, calculated weight, and provider cost are validated before checkout.
 - Errors are mapped to user-safe Indonesian messages.
 
 ## Ledger and withdrawal safety
 
 - Merchant balance is calculated from `LedgerEntry`, not a mutable balance column.
-- Platform fee is snapshotted per order.
+- Platform fee is snapshotted per order from shared commerce policy constants.
 - Available balance excludes canceled/refunded/disputed orders.
-- Paid order credits become available after H+2.
+- Paid order credits become available after H+2 from shared commerce policy constants.
 - Requested/processing withdrawals reduce available balance to prevent double withdrawal.
 - Payout processing is manual for MVP.
 
