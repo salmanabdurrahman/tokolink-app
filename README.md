@@ -116,6 +116,17 @@ npm run dev
 
 Buka peramban (browser) dan akses aplikasi di alamat `http://localhost:3000`.
 
+### 6. Jalankan Quality Check Lokal
+
+```bash
+bun run typecheck
+bun run lint
+bun run test
+bun run test:coverage
+```
+
+Test menggunakan Vitest, Testing Library, dan jsdom. Setup global berada di `src/test/setup.ts`, sedangkan factory data reusable berada di `src/test/factories.ts`.
+
 ---
 
 ## Struktur Repositori
