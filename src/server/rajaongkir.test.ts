@@ -77,6 +77,23 @@ describe("rajaongkir client", () => {
     );
   });
 
+  it("maps RajaOngkir auth, rate limit, and server errors", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(Response.json({}, { status: 401 }))
+      .mockResolvedValueOnce(Response.json({}, { status: 429 }))
+      .mockResolvedValueOnce(Response.json({}, { status: 500 }));
+
+    await expect(searchDomesticDestination("senayan", 5)).rejects.toThrow(
+      "Kunci API RajaOngkir tidak valid. Hubungi admin toko.",
+    );
+    await expect(searchDomesticDestination("senayan", 5)).rejects.toThrow(
+      "Terlalu banyak request ke RajaOngkir. Tunggu sebentar lalu coba lagi.",
+    );
+    await expect(searchDomesticDestination("senayan", 5)).rejects.toThrow(
+      "Layanan RajaOngkir sedang bermasalah. Coba lagi beberapa saat lagi.",
+    );
+  });
+
   it("tracks waybill when endpoint is available", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       Response.json({ data: { summary: { status: "DELIVERED", delivered: true } } }),
