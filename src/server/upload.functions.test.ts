@@ -1,12 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@vercel/blob", () => ({
-  put: vi.fn(async () => ({ url: "https://blob.vercel-storage.com/test-abc123.webp" })),
+vi.mock("./storage", () => ({
+  createMediaKey: vi.fn(() => "tenants/tenant-1/2026/01/id-logo.webp"),
+  storage: {
+    putObject: vi.fn(async ({ key }) => ({
+      key,
+      url: `https://cdn.example.com/${key}`,
+    })),
+  },
 }));
 
 vi.mock("./auth-middleware", () => ({ authMiddleware: vi.fn() }));
 
-import { put } from "@vercel/blob";
+import { createMediaKey, storage } from "./storage";
 import { isValidImageBuffer, uploadImage } from "./upload.functions";
 
 const uploadImageHandler = uploadImage as any;
@@ -34,7 +40,8 @@ describe("isValidImageBuffer", () => {
 
 describe("uploadImage", () => {
   beforeEach(() => {
-    vi.mocked(put).mockClear();
+    vi.mocked(createMediaKey).mockClear();
+    vi.mocked(storage.putObject).mockClear();
   });
 
   it("uploads valid image and returns URL", async () => {
@@ -44,8 +51,23 @@ describe("uploadImage", () => {
     });
 
     expect(result).toHaveProperty("url");
-    expect(result.url).toContain("blob.vercel-storage.com");
-    expect(put).toHaveBeenCalledOnce();
+    expect(result.url).toContain("cdn.example.com");
+    expect(result.key).toBe("tenants/tenant-1/2026/01/id-logo.webp");
+    expect(createMediaKey).toHaveBeenCalledWith({ tenantId: "tenant-1", filename: "logo.png" });
+    expect(storage.putObject).toHaveBeenCalledWith({
+      key: "tenants/tenant-1/2026/01/id-logo.webp",
+      buffer: Buffer.from(pngBase64, "base64"),
+      contentType: "image/webp",
+    });
+  });
+
+  it("rejects upload without tenant context", async () => {
+    await expect(
+      uploadImageHandler({
+        data: { name: "logo.png", base64: `data:image/png;base64,${pngBase64}` },
+        context: {},
+      }),
+    ).rejects.toThrow("Toko belum tersedia untuk upload gambar.");
   });
 
   it("rejects invalid image buffer", async () => {

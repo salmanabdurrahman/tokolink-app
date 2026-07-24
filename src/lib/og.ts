@@ -1,3 +1,14 @@
+function isR2PublicHost(hostname: string) {
+  const publicBaseUrl = process.env.R2_PUBLIC_BASE_URL;
+  if (!publicBaseUrl) return false;
+
+  try {
+    return hostname === new URL(publicBaseUrl).hostname;
+  } catch {
+    return false;
+  }
+}
+
 export function isSafeImageUrl(url: string | null | undefined): boolean {
   if (!url) return false;
   try {
@@ -7,6 +18,7 @@ export function isSafeImageUrl(url: string | null | undefined): boolean {
     const hostname = parsed.hostname;
 
     if (hostname.endsWith(".public.blob.vercel-storage.com")) return true;
+    if (isR2PublicHost(hostname)) return true;
     if (hostname === "api.dicebear.com") return true;
     if (hostname === "tokolink-v2.vercel.app") return true;
 

@@ -61,7 +61,7 @@ Each merchant gets a public storefront at `tokolink-v2.vercel.app/{store-slug}`.
 | Motion         | Framer Motion for small, purposeful transitions                                   |
 | Database       | PostgreSQL with Prisma ORM                                                        |
 | Auth           | Supabase Auth with email OTP and Google OAuth support                             |
-| Media          | Vercel Blob uploads with server-side image validation                             |
+| Media          | Cloudflare R2 uploads with server-side image validation and legacy Blob dual-read |
 | Email          | Resend verification and welcome emails                                            |
 | Bot protection | Cloudflare Turnstile                                                              |
 | Tests          | Vitest, Testing Library, jsdom, V8 coverage                                       |
@@ -118,7 +118,7 @@ Tokolink uses consistent patterns across routing, server logic, data access, sta
 - [Bun](https://bun.sh/) recommended, or Node.js 18+
 - PostgreSQL database, or Supabase PostgreSQL project
 - Supabase Auth project
-- Vercel Blob token
+- Cloudflare R2 bucket and API token
 - Resend API key
 - Cloudflare Turnstile keys
 
@@ -149,7 +149,7 @@ npm install
 cp .env.example .env
 ```
 
-Fill `.env` with local database, Supabase, Vercel Blob, Resend, and Turnstile credentials.
+Fill `.env` with local database, Supabase, Cloudflare R2, Resend, and Turnstile credentials.
 
 ### 4. Prepare database
 
@@ -183,7 +183,12 @@ Open `http://localhost:3000`.
 | `SUPABASE_URL`                | Server-side Supabase project URL                      |
 | `SUPABASE_ANON_KEY`           | Server-side Supabase anon key                         |
 | `SUPABASE_SERVICE_ROLE_KEY`   | Server-side Supabase admin key; keep secret           |
-| `BLOB_READ_WRITE_TOKEN`       | Vercel Blob upload token; keep secret                 |
+| `BLOB_READ_WRITE_TOKEN`       | Legacy Vercel Blob token for rollback/migration only  |
+| `R2_ACCOUNT_ID`               | Cloudflare account ID for R2 S3-compatible endpoint   |
+| `R2_ACCESS_KEY_ID`            | R2 access key ID; keep secret                         |
+| `R2_SECRET_ACCESS_KEY`        | R2 secret access key; keep secret                     |
+| `R2_BUCKET`                   | R2 bucket name for public media uploads               |
+| `R2_PUBLIC_BASE_URL`          | Public R2 custom domain/base URL for uploaded media   |
 | `VITE_TURNSTILE_SITE_KEY`     | Public Cloudflare Turnstile site key                  |
 | `TURNSTILE_SECRET_KEY`        | Server-side Turnstile secret key; keep secret         |
 | `TURNSTILE_ALLOWED_HOSTNAMES` | Optional comma-separated Turnstile hostname allowlist |
@@ -194,23 +199,24 @@ Never commit real `.env` files or production credentials.
 
 ## Available Scripts
 
-| Script                  | Description                           |
-| ----------------------- | ------------------------------------- |
-| `bun run dev`           | Start Vite development server         |
-| `bun run build`         | Build production app                  |
-| `bun run build:dev`     | Build in development mode             |
-| `bun run preview`       | Preview built app                     |
-| `bun run lint`          | Run ESLint and Prettier rule checks   |
-| `bun run typecheck`     | Run TypeScript typecheck without emit |
-| `bun run test`          | Run Vitest once                       |
-| `bun run test:watch`    | Run Vitest in watch mode              |
-| `bun run test:coverage` | Run Vitest with coverage              |
-| `bun run format`        | Format repository with Prettier       |
-| `bun run db:generate`   | Generate Prisma client                |
-| `bun run db:push`       | Push Prisma schema to database        |
-| `bun run db:migrate`    | Create/apply local Prisma migration   |
-| `bun run db:studio`     | Open Prisma Studio                    |
-| `bun run db:seed`       | Run database seed script              |
+| Script                     | Description                                          |
+| -------------------------- | ---------------------------------------------------- |
+| `bun run dev`              | Start Vite development server                        |
+| `bun run build`            | Build production app                                 |
+| `bun run build:dev`        | Build in development mode                            |
+| `bun run preview`          | Preview built app                                    |
+| `bun run lint`             | Run ESLint and Prettier rule checks                  |
+| `bun run typecheck`        | Run TypeScript typecheck without emit                |
+| `bun run test`             | Run Vitest once                                      |
+| `bun run test:watch`       | Run Vitest in watch mode                             |
+| `bun run test:coverage`    | Run Vitest with coverage                             |
+| `bun run format`           | Format repository with Prettier                      |
+| `bun run db:generate`      | Generate Prisma client                               |
+| `bun run db:push`          | Push Prisma schema to database                       |
+| `bun run db:migrate`       | Create/apply local Prisma migration                  |
+| `bun run db:studio`        | Open Prisma Studio                                   |
+| `bun run db:seed`          | Run database seed script                             |
+| `bun run media:migrate:r2` | Dry-run legacy Blob media inventory for R2 migration |
 
 ## Repository Structure
 
@@ -266,6 +272,26 @@ Testing conventions:
 - Mock Prisma and external services for server-function tests.
 - Cover ownership guards, validation failures, transactions, and cart/order formatting.
 
+## Media migration
+
+New uploads are stored in R2. Existing Vercel Blob image URLs remain accepted for storefront and OG rendering until migration completes.
+
+Inventory legacy media without changing data:
+
+```bash
+bun run media:migrate:r2
+```
+
+Apply migration only after R2 env and public domain are verified:
+
+```bash
+bun run media:migrate:r2 -- --apply
+```
+
+The script downloads legacy Blob URLs from `Tenant.avatar` and `Product.image`, uploads them to R2, updates each DB row in a transaction, validates public access with `HEAD`, and prints an `oldUrl` → `newUrl` mapping for rollback records.
+
+Cleanup plan: keep Vercel Blob objects and `BLOB_READ_WRITE_TOKEN` through a retention period after migration, sample migrated storefronts/OG previews, keep rollback mapping, then remove legacy Blob credentials and delete old objects only after no DB rows reference `*.public.blob.vercel-storage.com`.
+
 ## Security
 
 Tokolink includes several hardening patterns:
@@ -277,7 +303,8 @@ Tokolink includes several hardening patterns:
 - **Invisible Turnstile checks** for signup, OTP resend, and onboarding flows.
 - **OTP brute-force protection** with attempt limits and expiry handling.
 - **Image upload validation** with magic-byte checks and 5MB limit.
-- **OG image SSRF guard** with an allowlist and production loopback/local-network blocking.
+- **R2 object uploads** with tenant-scoped keys, immutable public cache headers, and public custom-domain URLs.
+- **OG image SSRF guard** with an allowlist for legacy Blob, R2 public domain, and production loopback/local-network blocking.
 - **Secret hygiene** through `.env.example` templates and local `.env` usage.
 
 ## Deployment
@@ -290,7 +317,7 @@ Before deploying:
 2. Configure PostgreSQL/Supabase database connectivity.
 3. Generate/push Prisma schema or apply migrations.
 4. Configure Supabase Auth redirect URLs and providers.
-5. Configure Vercel Blob, Resend sender identity, and Turnstile domain allowlist.
+5. Configure Cloudflare R2 public domain, Resend sender identity, and Turnstile domain allowlist.
 6. Run `bun run build` locally or in CI.
 
 ## Contributing

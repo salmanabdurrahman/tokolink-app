@@ -9,7 +9,10 @@ afterEach(() => {
 
 describe("OG image safety", () => {
   it("allows trusted image hosts", () => {
+    process.env.R2_PUBLIC_BASE_URL = "https://media.example.com";
+
     expect(isSafeImageUrl("https://asset.public.blob.vercel-storage.com/a.png")).toBe(true);
+    expect(isSafeImageUrl("https://media.example.com/tenants/tenant-1/avatar.png")).toBe(true);
     expect(isSafeImageUrl("https://api.dicebear.com/9.x/initials/svg?seed=Toko")).toBe(true);
     expect(isSafeImageUrl("https://tokolink-v2.vercel.app/og-main.png")).toBe(true);
   });

@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { put } from "@vercel/blob";
 import { authMiddleware } from "./auth-middleware";
+import { createMediaKey, storage } from "./storage";
 import { z } from "zod";
 
 export function isValidImageBuffer(buffer: Buffer): boolean {
@@ -53,16 +53,14 @@ export const uploadImage = createServerFn({ method: "POST" })
       throw new Error("Ukuran gambar melebihi batas 5MB");
     }
 
-    const tenantId = context.tenant?.id || "default";
-    const cleanName = data.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const blobPath = `tenants/${tenantId}/${Date.now()}-${cleanName}`;
+    const tenantId = context.tenant?.id;
+    if (!tenantId) {
+      throw new Error("Toko belum tersedia untuk upload gambar.");
+    }
 
-    const blob = await put(blobPath, buffer, {
-      access: "public",
-      contentType: "image/webp",
-      addRandomSuffix: true,
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-    });
+    const contentType = "image/webp";
+    const key = createMediaKey({ tenantId, filename: data.name });
+    const object = await storage.putObject({ key, buffer, contentType });
 
-    return { url: blob.url };
+    return { url: object.url, key: object.key };
   });

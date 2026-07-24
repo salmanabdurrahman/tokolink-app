@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { UploadCloud, Image as ImageIcon, AlertCircle, Loader2 } from "lucide-react";
 import { validateImage, compressToWebP } from "@/lib/image-utils";
 import { uploadImage } from "@/server/upload.functions";
+import { Button } from "./button";
 
 interface ImageUploadProps {
   value?: string;
@@ -84,10 +85,13 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       await processFile(e.target.files[0]);
+      e.target.value = "";
     }
   };
 
-  const onButtonClick = () => {
+  const onButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
     inputRef.current?.click();
   };
 
@@ -106,8 +110,7 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
         onDragOver={handleDrag}
         onDragLeave={handleDrag}
         onDrop={handleDrop}
-        onClick={!loading ? onButtonClick : undefined}
-        className={`relative flex flex-col items-center justify-center min-h-[160px] border-2 border-dashed rounded-3xl p-6 transition duration-200 cursor-pointer text-center select-none overflow-hidden group ${
+        className={`relative flex flex-col items-center justify-center min-h-[160px] border-2 border-dashed rounded-3xl p-6 transition duration-200 text-center select-none overflow-hidden group ${
           dragActive
             ? "border-accent bg-accent/5"
             : "border-border hover:border-foreground/40 hover:bg-muted/10"
@@ -121,9 +124,14 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
               className="h-20 w-20 object-cover rounded-2xl border border-border shadow-sm group-hover:scale-[1.02] transition duration-200"
             />
             {!loading && (
-              <span className="text-xs text-muted-foreground group-hover:text-foreground transition duration-200">
-                Klik atau drag file untuk mengganti gambar
-              </span>
+              <div className="space-y-2">
+                <span className="block text-xs text-muted-foreground transition duration-200">
+                  Drag file ke area ini untuk mengganti gambar
+                </span>
+                <Button type="button" variant="outline" size="sm" onClick={onButtonClick}>
+                  Ganti gambar
+                </Button>
+              </div>
             )}
           </div>
         ) : (
@@ -131,9 +139,20 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
             <div className="p-3 bg-muted/50 rounded-2xl border border-border group-hover:scale-110 transition duration-200">
               <UploadCloud className="h-6 w-6 text-muted-foreground group-hover:text-foreground transition duration-200" />
             </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Drag & drop gambar di sini</p>
-              <p className="text-xs text-muted-foreground">JPEG, PNG, WebP atau GIF up to 5MB</p>
+            <div className="space-y-2">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Drag & drop gambar di sini</p>
+                <p className="text-xs text-muted-foreground">JPEG, PNG, WebP atau GIF up to 5MB</p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onButtonClick}
+                disabled={loading}
+              >
+                Pilih gambar
+              </Button>
             </div>
           </div>
         )}
