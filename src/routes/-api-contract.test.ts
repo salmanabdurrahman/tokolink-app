@@ -8,6 +8,10 @@ vi.mock("../server/checkout.server", () => ({ createCheckoutOrderData: vi.fn() }
 vi.mock("../server/shipping.functions", () => ({
   getRajaOngkirShippingCosts: vi.fn(),
   searchRajaOngkirDestinations: vi.fn(),
+  getRajaOngkirProvinces: vi.fn(),
+  getRajaOngkirCities: vi.fn(),
+  getRajaOngkirDistricts: vi.fn(),
+  getRajaOngkirSubdistricts: vi.fn(),
 }));
 vi.mock("../db", () => ({ prisma: { $queryRaw: vi.fn() } }));
 
@@ -15,22 +19,38 @@ import { prisma } from "../db";
 import { createCheckoutOrderData } from "../server/checkout.server";
 import { enforceAuthRateLimit } from "../server/auth-abuse";
 import {
+  getRajaOngkirCities,
+  getRajaOngkirDistricts,
+  getRajaOngkirProvinces,
   getRajaOngkirShippingCosts,
+  getRajaOngkirSubdistricts,
   searchRajaOngkirDestinations,
 } from "../server/shipping.functions";
 import { Route as CheckoutRoute } from "./api.checkout";
 import { Route as HealthRoute } from "./api.health";
 import { Route as CostsRoute } from "./api.shipping.costs";
 import { Route as DestinationsRoute } from "./api.shipping.destinations";
+import { Route as ProvincesRoute } from "./api.shipping.provinces";
+import { Route as CitiesRoute } from "./api.shipping.cities";
+import { Route as DistrictsRoute } from "./api.shipping.districts";
+import { Route as SubdistrictsRoute } from "./api.shipping.subdistricts";
 
 const prismaAny = prisma as any;
 const checkoutPost = (CheckoutRoute as any).server.handlers.POST;
 const costsPost = (CostsRoute as any).server.handlers.POST;
 const destinationsPost = (DestinationsRoute as any).server.handlers.POST;
 const healthGet = (HealthRoute as any).server.handlers.GET;
+const provincesGet = (ProvincesRoute as any).server.handlers.GET;
+const citiesGet = (CitiesRoute as any).server.handlers.GET;
+const districtsGet = (DistrictsRoute as any).server.handlers.GET;
+const subdistrictsGet = (SubdistrictsRoute as any).server.handlers.GET;
 
 function jsonRequest(body: unknown) {
   return new Request("https://example.com/api", { method: "POST", body: JSON.stringify(body) });
+}
+
+function getRequest(url: string) {
+  return new Request(url, { method: "GET" });
 }
 
 async function json(response: Response) {
@@ -55,6 +75,18 @@ describe("API route contracts", () => {
     } as never);
     vi.mocked(searchRajaOngkirDestinations).mockResolvedValue([
       { id: "dest-1", label: "Jakarta" },
+    ] as never);
+    vi.mocked(getRajaOngkirProvinces).mockResolvedValue([
+      { id: "6", name: "JAWA BARAT", zipCode: "" },
+    ] as never);
+    vi.mocked(getRajaOngkirCities).mockResolvedValue([
+      { id: "23", name: "KARAWANG", zipCode: "" },
+    ] as never);
+    vi.mocked(getRajaOngkirDistricts).mockResolvedValue([
+      { id: "575", name: "KARAWANG TIMUR", zipCode: "" },
+    ] as never);
+    vi.mocked(getRajaOngkirSubdistricts).mockResolvedValue([
+      { id: "37965", name: "KARAWANG WETAN", zipCode: "41314" },
     ] as never);
     vi.mocked(prismaAny.$queryRaw).mockResolvedValue([{ ok: 1 }]);
   });
@@ -120,6 +152,66 @@ describe("API route contracts", () => {
     });
     expect(searchRajaOngkirDestinations).toHaveBeenCalledWith({
       data: { search: "jak", limit: 5 },
+    });
+  });
+
+  it("api.shipping.provinces rate limits and returns province list", async () => {
+    const response = await provincesGet({
+      request: getRequest("https://example.com/api/shipping/provinces"),
+    });
+
+    expect(response.status).toBe(200);
+    await expect(json(response)).resolves.toEqual([{ id: "6", name: "JAWA BARAT", zipCode: "" }]);
+    expect(enforceAuthRateLimit).toHaveBeenCalledWith({
+      event: "shipping_locations",
+      request: expect.any(Request),
+    });
+  });
+
+  it("api.shipping.cities rate limits and forwards provinceId as parentId", async () => {
+    const response = await citiesGet({
+      request: getRequest("https://example.com/api/shipping/cities?provinceId=6"),
+    });
+
+    expect(response.status).toBe(200);
+    await expect(json(response)).resolves.toEqual([{ id: "23", name: "KARAWANG", zipCode: "" }]);
+    expect(getRajaOngkirCities).toHaveBeenCalledWith({ data: { parentId: "6" } });
+  });
+
+  it("api.shipping.districts rate limits and forwards cityId as parentId", async () => {
+    const response = await districtsGet({
+      request: getRequest("https://example.com/api/shipping/districts?cityId=23"),
+    });
+
+    expect(response.status).toBe(200);
+    await expect(json(response)).resolves.toEqual([
+      { id: "575", name: "KARAWANG TIMUR", zipCode: "" },
+    ]);
+    expect(getRajaOngkirDistricts).toHaveBeenCalledWith({ data: { parentId: "23" } });
+  });
+
+  it("api.shipping.subdistricts rate limits and forwards districtId as parentId", async () => {
+    const response = await subdistrictsGet({
+      request: getRequest("https://example.com/api/shipping/subdistricts?districtId=575"),
+    });
+
+    expect(response.status).toBe(200);
+    await expect(json(response)).resolves.toEqual([
+      { id: "37965", name: "KARAWANG WETAN", zipCode: "41314" },
+    ]);
+    expect(getRajaOngkirSubdistricts).toHaveBeenCalledWith({ data: { parentId: "575" } });
+  });
+
+  it("api.shipping.cities returns 400 message when the underlying lookup fails", async () => {
+    vi.mocked(getRajaOngkirCities).mockRejectedValueOnce(new Error("Gagal memuat kabupaten/kota"));
+
+    const response = await citiesGet({
+      request: getRequest("https://example.com/api/shipping/cities?provinceId=6"),
+    });
+
+    expect(response.status).toBe(400);
+    await expect(json(response)).resolves.toMatchObject({
+      message: "Gagal memuat kabupaten/kota",
     });
   });
 

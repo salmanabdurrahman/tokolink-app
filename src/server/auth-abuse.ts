@@ -9,6 +9,7 @@ export type AuthAbuseEvent =
   | "checkout"
   | "shipping_destinations"
   | "shipping_costs"
+  | "shipping_locations"
   | "payment_webhook_lookup";
 export type AuthAbuseOutcome = "success" | "blocked" | "failed";
 
@@ -20,6 +21,10 @@ const RATE_LIMITS: Record<AuthAbuseEvent, { limit: number; windowMs: number }> =
   checkout: { limit: 20, windowMs: 10 * 60 * 1000 },
   shipping_destinations: { limit: 60, windowMs: 10 * 60 * 1000 },
   shipping_costs: { limit: 40, windowMs: 10 * 60 * 1000 },
+  // Cascading provinsi/kota/kecamatan/kelurahan picker can fire several
+  // lookups per checkout/settings session (one per dropdown level, plus
+  // re-selections), so this needs a higher ceiling than the free-text search.
+  shipping_locations: { limit: 120, windowMs: 10 * 60 * 1000 },
   payment_webhook_lookup: { limit: 120, windowMs: 10 * 60 * 1000 },
 };
 

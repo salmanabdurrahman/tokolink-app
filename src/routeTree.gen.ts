@@ -24,8 +24,12 @@ import { Route as DashboardOrdersRouteImport } from './routes/dashboard.orders'
 import { Route as DashboardLinksRouteImport } from './routes/dashboard.links'
 import { Route as ApiHealthRouteImport } from './routes/api.health'
 import { Route as ApiCheckoutRouteImport } from './routes/api.checkout'
+import { Route as ApiShippingSubdistrictsRouteImport } from './routes/api.shipping.subdistricts'
+import { Route as ApiShippingProvincesRouteImport } from './routes/api.shipping.provinces'
+import { Route as ApiShippingDistrictsRouteImport } from './routes/api.shipping.districts'
 import { Route as ApiShippingDestinationsRouteImport } from './routes/api.shipping.destinations'
 import { Route as ApiShippingCostsRouteImport } from './routes/api.shipping.costs'
+import { Route as ApiShippingCitiesRouteImport } from './routes/api.shipping.cities'
 import { Route as ApiPakasirWebhookRouteImport } from './routes/api.pakasir.webhook'
 import { Route as ApiOgSlugRouteImport } from './routes/api.og.$slug'
 
@@ -104,6 +108,21 @@ const ApiCheckoutRoute = ApiCheckoutRouteImport.update({
   path: '/api/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiShippingSubdistrictsRoute = ApiShippingSubdistrictsRouteImport.update({
+  id: '/api/shipping/subdistricts',
+  path: '/api/shipping/subdistricts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiShippingProvincesRoute = ApiShippingProvincesRouteImport.update({
+  id: '/api/shipping/provinces',
+  path: '/api/shipping/provinces',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiShippingDistrictsRoute = ApiShippingDistrictsRouteImport.update({
+  id: '/api/shipping/districts',
+  path: '/api/shipping/districts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiShippingDestinationsRoute = ApiShippingDestinationsRouteImport.update({
   id: '/api/shipping/destinations',
   path: '/api/shipping/destinations',
@@ -112,6 +131,11 @@ const ApiShippingDestinationsRoute = ApiShippingDestinationsRouteImport.update({
 const ApiShippingCostsRoute = ApiShippingCostsRouteImport.update({
   id: '/api/shipping/costs',
   path: '/api/shipping/costs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiShippingCitiesRoute = ApiShippingCitiesRouteImport.update({
+  id: '/api/shipping/cities',
+  path: '/api/shipping/cities',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPakasirWebhookRoute = ApiPakasirWebhookRouteImport.update({
@@ -143,8 +167,12 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/api/og/$slug': typeof ApiOgSlugRoute
   '/api/pakasir/webhook': typeof ApiPakasirWebhookRoute
+  '/api/shipping/cities': typeof ApiShippingCitiesRoute
   '/api/shipping/costs': typeof ApiShippingCostsRoute
   '/api/shipping/destinations': typeof ApiShippingDestinationsRoute
+  '/api/shipping/districts': typeof ApiShippingDistrictsRoute
+  '/api/shipping/provinces': typeof ApiShippingProvincesRoute
+  '/api/shipping/subdistricts': typeof ApiShippingSubdistrictsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -163,8 +191,12 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardIndexRoute
   '/api/og/$slug': typeof ApiOgSlugRoute
   '/api/pakasir/webhook': typeof ApiPakasirWebhookRoute
+  '/api/shipping/cities': typeof ApiShippingCitiesRoute
   '/api/shipping/costs': typeof ApiShippingCostsRoute
   '/api/shipping/destinations': typeof ApiShippingDestinationsRoute
+  '/api/shipping/districts': typeof ApiShippingDistrictsRoute
+  '/api/shipping/provinces': typeof ApiShippingProvincesRoute
+  '/api/shipping/subdistricts': typeof ApiShippingSubdistrictsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -185,8 +217,12 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/api/og/$slug': typeof ApiOgSlugRoute
   '/api/pakasir/webhook': typeof ApiPakasirWebhookRoute
+  '/api/shipping/cities': typeof ApiShippingCitiesRoute
   '/api/shipping/costs': typeof ApiShippingCostsRoute
   '/api/shipping/destinations': typeof ApiShippingDestinationsRoute
+  '/api/shipping/districts': typeof ApiShippingDistrictsRoute
+  '/api/shipping/provinces': typeof ApiShippingProvincesRoute
+  '/api/shipping/subdistricts': typeof ApiShippingSubdistrictsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -208,8 +244,12 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/api/og/$slug'
     | '/api/pakasir/webhook'
+    | '/api/shipping/cities'
     | '/api/shipping/costs'
     | '/api/shipping/destinations'
+    | '/api/shipping/districts'
+    | '/api/shipping/provinces'
+    | '/api/shipping/subdistricts'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -228,8 +268,12 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/api/og/$slug'
     | '/api/pakasir/webhook'
+    | '/api/shipping/cities'
     | '/api/shipping/costs'
     | '/api/shipping/destinations'
+    | '/api/shipping/districts'
+    | '/api/shipping/provinces'
+    | '/api/shipping/subdistricts'
   id:
     | '__root__'
     | '/'
@@ -249,8 +293,12 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/api/og/$slug'
     | '/api/pakasir/webhook'
+    | '/api/shipping/cities'
     | '/api/shipping/costs'
     | '/api/shipping/destinations'
+    | '/api/shipping/districts'
+    | '/api/shipping/provinces'
+    | '/api/shipping/subdistricts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -265,8 +313,12 @@ export interface RootRouteChildren {
   OrdersOrderNumberRoute: typeof OrdersOrderNumberRoute
   ApiOgSlugRoute: typeof ApiOgSlugRoute
   ApiPakasirWebhookRoute: typeof ApiPakasirWebhookRoute
+  ApiShippingCitiesRoute: typeof ApiShippingCitiesRoute
   ApiShippingCostsRoute: typeof ApiShippingCostsRoute
   ApiShippingDestinationsRoute: typeof ApiShippingDestinationsRoute
+  ApiShippingDistrictsRoute: typeof ApiShippingDistrictsRoute
+  ApiShippingProvincesRoute: typeof ApiShippingProvincesRoute
+  ApiShippingSubdistrictsRoute: typeof ApiShippingSubdistrictsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -376,6 +428,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/shipping/subdistricts': {
+      id: '/api/shipping/subdistricts'
+      path: '/api/shipping/subdistricts'
+      fullPath: '/api/shipping/subdistricts'
+      preLoaderRoute: typeof ApiShippingSubdistrictsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/shipping/provinces': {
+      id: '/api/shipping/provinces'
+      path: '/api/shipping/provinces'
+      fullPath: '/api/shipping/provinces'
+      preLoaderRoute: typeof ApiShippingProvincesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/shipping/districts': {
+      id: '/api/shipping/districts'
+      path: '/api/shipping/districts'
+      fullPath: '/api/shipping/districts'
+      preLoaderRoute: typeof ApiShippingDistrictsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/shipping/destinations': {
       id: '/api/shipping/destinations'
       path: '/api/shipping/destinations'
@@ -388,6 +461,13 @@ declare module '@tanstack/react-router' {
       path: '/api/shipping/costs'
       fullPath: '/api/shipping/costs'
       preLoaderRoute: typeof ApiShippingCostsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/shipping/cities': {
+      id: '/api/shipping/cities'
+      path: '/api/shipping/cities'
+      fullPath: '/api/shipping/cities'
+      preLoaderRoute: typeof ApiShippingCitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/pakasir/webhook': {
@@ -441,8 +521,12 @@ const rootRouteChildren: RootRouteChildren = {
   OrdersOrderNumberRoute: OrdersOrderNumberRoute,
   ApiOgSlugRoute: ApiOgSlugRoute,
   ApiPakasirWebhookRoute: ApiPakasirWebhookRoute,
+  ApiShippingCitiesRoute: ApiShippingCitiesRoute,
   ApiShippingCostsRoute: ApiShippingCostsRoute,
   ApiShippingDestinationsRoute: ApiShippingDestinationsRoute,
+  ApiShippingDistrictsRoute: ApiShippingDistrictsRoute,
+  ApiShippingProvincesRoute: ApiShippingProvincesRoute,
+  ApiShippingSubdistrictsRoute: ApiShippingSubdistrictsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

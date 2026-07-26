@@ -1,6 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { calculateDomesticCost, searchDomesticDestination, trackWaybill } from "./rajaongkir";
+import {
+  calculateDomesticCost,
+  listCities,
+  listDistricts,
+  listProvinces,
+  listSubdistricts,
+  searchDomesticDestination,
+  trackWaybill,
+} from "./rajaongkir";
 import { getShippingCatalogBySlug } from "./catalog.queries.server";
 import { DEFAULT_COURIERS } from "../lib/commerce-policy";
 const destinationCache = new Map<
@@ -8,9 +16,38 @@ const destinationCache = new Map<
   { expiresAt: number; data: Awaited<ReturnType<typeof searchDomesticDestination>> }
 >();
 
+// Reference geography (provinsi/kabupaten/kecamatan/kelurahan) barely ever
+// changes, so a long TTL keeps the cascading picker snappy without hammering
+// RajaOngkir on every keystroke-free dropdown open.
+const LOCATION_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const locationCache = new Map<
+  string,
+  { expiresAt: number; data: Awaited<ReturnType<typeof listProvinces>> }
+>();
+
+async function cachedLocations(
+  cacheKey: string,
+  loader: () => Promise<Awaited<ReturnType<typeof listProvinces>>>,
+) {
+  const cached = locationCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.data;
+
+  const data = await loader();
+  locationCache.set(cacheKey, { expiresAt: Date.now() + LOCATION_CACHE_TTL_MS, data });
+  return data;
+}
+
+export function __clearRajaOngkirLocationCacheForTests() {
+  locationCache.clear();
+}
+
 export const destinationSearchSchema = z.object({
   search: z.string().trim().min(3, "Ketik minimal 3 karakter lokasi"),
   limit: z.number().int().min(1).max(10).default(5),
+});
+
+export const locationParentSchema = z.object({
+  parentId: z.string().trim().min(1, "Pilih lokasi sebelumnya dulu"),
 });
 
 export const shippingCostSchema = z.object({
@@ -47,6 +84,28 @@ export const searchRajaOngkirDestinations = createServerFn({ method: "GET" })
     destinationCache.set(cacheKey, { expiresAt: Date.now() + 5 * 60 * 1000, data: destinations });
     return destinations;
   });
+
+export const getRajaOngkirProvinces = createServerFn({ method: "GET" }).handler(async () =>
+  cachedLocations("province", () => listProvinces()),
+);
+
+export const getRajaOngkirCities = createServerFn({ method: "GET" })
+  .validator(locationParentSchema)
+  .handler(async ({ data }) =>
+    cachedLocations(`city:${data.parentId}`, () => listCities(data.parentId)),
+  );
+
+export const getRajaOngkirDistricts = createServerFn({ method: "GET" })
+  .validator(locationParentSchema)
+  .handler(async ({ data }) =>
+    cachedLocations(`district:${data.parentId}`, () => listDistricts(data.parentId)),
+  );
+
+export const getRajaOngkirSubdistricts = createServerFn({ method: "GET" })
+  .validator(locationParentSchema)
+  .handler(async ({ data }) =>
+    cachedLocations(`subdistrict:${data.parentId}`, () => listSubdistricts(data.parentId)),
+  );
 
 export const getRajaOngkirShippingCosts = createServerFn({ method: "POST" })
   .validator(shippingCostSchema)

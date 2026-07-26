@@ -95,16 +95,26 @@ Expected. Handler is idempotent and should not duplicate ledger entries.
 
 ## RajaOngkir API key
 
-### Destination search returns no result
+### Location picker (provinsi/kabupaten-kota/kecamatan/kelurahan) is empty or stuck loading
 
-Check spelling and location level. Try broader keywords first. Confirm `RAJAONGKIR_API_KEY` and `RAJAONGKIR_BASE_URL`.
+The cascading picker calls `GET /api/shipping/provinces`, `/cities`, `/districts`, `/subdistricts` in
+sequence (each scoped by the previous level's id). Confirm `RAJAONGKIR_API_KEY` and `RAJAONGKIR_BASE_URL`,
+and check the `shipping_locations` rate limit bucket in `src/server/auth-abuse.ts` if requests are being
+blocked. A district with no registered kelurahan/desa is expected to auto-finalize at the district level
+instead of waiting for a 4th selection.
+
+### Destination search ("Cari cepat") returns no result
+
+Check spelling and location level. Try broader keywords first, or switch to the step-by-step
+provinsi -> kabupaten/kota -> kecamatan -> kelurahan picker instead. Confirm `RAJAONGKIR_API_KEY` and
+`RAJAONGKIR_BASE_URL`.
 
 ### Shipping cost unavailable
 
 Check:
 
-- Tenant origin subdistrict ID is saved in dashboard settings.
-- Buyer destination ID is selected from search result.
+- Tenant origin ID (district or subdistrict level) is saved in dashboard settings.
+- Buyer destination ID is selected via the cascading picker or quick search.
 - Product weights are set and total weight is valid.
 - Courier is enabled for tenant and supported by RajaOngkir route.
 

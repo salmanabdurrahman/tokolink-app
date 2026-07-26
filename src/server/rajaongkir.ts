@@ -29,6 +29,12 @@ export type RajaOngkirWaybill = {
   raw: unknown;
 };
 
+export type RajaOngkirLocation = {
+  id: string;
+  name: string;
+  zipCode: string;
+};
+
 const DEFAULT_BASE_URL = "https://rajaongkir.komerce.id/api/v1";
 const REQUEST_TIMEOUT_MS = 10000;
 
@@ -112,6 +118,14 @@ function normalizeDestination(item: any): RajaOngkirDestination {
   };
 }
 
+function normalizeLocation(item: any): RajaOngkirLocation {
+  return {
+    id: String(item.id ?? ""),
+    name: String(item.name || item.province_name || item.city_name || "").trim(),
+    zipCode: String(item.zip_code || item.postal_code || ""),
+  };
+}
+
 function normalizeCost(item: any): RajaOngkirCostOption {
   return {
     courier: String(item.code || item.courier || item.name || "").toLowerCase(),
@@ -133,6 +147,47 @@ export async function searchDomesticDestination(search: string, limit = 5) {
   return payloadData(payload)
     .map(normalizeDestination)
     .filter((item: RajaOngkirDestination) => item.id);
+}
+
+// Step-by-step hierarchy for the cascading location picker (provinsi ->
+// kabupaten/kota -> kecamatan -> kelurahan). Each level narrows by the
+// parent id returned from the level above.
+export async function listProvinces() {
+  const { baseUrl } = getConfig();
+  const payload = await fetchJson<any>(`${baseUrl}/destination/province`);
+  return payloadData(payload)
+    .map(normalizeLocation)
+    .filter((item: RajaOngkirLocation) => item.id && item.name);
+}
+
+export async function listCities(provinceId: string) {
+  const { baseUrl } = getConfig();
+  const payload = await fetchJson<any>(
+    `${baseUrl}/destination/city/${encodeURIComponent(provinceId)}`,
+  );
+  return payloadData(payload)
+    .map(normalizeLocation)
+    .filter((item: RajaOngkirLocation) => item.id && item.name);
+}
+
+export async function listDistricts(cityId: string) {
+  const { baseUrl } = getConfig();
+  const payload = await fetchJson<any>(
+    `${baseUrl}/destination/district/${encodeURIComponent(cityId)}`,
+  );
+  return payloadData(payload)
+    .map(normalizeLocation)
+    .filter((item: RajaOngkirLocation) => item.id && item.name);
+}
+
+export async function listSubdistricts(districtId: string) {
+  const { baseUrl } = getConfig();
+  const payload = await fetchJson<any>(
+    `${baseUrl}/destination/sub-district/${encodeURIComponent(districtId)}`,
+  );
+  return payloadData(payload)
+    .map(normalizeLocation)
+    .filter((item: RajaOngkirLocation) => item.id && item.name);
 }
 
 const RAJAONGKIR_TIMEOUT_MESSAGE = "RajaOngkir terlalu lama merespons. Coba lagi.";

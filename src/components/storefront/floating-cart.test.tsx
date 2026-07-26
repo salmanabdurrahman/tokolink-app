@@ -32,6 +32,7 @@ describe("FloatingCart", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) => {
+        if (url.includes("/api/shipping/provinces")) return Response.json([]);
         if (url.includes("destinations")) {
           return Response.json([
             {
@@ -66,6 +67,7 @@ describe("FloatingCart", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tambah Kopi Susu" }));
     expect(useCart.getState().items[0].qty).toBe(2);
 
+    fireEvent.click(screen.getByRole("button", { name: "Cari cepat" }));
     fireEvent.change(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), {
       target: { value: "senayan" },
     });
@@ -173,6 +175,7 @@ describe("FloatingCart", () => {
 
     render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Cari cepat" }));
     fireEvent.click(screen.getByRole("button", { name: "Cari" }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Lokasi tidak ditemukan"));
@@ -182,13 +185,15 @@ describe("FloatingCart", () => {
     const { toast } = await import("sonner");
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => {
+      vi.fn(async (url: string) => {
+        if (String(url).includes("/api/shipping/provinces")) return Response.json([]);
         throw new Error("network down");
       }) as any,
     );
 
     render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Cari cepat" }));
     fireEvent.click(screen.getByRole("button", { name: "Cari" }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("network down"));
@@ -199,6 +204,7 @@ describe("FloatingCart", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) => {
+        if (url.includes("/api/shipping/provinces")) return Response.json([]);
         if (url.includes("destinations")) {
           return Response.json([
             {
@@ -221,6 +227,7 @@ describe("FloatingCart", () => {
 
     render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Cari cepat" }));
     fireEvent.change(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), {
       target: { value: "senayan" },
     });
@@ -246,6 +253,7 @@ describe("FloatingCart", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) => {
+        if (url.includes("/api/shipping/provinces")) return Response.json([]);
         if (url.includes("destinations")) {
           return Response.json([
             {
@@ -272,6 +280,7 @@ describe("FloatingCart", () => {
 
     render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Cari cepat" }));
     fireEvent.change(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), {
       target: { value: "senayan" },
     });
@@ -288,6 +297,7 @@ describe("FloatingCart", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) => {
+        if (url.includes("/api/shipping/provinces")) return Response.json([]);
         if (url.includes("destinations")) {
           return Response.json([
             {
@@ -314,6 +324,7 @@ describe("FloatingCart", () => {
 
     render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Cari cepat" }));
     fireEvent.change(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), {
       target: { value: "senayan" },
     });

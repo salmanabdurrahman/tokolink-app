@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   __clearRajaOngkirCostCacheForTests,
   calculateDomesticCost,
+  listCities,
+  listDistricts,
+  listProvinces,
+  listSubdistricts,
   searchDomesticDestination,
   trackWaybill,
 } from "./rajaongkir";
@@ -98,6 +102,66 @@ describe("rajaongkir client", () => {
     await expect(searchDomesticDestination("senayan", 5)).rejects.toThrow(
       "Layanan RajaOngkir sedang bermasalah. Coba lagi beberapa saat lagi.",
     );
+  });
+
+  it("lists provinces for the step-by-step picker", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      Response.json({ data: [{ id: 6, name: "JAWA BARAT" }] }),
+    );
+
+    await expect(listProvinces()).resolves.toEqual([
+      expect.objectContaining({ id: "6", name: "JAWA BARAT" }),
+    ]);
+    expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain("/destination/province");
+  });
+
+  it("lists cities within a province by id", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      Response.json({ data: [{ id: 23, name: "KARAWANG", zip_code: "41311" }] }),
+    );
+
+    await expect(listCities("6")).resolves.toEqual([
+      expect.objectContaining({ id: "23", name: "KARAWANG", zipCode: "41311" }),
+    ]);
+    expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain("/destination/city/6");
+  });
+
+  it("lists districts within a city by id", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      Response.json({ data: [{ id: 575, name: "KARAWANG TIMUR", zip_code: "41314" }] }),
+    );
+
+    await expect(listDistricts("23")).resolves.toEqual([
+      expect.objectContaining({ id: "575", name: "KARAWANG TIMUR" }),
+    ]);
+    expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain("/destination/district/23");
+  });
+
+  it("lists subdistricts within a district by id", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      Response.json({ data: [{ id: 37965, name: "KARAWANG WETAN", zip_code: "41314" }] }),
+    );
+
+    await expect(listSubdistricts("575")).resolves.toEqual([
+      expect.objectContaining({ id: "37965", name: "KARAWANG WETAN" }),
+    ]);
+    expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain("/destination/sub-district/575");
+  });
+
+  it("filters out location rows missing id or name", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      Response.json({
+        data: [
+          { id: 1, name: "OK" },
+          { id: "", name: "NO ID" },
+          { id: 2, name: "" },
+        ],
+      }),
+    );
+
+    await expect(listProvinces()).resolves.toEqual([
+      expect.objectContaining({ id: "1", name: "OK" }),
+    ]);
   });
 
   it("tracks waybill when endpoint is available", async () => {

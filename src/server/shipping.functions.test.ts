@@ -7,14 +7,31 @@ vi.mock("./rajaongkir", () => ({
   calculateDomesticCost: vi.fn(),
   searchDomesticDestination: vi.fn(),
   trackWaybill: vi.fn(),
+  listProvinces: vi.fn(),
+  listCities: vi.fn(),
+  listDistricts: vi.fn(),
+  listSubdistricts: vi.fn(),
 }));
 
 import { prisma } from "../db";
-import { calculateDomesticCost, searchDomesticDestination, trackWaybill } from "./rajaongkir";
 import {
+  calculateDomesticCost,
+  listCities,
+  listDistricts,
+  listProvinces,
+  listSubdistricts,
+  searchDomesticDestination,
+  trackWaybill,
+} from "./rajaongkir";
+import {
+  __clearRajaOngkirLocationCacheForTests,
   calculateShippingWeightGram,
   checkRajaOngkirWaybill,
+  getRajaOngkirCities,
+  getRajaOngkirDistricts,
+  getRajaOngkirProvinces,
   getRajaOngkirShippingCosts,
+  getRajaOngkirSubdistricts,
   searchRajaOngkirDestinations,
 } from "./shipping.functions";
 
@@ -170,6 +187,69 @@ describe("searchRajaOngkirDestinations", () => {
     await searchHandler({ data: { search: "cache-key", limit: 5 } });
 
     expect(searchDomesticDestination).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("RajaOngkir cascading location lookups", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    __clearRajaOngkirLocationCacheForTests();
+  });
+
+  it("lists and caches provinces", async () => {
+    vi.mocked(listProvinces).mockResolvedValue([{ id: "6", name: "JAWA BARAT", zipCode: "" }]);
+
+    await expect((getRajaOngkirProvinces as any)({})).resolves.toEqual([
+      { id: "6", name: "JAWA BARAT", zipCode: "" },
+    ]);
+    await (getRajaOngkirProvinces as any)({});
+
+    expect(listProvinces).toHaveBeenCalledTimes(1);
+  });
+
+  it("lists cities scoped by province id and caches per parent", async () => {
+    vi.mocked(listCities).mockResolvedValue([{ id: "23", name: "KARAWANG", zipCode: "" }]);
+
+    await expect((getRajaOngkirCities as any)({ data: { parentId: "6" } })).resolves.toEqual([
+      { id: "23", name: "KARAWANG", zipCode: "" },
+    ]);
+    await (getRajaOngkirCities as any)({ data: { parentId: "6" } });
+
+    expect(listCities).toHaveBeenCalledTimes(1);
+    expect(listCities).toHaveBeenCalledWith("6");
+  });
+
+  it("lists districts scoped by city id", async () => {
+    vi.mocked(listDistricts).mockResolvedValue([
+      { id: "575", name: "KARAWANG TIMUR", zipCode: "" },
+    ]);
+
+    await expect((getRajaOngkirDistricts as any)({ data: { parentId: "23" } })).resolves.toEqual([
+      { id: "575", name: "KARAWANG TIMUR", zipCode: "" },
+    ]);
+    expect(listDistricts).toHaveBeenCalledWith("23");
+  });
+
+  it("lists subdistricts scoped by district id", async () => {
+    vi.mocked(listSubdistricts).mockResolvedValue([
+      { id: "37965", name: "KARAWANG WETAN", zipCode: "41314" },
+    ]);
+
+    await expect(
+      (getRajaOngkirSubdistricts as any)({ data: { parentId: "575" } }),
+    ).resolves.toEqual([{ id: "37965", name: "KARAWANG WETAN", zipCode: "41314" }]);
+    expect(listSubdistricts).toHaveBeenCalledWith("575");
+  });
+
+  it("does not mix up caches between different parent ids", async () => {
+    vi.mocked(listCities)
+      .mockResolvedValueOnce([{ id: "23", name: "KARAWANG", zipCode: "" }])
+      .mockResolvedValueOnce([{ id: "24", name: "BEKASI", zipCode: "" }]);
+
+    await (getRajaOngkirCities as any)({ data: { parentId: "6" } });
+    await (getRajaOngkirCities as any)({ data: { parentId: "7" } });
+
+    expect(listCities).toHaveBeenCalledTimes(2);
   });
 });
 

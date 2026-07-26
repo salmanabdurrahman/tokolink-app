@@ -9,16 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  RajaOngkirLocationPicker,
+  type RajaOngkirLocationValue,
+} from "@/components/shipping/rajaongkir-location-picker";
 
-type Destination = {
-  id: string;
-  label: string;
-  provinceName: string;
-  cityName: string;
-  districtName: string;
-  subdistrictName: string;
-  zipCode: string;
-};
+type Destination = RajaOngkirLocationValue;
 
 type ShippingOption = {
   courier: string;
@@ -54,10 +50,7 @@ export function FloatingCart({
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
-  const [searchingDestination, setSearchingDestination] = useState(false);
   const [loadingShipping, setLoadingShipping] = useState(false);
-  const [destinationQuery, setDestinationQuery] = useState("");
-  const [destinations, setDestinations] = useState<Destination[]>([]);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [customer, setCustomer] = useState({ name: "", email: "", whatsapp: "", address: "" });
@@ -89,23 +82,14 @@ export function FloatingCart({
     window.location.assign(url);
   };
 
-  const searchDestination = async () => {
-    try {
-      setSearchingDestination(true);
-      const response = await fetch("/api/shipping/destinations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ search: destinationQuery, limit: 5 }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result?.message || "Gagal mencari lokasi");
-      setDestinations(result);
-      if (!result.length) toast.error("Lokasi tidak ditemukan");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal mencari lokasi");
-    } finally {
-      setSearchingDestination(false);
+  const handleDestinationChange = (destination: RajaOngkirLocationValue | null) => {
+    if (!destination) {
+      setSelectedDestination(null);
+      setShipping({ courier: "", service: "", etd: "", cost: 0 });
+      setShippingOptions([]);
+      return;
     }
+    loadShippingCosts(destination);
   };
 
   const loadShippingCosts = async (destination: Destination) => {
@@ -277,38 +261,15 @@ export function FloatingCart({
             />
           </div>
           <div className="mt-4 space-y-3 shrink-0">
-            <Label>Tujuan pengiriman</Label>
-            <div className="flex gap-2">
-              <Input
-                value={destinationQuery}
-                onChange={(e) => setDestinationQuery(e.target.value)}
-                placeholder="Cari kecamatan/kelurahan"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                disabled={searchingDestination}
-                onClick={searchDestination}
-              >
-                {searchingDestination ? "Cari..." : "Cari"}
-              </Button>
-            </div>
-            {destinations.length > 0 && (
-              <div className="space-y-2">
-                {destinations.map((destination) => (
-                  <button
-                    key={destination.id}
-                    type="button"
-                    onClick={() => loadShippingCosts(destination)}
-                    className="w-full rounded-xl border border-border p-3 text-left text-sm hover:bg-surface transition"
-                  >
-                    {destination.label}
-                  </button>
-                ))}
-              </div>
-            )}
+            <Label>Alamat tujuan pengiriman</Label>
+            <RajaOngkirLocationPicker
+              value={selectedDestination}
+              onChange={handleDestinationChange}
+              quickSearchLabel="Cari kecamatan atau kelurahan tujuan"
+              quickSearchPlaceholder="Cari kecamatan/kelurahan"
+            />
             {loadingShipping && (
-              <p className="text-xs text-muted-foreground">Menghitung ongkir...</p>
+              <p className="text-xs text-muted-foreground">Sedang menghitung ongkir...</p>
             )}
             {shippingOptions.length > 0 && (
               <div className="grid gap-2">

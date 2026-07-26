@@ -12,6 +12,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
 import { updateTenantSchema } from "@/lib/schemas";
 import { formatWhatsAppNumber } from "@/lib/utils";
+import {
+  RajaOngkirLocationPicker,
+  type RajaOngkirLocationValue,
+} from "@/components/shipping/rajaongkir-location-picker";
 import { getMyTenantSettings } from "@/server/tenant.functions";
 import { isExpectedLoaderError, logLoaderError } from "@/lib/loader-error";
 
@@ -43,11 +47,6 @@ function SettingsPage() {
   const [rajaOngkirOriginLabel, setRajaOngkirOriginLabel] = useState(
     tenant?.rajaOngkirOriginLabel ?? "",
   );
-  const [originQuery, setOriginQuery] = useState(tenant?.rajaOngkirOriginLabel ?? "");
-  const [originOptions, setOriginOptions] = useState<
-    { id: string; label: string; provinceName: string; cityName: string; districtName: string }[]
-  >([]);
-  const [searchingOrigin, setSearchingOrigin] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -61,7 +60,6 @@ function SettingsPage() {
       setOriginAddress(tenant.originAddress ?? "");
       setRajaOngkirOriginId(tenant.rajaOngkirOriginId ?? "");
       setRajaOngkirOriginLabel(tenant.rajaOngkirOriginLabel ?? "");
-      setOriginQuery(tenant.rajaOngkirOriginLabel ?? "");
     }
   }, [tenant]);
 
@@ -86,20 +84,9 @@ function SettingsPage() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty]);
 
-  const searchOrigin = async () => {
-    try {
-      setSearchingOrigin(true);
-      const { searchRajaOngkirDestinations } = await import("@/server/shipping.functions");
-      const result = await searchRajaOngkirDestinations({
-        data: { search: originQuery, limit: 5 },
-      });
-      setOriginOptions(result);
-      if (!result.length) toast.error("Origin tidak ditemukan");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal mencari origin");
-    } finally {
-      setSearchingOrigin(false);
-    }
+  const handleOriginChange = (location: RajaOngkirLocationValue | null) => {
+    setRajaOngkirOriginId(location?.id ?? "");
+    setRajaOngkirOriginLabel(location?.label ?? "");
   };
 
   if (!tenant) {
@@ -206,68 +193,47 @@ function SettingsPage() {
 
         <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
           <div>
-            <h2 className="font-display text-lg font-medium">Origin pengiriman</h2>
+            <h2 className="font-display text-lg font-medium">Lokasi asal pengiriman</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Wajib diisi sebelum checkout berbayar bisa menghitung ongkir RajaOngkir.
+              Lengkapi lokasi toko supaya Tokolink bisa menghitung ongkir otomatis lewat RajaOngkir
+              saat pembeli checkout.
             </p>
           </div>
           {!originAddress && !rajaOngkirOriginId && (
             <div className="rounded-xl border border-dashed border-border bg-background p-4 text-sm text-muted-foreground">
-              Lengkapi alamat dan origin agar checkout berbayar bisa menghitung ongkir.
+              Alamat dan lokasi asal belum lengkap. Checkout berbayar belum bisa menghitung ongkir
+              sebelum ini diisi.
             </div>
           )}
-          <Field label="Alamat origin">
+          <Field label="Alamat lengkap toko">
             <Input
               value={originAddress}
               onChange={(e) => setOriginAddress(e.target.value)}
-              placeholder="Alamat pickup/toko"
+              placeholder="Contoh: Jl. Melati No. 1, dekat Pasar Karawang"
             />
           </Field>
-          <Field label="Cari origin RajaOngkir">
-            <div className="flex gap-2">
-              <Input
-                value={originQuery}
-                onChange={(e) => setOriginQuery(e.target.value)}
-                placeholder="Ketik kecamatan/kelurahan origin"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                disabled={searchingOrigin}
-                onClick={searchOrigin}
-              >
-                {searchingOrigin ? "Cari..." : "Cari"}
-              </Button>
-            </div>
+          <Field label="Wilayah asal pengiriman">
+            <RajaOngkirLocationPicker
+              value={
+                rajaOngkirOriginId
+                  ? {
+                      id: rajaOngkirOriginId,
+                      label: rajaOngkirOriginLabel,
+                      provinceName: "",
+                      cityName: "",
+                      districtName: "",
+                      subdistrictName: "",
+                      zipCode: "",
+                    }
+                  : null
+              }
+              onChange={handleOriginChange}
+              quickSearchLabel="Cari kecamatan atau kelurahan toko"
+              quickSearchPlaceholder="Ketik kecamatan/kelurahan toko"
+            />
           </Field>
-          {originOptions.length > 0 && (
-            <div className="grid gap-2">
-              {originOptions.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => {
-                    setRajaOngkirOriginId(option.id);
-                    setRajaOngkirOriginLabel(option.label);
-                    setOriginQuery(option.label);
-                    setOriginOptions([]);
-                  }}
-                  className="rounded-xl border border-border p-3 text-left text-sm hover:bg-surface transition"
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          )}
-          {rajaOngkirOriginId && (
-            <div className="rounded-xl bg-surface p-3 text-sm">
-              <div className="text-xs text-muted-foreground">Origin dipilih</div>
-              <div className="mt-1 font-medium">{rajaOngkirOriginLabel}</div>
-              <div className="mt-1 text-xs text-muted-foreground">ID: {rajaOngkirOriginId}</div>
-            </div>
-          )}
           <p className="text-xs text-muted-foreground">
-            Kurir default aktif: JNE, J&T, SiCepat, Anteraja, POS, TIKI, Ninja.
+            Kurir aktif secara default: JNE, J&T, SiCepat, Anteraja, POS, TIKI, dan Ninja.
           </p>
         </div>
 
