@@ -3,7 +3,7 @@ import { calculateDomesticCost, type RajaOngkirCostOption } from "./rajaongkir";
 import type { getCheckoutCatalogBySlug } from "./catalog.queries.server";
 import type { z } from "zod";
 import type { checkoutSchema } from "../lib/schemas";
-import { PLATFORM_FEE_RATE } from "../lib/commerce-policy";
+import { DEFAULT_COURIERS, PLATFORM_FEE_RATE } from "../lib/commerce-policy";
 
 export { PLATFORM_FEE_RATE };
 
@@ -102,11 +102,16 @@ export async function validateCheckoutShippingQuote(
 ) {
   if (calculatedWeight < 1) throw new Error("Berat pengiriman tidak valid");
 
+  // Reuse the exact courier set the storefront quoted with (allowedCouriers)
+  // so this validation hits the RajaOngkir cost cache instead of firing a
+  // fresh single-courier request. A redundant round-trip here stacks on top
+  // of the Pakasir call and can blow the serverless function time budget.
+  const couriers = tenant.allowedCouriers.length ? tenant.allowedCouriers : [...DEFAULT_COURIERS];
   const shippingOptions = await calculateDomesticCost({
     origin: tenant.rajaOngkirOriginId || "",
     destination: data.customer.rajaOngkirDestinationId || "",
     weight: calculatedWeight,
-    couriers: [data.shipping.courier],
+    couriers,
   });
   const matchedShipping = shippingOptions.find(
     (option: RajaOngkirCostOption) =>

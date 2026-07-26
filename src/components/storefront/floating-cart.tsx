@@ -71,10 +71,15 @@ export function FloatingCart({
     onOrderCreated: clear,
   });
 
+  // Depend on `items` too: the persisted cart rehydrates asynchronously after
+  // mount, so a reconcile that runs before hydration would miss stale product
+  // ids (e.g. products removed/reseeded), leaving cart entries that later fail
+  // shipping/checkout with "Sebagian produk tidak ditemukan". reconcile is a
+  // no-op when nothing changes, so re-running on item changes is safe.
   useEffect(() => {
     setTenantSlug(tenantSlug);
     reconcile(productIds);
-  }, [setTenantSlug, tenantSlug, reconcile, productIds]);
+  }, [setTenantSlug, tenantSlug, reconcile, productIds, items]);
 
   if (totalQty === 0) return null;
 

@@ -28,6 +28,17 @@ export default defineConfig({
       },
     }),
     viteReact(),
-    nitro({ preset: "vercel" }),
+    nitro({
+      preset: "vercel",
+      // Checkout/shipping routes call external providers (RajaOngkir + Pakasir)
+      // sequentially; raise the per-route budget above Vercel's low default so a
+      // slow upstream can't trip the function timeout mid-payment.
+      vercel: {
+        functionRules: {
+          "/api/checkout": { maxDuration: 30 },
+          "/api/shipping/**": { maxDuration: 30 },
+        },
+      },
+    }),
   ],
 });
