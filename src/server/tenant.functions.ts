@@ -17,19 +17,22 @@ import {
 } from "./catalog.queries.server";
 import { requireTenant } from "./tenant-context.server";
 import { invalidateCachedUser } from "./user-cache.server";
+import { withTiming } from "../lib/metrics.server";
 import { z } from "zod";
 
 export const getTenant = createServerFn({ method: "GET" })
   .validator(z.string())
-  .handler(async ({ data: slug }) => {
-    const tenant = await getStorefrontCatalogBySlug(slug);
+  .handler(async ({ data: slug }) =>
+    withTiming("get_tenant", { slug }, async () => {
+      const tenant = await getStorefrontCatalogBySlug(slug);
 
-    if (!tenant) {
-      throw new Error(`Toko dengan slug "${slug}" tidak ditemukan`);
-    }
+      if (!tenant) {
+        throw new Error(`Toko dengan slug "${slug}" tidak ditemukan`);
+      }
 
-    return tenant;
-  });
+      return tenant;
+    }),
+  );
 
 export const getMyTenant = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -45,52 +48,58 @@ export const getMyTenant = createServerFn({ method: "GET" })
 
 export const getDashboardData = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async ({ context }) => {
-    const userId = context.user.id;
-    const tenantId = context.tenant?.id;
+  .handler(async ({ context }) =>
+    withTiming("get_dashboard_data", { queryCount: 4 }, async () => {
+      const userId = context.user.id;
+      const tenantId = context.tenant?.id;
 
-    const [tenant, orderCount, productCount, linkCount] = await Promise.all([
-      prisma.tenant.findUnique({
-        where: { userId },
-        select: tenantDashboardShellSelect,
-      }),
-      tenantId ? prisma.order.count({ where: { tenantId, status: "PAID" } }) : Promise.resolve(0),
-      tenantId ? prisma.product.count({ where: { tenantId } }) : Promise.resolve(0),
-      tenantId ? prisma.link.count({ where: { tenantId } }) : Promise.resolve(0),
-    ]);
+      const [tenant, orderCount, productCount, linkCount] = await Promise.all([
+        prisma.tenant.findUnique({
+          where: { userId },
+          select: tenantDashboardShellSelect,
+        }),
+        tenantId ? prisma.order.count({ where: { tenantId, status: "PAID" } }) : Promise.resolve(0),
+        tenantId ? prisma.product.count({ where: { tenantId } }) : Promise.resolve(0),
+        tenantId ? prisma.link.count({ where: { tenantId } }) : Promise.resolve(0),
+      ]);
 
-    return { tenant: withEmptyCatalog(tenant), orderCount, productCount, linkCount };
-  });
+      return { tenant: withEmptyCatalog(tenant), orderCount, productCount, linkCount };
+    }),
+  );
 
 export const getMyTenantProducts = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async ({ context }) => {
-    const userId = context.user.id;
-    const tenant = await prisma.tenant.findUnique({
-      where: { userId },
-      select: {
-        ...tenantCatalogIdentitySelect,
-        ...tenantProductInclude,
-      },
-    });
+  .handler(async ({ context }) =>
+    withTiming("get_my_tenant_products", { queryCount: 1 }, async () => {
+      const userId = context.user.id;
+      const tenant = await prisma.tenant.findUnique({
+        where: { userId },
+        select: {
+          ...tenantCatalogIdentitySelect,
+          ...tenantProductInclude,
+        },
+      });
 
-    return tenant ? { ...tenant, links: [] } : null;
-  });
+      return tenant ? { ...tenant, links: [] } : null;
+    }),
+  );
 
 export const getMyTenantLinks = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async ({ context }) => {
-    const userId = context.user.id;
-    const tenant = await prisma.tenant.findUnique({
-      where: { userId },
-      select: {
-        ...tenantCatalogIdentitySelect,
-        ...tenantLinkInclude,
-      },
-    });
+  .handler(async ({ context }) =>
+    withTiming("get_my_tenant_links", { queryCount: 1 }, async () => {
+      const userId = context.user.id;
+      const tenant = await prisma.tenant.findUnique({
+        where: { userId },
+        select: {
+          ...tenantCatalogIdentitySelect,
+          ...tenantLinkInclude,
+        },
+      });
 
-    return tenant ? { ...tenant, products: [] } : null;
-  });
+      return tenant ? { ...tenant, products: [] } : null;
+    }),
+  );
 
 export const getMyTenantSettings = createServerFn({ method: "GET" })
   .middleware([authMiddleware])

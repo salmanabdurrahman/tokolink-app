@@ -94,7 +94,7 @@ beforeEach(() => {
   vi.mocked(canVerifySupabaseAccessTokenLocally).mockReset().mockReturnValue(false);
   vi.mocked(verifySupabaseAccessTokenLocally).mockReset();
   vi.mocked(supabaseAdmin.auth.getUser).mockReset();
-  vi.mocked(sendVerificationEmail).mockReset();
+  vi.mocked(sendVerificationEmail).mockReset().mockResolvedValue(undefined);
   __clearUserCacheForTests();
 });
 
@@ -167,7 +167,7 @@ describe("registerUser", () => {
     );
   });
 
-  it("fails when verification email cannot be sent", async () => {
+  it("does not fail signup when verification email send fails (fire-and-forget)", async () => {
     vi.mocked(prismaAny.user.findUnique).mockResolvedValue(null);
     vi.mocked(supabaseAdmin.auth.admin.createUser).mockResolvedValue({
       data: { user: { id: "supa-1" } },
@@ -175,9 +175,10 @@ describe("registerUser", () => {
     });
     vi.mocked(sendVerificationEmail).mockRejectedValue(new Error("email failed"));
 
-    await expect(registerUserHandler({ data: { email, password } })).rejects.toThrow(
-      "email failed",
-    );
+    await expect(registerUserHandler({ data: { email, password } })).resolves.toEqual({
+      success: true,
+      message: "Kode verifikasi telah dikirim.",
+    });
   });
 });
 

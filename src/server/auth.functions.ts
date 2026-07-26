@@ -179,7 +179,11 @@ async function generateAndSendOTP(email: string) {
     },
   });
 
-  await sendVerificationEmail(email, code);
+  // Fire-and-forget: OTP is already persisted above, so signup/resend must
+  // not block the response on Resend latency (same pattern as welcome email).
+  sendVerificationEmail(email, code).catch((err) => {
+    console.error("Failed to send verification email:", err);
+  });
 }
 
 export const registerUser = createServerFn({ method: "POST" })

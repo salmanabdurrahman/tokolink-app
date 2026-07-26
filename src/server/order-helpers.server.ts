@@ -60,15 +60,15 @@ export async function markOrderPaid(orderNumber: string, rawPayload: unknown, me
     });
   });
 
+  // Fire-and-forget: webhook response must not block on Resend, otherwise
+  // Pakasir retries the webhook and doubles the ledger/notification work.
   if ("customerEmail" in paidOrder && paidOrder.customerEmail) {
-    await sendOrderReceiptEmail(
-      paidOrder.customerEmail,
-      paidOrder.orderNumber,
-      paidOrder.total,
-    ).catch((error) => console.error("[ORDER] Failed to send receipt email", error));
+    sendOrderReceiptEmail(paidOrder.customerEmail, paidOrder.orderNumber, paidOrder.total).catch(
+      (error) => console.error("[ORDER] Failed to send receipt email", error),
+    );
   }
   if ("tenant" in paidOrder && paidOrder.tenant?.user?.email) {
-    await sendTenantOrderNotificationEmail(
+    sendTenantOrderNotificationEmail(
       paidOrder.tenant.user.email,
       paidOrder.orderNumber,
       paidOrder.total,

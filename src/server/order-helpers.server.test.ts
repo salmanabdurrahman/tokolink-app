@@ -88,4 +88,16 @@ describe("markOrderPaid", () => {
     expect(tx.payment.update).not.toHaveBeenCalled();
     expect(tx.ledgerEntry.createMany).not.toHaveBeenCalled();
   });
+
+  it("does not fail order paid flow when notification emails fail (fire-and-forget)", async () => {
+    const tx = makeTx();
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+    const { sendOrderReceiptEmail, sendTenantOrderNotificationEmail } = await import("./email");
+    vi.mocked(sendOrderReceiptEmail).mockRejectedValueOnce(new Error("resend down"));
+    vi.mocked(sendTenantOrderNotificationEmail).mockRejectedValueOnce(new Error("resend down"));
+
+    await expect(markOrderPaid("TL1", { ok: true }, "qris")).resolves.toMatchObject({
+      status: "PAID",
+    });
+  });
 });

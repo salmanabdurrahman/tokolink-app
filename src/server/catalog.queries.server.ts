@@ -1,4 +1,5 @@
 import { prisma } from "../db";
+import { recordMetric } from "../lib/metrics.server";
 
 const STOREFRONT_CATALOG_CACHE_TTL_MS = 60 * 1000;
 const STOREFRONT_CATALOG_CACHE_MAX_ENTRIES = 500;
@@ -130,7 +131,11 @@ export function getStorefrontCatalogBySlug(slug: string) {
   pruneStorefrontCatalogCache();
 
   const cached = storefrontCatalogCache.get(slug);
-  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+  if (cached && cached.expiresAt > Date.now()) {
+    recordMetric("storefront_cache_hit", { slug });
+    return cached.promise;
+  }
+  recordMetric("storefront_cache_miss", { slug });
 
   const promise = loadStorefrontCatalogBySlug(slug)
     .then((tenant) => {
