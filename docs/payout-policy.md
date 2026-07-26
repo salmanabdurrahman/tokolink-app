@@ -22,6 +22,8 @@ Tokolink keeps merchant balance from ledger entries, not from mutable balance fi
 - Minimum amount is defined in shared commerce policy constants.
 - Merchants can request withdrawal from dashboard.
 - Withdrawal statuses: requested, processing, paid, rejected.
+- Status transitions are guarded: only `requested → processing`, `requested/processing → paid`, and `requested/processing → rejected` are allowed. `paid` and `rejected` are terminal.
+- Terminal states cannot be reverted; flipping a `paid` request to `rejected` would release its settled ledger hold and let the merchant double-withdraw, so it is rejected. Status updates run under a Serializable transaction to avoid concurrent double-settlement.
 - MVP payout processing is manual outside Tokolink system.
 - Merchants receive email when withdrawal is requested and when status changes.
 

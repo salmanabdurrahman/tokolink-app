@@ -26,6 +26,23 @@ export type PakasirTransaction = {
 
 const DEFAULT_BASE_URL = "https://app.pakasir.com";
 const REQUEST_TIMEOUT_MS = 10000;
+const PAKASIR_TIMEOUT_MESSAGE =
+  "Layanan pembayaran lambat merespons. Coba lagi beberapa saat lagi.";
+
+function pakasirErrorMessage(status: number) {
+  if (status === 401 || status === 403) {
+    return "Konfigurasi pembayaran bermasalah. Hubungi penjual.";
+  }
+  if (status === 429) {
+    return "Terlalu banyak percobaan pembayaran. Tunggu sebentar lalu coba lagi.";
+  }
+  // Includes Cloudflare origin-down codes (520-524) that surface when the
+  // Pakasir backend is unreachable, not just standard 5xx.
+  if (status >= 500) {
+    return "Layanan pembayaran sedang bermasalah. Coba lagi beberapa saat lagi.";
+  }
+  return "Gagal memproses pembayaran. Coba lagi.";
+}
 
 function getConfig(): PakasirConfig {
   const projectSlug = process.env.PAKASIR_PROJECT_SLUG || "";
@@ -48,13 +65,13 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
     const payload = await response.json().catch(() => null);
 
     if (!response.ok) {
-      throw new Error(`Pakasir request gagal (${response.status})`);
+      throw new Error(pakasirErrorMessage(response.status));
     }
 
     return payload as T;
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error("Pakasir request timeout");
+      throw new Error(PAKASIR_TIMEOUT_MESSAGE);
     }
     throw error;
   } finally {

@@ -54,6 +54,7 @@ Commerce flow:
 - Auth state lives in `src/lib/auth-store.ts`.
 - Tenant mutation state lives in `src/lib/tenant-store.ts`; Server Functions are imported dynamically inside actions.
 - Cart state lives in `src/lib/cart-store.ts` and persists per browser session/local storage.
+- On storefront load the persisted cart is reconciled against the current catalog: items are dropped when their product or a selected variant option no longer exists, and `unitPrice` is refreshed from the current base price plus variant deltas so stale prices and deleted variants can't stall checkout.
 - WhatsApp/cart message helpers live in `src/lib/commerce.ts`.
 - `useLoadedTenant(loadedTenant)` hydrates route loader tenant data into dashboard store views.
 

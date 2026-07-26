@@ -64,7 +64,9 @@ describe("FloatingCart", () => {
   it("opens cart, updates qty, searches destination, selects shipping, and checks out", async () => {
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"
@@ -102,7 +104,9 @@ describe("FloatingCart", () => {
   it("keeps customer input focused while typing", () => {
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"
@@ -121,7 +125,9 @@ describe("FloatingCart", () => {
   it("shows WhatsApp fallback when store phone missing", () => {
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone=""
@@ -136,7 +142,9 @@ describe("FloatingCart", () => {
   it("redirects to WhatsApp with the built order message", () => {
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"
@@ -152,7 +160,9 @@ describe("FloatingCart", () => {
   it("decrements item qty via the minus button", () => {
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"
@@ -168,7 +178,9 @@ describe("FloatingCart", () => {
   it("clears the cart when 'Kosongkan keranjang' is clicked", () => {
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"
@@ -184,7 +196,9 @@ describe("FloatingCart", () => {
   it("closes the sheet via the close control", () => {
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"
@@ -202,7 +216,9 @@ describe("FloatingCart", () => {
   it("updates the order note field", () => {
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"
@@ -219,7 +235,9 @@ describe("FloatingCart", () => {
   it("updates the customer email field", () => {
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"
@@ -239,7 +257,9 @@ describe("FloatingCart", () => {
 
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"
@@ -267,7 +287,9 @@ describe("FloatingCart", () => {
 
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"
@@ -311,7 +333,9 @@ describe("FloatingCart", () => {
 
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"
@@ -332,7 +356,9 @@ describe("FloatingCart", () => {
     const { toast } = await import("sonner");
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"
@@ -357,7 +383,9 @@ describe("FloatingCart", () => {
     const { toast } = await import("sonner");
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"
@@ -404,7 +432,9 @@ describe("FloatingCart", () => {
 
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"
@@ -462,7 +492,9 @@ describe("FloatingCart", () => {
 
     render(
       <FloatingCart
-        productIds={["product-1"]}
+        products={[
+          { id: "product-1", basePrice: 10000, options: [{ id: "small", priceDelta: 0 }] },
+        ]}
         tenantSlug="kopi-ibu"
         storeName="Kopi Ibu"
         phone="081234567890"

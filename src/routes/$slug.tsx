@@ -83,7 +83,17 @@ function Storefront() {
       return [product.name, product.description].join(" ").toLowerCase().includes(normalized);
     });
   }, [activeCategoryId, query, tenant.products]);
-  const productIds = useMemo(() => tenant.products.map((p) => p.id), [tenant.products]);
+  const cartProducts = useMemo(
+    () =>
+      tenant.products.map((p) => ({
+        id: p.id,
+        basePrice: p.basePrice,
+        options: (p.variantGroups ?? []).flatMap((g) =>
+          g.options.map((o) => ({ id: o.id ?? o.name, priceDelta: o.priceDelta })),
+        ),
+      })),
+    [tenant.products],
+  );
 
   const copyStoreLink = async () => {
     trackEvent("storefront_share_click", { tenantSlug: tenant.slug });
@@ -220,7 +230,7 @@ function Storefront() {
         storeName={tenant.name}
         phone={tenant.whatsapp}
         whatsappTemplate={tenant.whatsappTemplate ?? ""}
-        productIds={productIds}
+        products={cartProducts}
       />
     </div>
   );

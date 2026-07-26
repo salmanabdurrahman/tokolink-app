@@ -156,7 +156,11 @@ describe("useCart", () => {
     act(() => result.current.add(items[1]));
     expect(result.current.items).toHaveLength(2);
 
-    act(() => result.current.reconcile(["product-1"]));
+    act(() =>
+      result.current.reconcile([
+        { id: "product-1", basePrice: 18000, options: [{ id: "variant-1", priceDelta: 0 }] },
+      ]),
+    );
 
     expect(result.current.items).toHaveLength(1);
     expect(result.current.items[0].productId).toBe("product-1");
@@ -166,11 +170,46 @@ describe("useCart", () => {
     const { result } = renderHook(() => useCart());
 
     act(() => result.current.add(items[0]));
+    act(() => result.current.add(items[1]));
     const before = result.current.items;
 
-    act(() => result.current.reconcile(["product-1", "product-2"]));
+    act(() =>
+      result.current.reconcile([
+        { id: "product-1", basePrice: 18000, options: [{ id: "variant-1", priceDelta: 0 }] },
+        { id: "product-2", basePrice: 12000, options: [] },
+      ]),
+    );
 
     expect(result.current.items).toBe(before);
+  });
+
+  it("reconcile drops items whose selected variant option was deleted", () => {
+    const { result } = renderHook(() => useCart());
+
+    act(() => result.current.add(items[0]));
+
+    act(() =>
+      result.current.reconcile([
+        { id: "product-1", basePrice: 18000, options: [{ id: "variant-2", priceDelta: 0 }] },
+      ]),
+    );
+
+    expect(result.current.items).toHaveLength(0);
+  });
+
+  it("reconcile refreshes unitPrice from current base price and variant delta", () => {
+    const { result } = renderHook(() => useCart());
+
+    act(() => result.current.add(items[0]));
+
+    act(() =>
+      result.current.reconcile([
+        { id: "product-1", basePrice: 20000, options: [{ id: "variant-1", priceDelta: 5000 }] },
+      ]),
+    );
+
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.items[0].unitPrice).toBe(25000);
   });
 
   it("removes item when dec reaches zero", () => {

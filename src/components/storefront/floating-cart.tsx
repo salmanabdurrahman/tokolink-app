@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import { useCart } from "@/lib/store";
+import { useCart, type CartReconcileProduct } from "@/lib/store";
 import { formatIDR } from "@/lib/utils";
 import { Sheet } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,7 @@ interface FloatingCartProps {
   storeName: string;
   phone: string;
   whatsappTemplate?: string;
-  productIds: string[];
+  products: CartReconcileProduct[];
 }
 
 export function FloatingCart({
@@ -25,7 +25,7 @@ export function FloatingCart({
   storeName,
   phone,
   whatsappTemplate,
-  productIds,
+  products,
 }: FloatingCartProps) {
   const items = useCart((s) => s.items);
   const totalQty = useMemo(() => items.reduce((sum, item) => sum + item.qty, 0), [items]);
@@ -78,8 +78,8 @@ export function FloatingCart({
   // no-op when nothing changes, so re-running on item changes is safe.
   useEffect(() => {
     setTenantSlug(tenantSlug);
-    reconcile(productIds);
-  }, [setTenantSlug, tenantSlug, reconcile, productIds, items]);
+    reconcile(products);
+  }, [setTenantSlug, tenantSlug, reconcile, products, items]);
 
   if (totalQty === 0) return null;
 

@@ -167,7 +167,7 @@ describe("withdrawal functions", () => {
     };
     const tx = {
       withdrawalRequest: {
-        findUnique: vi.fn().mockResolvedValue({ id: "wd-1" }),
+        findUnique: vi.fn().mockResolvedValue({ id: "wd-1", status: "PROCESSING" }),
         update: vi.fn().mockResolvedValue(updated),
       },
       ledgerEntry: { updateMany: vi.fn() },
@@ -193,7 +193,7 @@ describe("withdrawal functions", () => {
     const updateSpy = vi.fn().mockResolvedValue(updated);
     const tx = {
       withdrawalRequest: {
-        findUnique: vi.fn().mockResolvedValue({ id: "wd-1" }),
+        findUnique: vi.fn().mockResolvedValue({ id: "wd-1", status: "REQUESTED" }),
         update: updateSpy,
       },
       ledgerEntry: { updateMany: vi.fn() },
@@ -219,7 +219,7 @@ describe("withdrawal functions", () => {
     };
     const tx = {
       withdrawalRequest: {
-        findUnique: vi.fn().mockResolvedValue({ id: "wd-1" }),
+        findUnique: vi.fn().mockResolvedValue({ id: "wd-1", status: "PROCESSING" }),
         update: vi.fn().mockResolvedValue(updated),
       },
       ledgerEntry: { updateMany: vi.fn() },
@@ -234,6 +234,24 @@ describe("withdrawal functions", () => {
       where: { withdrawalRequestId: "wd-1", type: "WITHDRAWAL" },
       data: { status: "CANCELED" },
     });
+  });
+
+  it("rejects an invalid status transition out of a terminal PAID request", async () => {
+    const tx = {
+      withdrawalRequest: {
+        findUnique: vi.fn().mockResolvedValue({ id: "wd-1", status: "PAID" }),
+        update: vi.fn(),
+      },
+      ledgerEntry: { updateMany: vi.fn() },
+    };
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await expect(updateWithdrawalStatus("wd-1", "REJECTED")).rejects.toThrow(
+      "Transisi status pencairan tidak valid",
+    );
+
+    expect(tx.withdrawalRequest.update).not.toHaveBeenCalled();
+    expect(tx.ledgerEntry.updateMany).not.toHaveBeenCalled();
   });
 
   it("throws when withdrawal request does not exist", async () => {
@@ -259,7 +277,7 @@ describe("withdrawal functions", () => {
     };
     const tx = {
       withdrawalRequest: {
-        findUnique: vi.fn().mockResolvedValue({ id: "wd-1" }),
+        findUnique: vi.fn().mockResolvedValue({ id: "wd-1", status: "PROCESSING" }),
         update: vi.fn().mockResolvedValue(updated),
       },
       ledgerEntry: { updateMany: vi.fn() },
@@ -282,7 +300,7 @@ describe("withdrawal functions", () => {
     };
     const tx = {
       withdrawalRequest: {
-        findUnique: vi.fn().mockResolvedValue({ id: "wd-1" }),
+        findUnique: vi.fn().mockResolvedValue({ id: "wd-1", status: "PROCESSING" }),
         update: vi.fn().mockResolvedValue(updated),
       },
       ledgerEntry: { updateMany: vi.fn() },

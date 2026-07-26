@@ -75,7 +75,7 @@ describe("pakasir client", () => {
     vi.mocked(fetch).mockResolvedValueOnce(Response.json({ message: "bad" }, { status: 500 }));
 
     await expect(createPakasirTransaction("TL1", 12000)).rejects.toThrow(
-      "Pakasir request gagal (500)",
+      "Layanan pembayaran sedang bermasalah. Coba lagi beberapa saat lagi.",
     );
   });
 
@@ -91,7 +91,7 @@ describe("pakasir client", () => {
     );
 
     const request = expect(createPakasirTransaction("TL1", 12000)).rejects.toThrow(
-      "Pakasir request timeout",
+      "Layanan pembayaran lambat merespons. Coba lagi beberapa saat lagi.",
     );
     await vi.advanceTimersByTimeAsync(10000);
 

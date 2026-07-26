@@ -9,6 +9,21 @@ const FALLBACK_OG = getPublicUrl("/og-main.png");
 
 let cachedFont: ArrayBuffer | null = null;
 
+const FONT_FETCH_TIMEOUT_MS = 5000;
+
+// The OG handler runs on a serverless time budget; an unbounded fetch to
+// Google Fonts that hangs would stall image generation until the platform
+// kills it. Abort after a short timeout and fall back to the system font.
+async function fetchWithTimeout(url: string, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FONT_FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function getFont(): Promise<ArrayBuffer | null> {
   if (cachedFont) return cachedFont;
 
@@ -24,12 +39,15 @@ async function getFont(): Promise<ArrayBuffer | null> {
   }
 
   try {
-    const cssRes = await fetch("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700", {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
+    const cssRes = await fetchWithTimeout(
+      "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700",
+      {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
+        },
       },
-    });
+    );
     if (!cssRes.ok) throw new Error(`CSS fetch status ${cssRes.status}`);
     const cssText = await cssRes.text();
 
@@ -37,7 +55,7 @@ async function getFont(): Promise<ArrayBuffer | null> {
     if (!match) throw new Error("Could not parse font URL from CSS");
     const fontUrl = match[1];
 
-    const fontRes = await fetch(fontUrl);
+    const fontRes = await fetchWithTimeout(fontUrl);
     if (!fontRes.ok) throw new Error(`Font file fetch status ${fontRes.status}`);
     cachedFont = await fontRes.arrayBuffer();
     return cachedFont;
