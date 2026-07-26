@@ -76,7 +76,7 @@ export const uploadImage = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     if (!hasAllowedImageExtension(data.name)) {
-      throw new Error("Ekstensi gambar tidak didukung.");
+      throw new Error("Ekstensi gambar tidak didukung");
     }
 
     const base64Data = data.base64.split(",")[1] || data.base64;
@@ -96,12 +96,12 @@ export const uploadImage = createServerFn({ method: "POST" })
 
     const dimensions = getImageDimensions(buffer);
     if (dimensions && dimensions.width * dimensions.height > MAX_IMAGE_PIXELS) {
-      throw new Error("Dimensi gambar terlalu besar.");
+      throw new Error("Dimensi gambar terlalu besar");
     }
 
     const scanResult = await scanMediaBuffer(buffer);
     if (!scanResult.clean) {
-      throw new Error("Gambar tidak lolos pemeriksaan keamanan.");
+      throw new Error("Gambar tidak lolos pemeriksaan keamanan");
     }
 
     const tenantId = requireTenant(context, "Toko belum tersedia untuk upload gambar.");

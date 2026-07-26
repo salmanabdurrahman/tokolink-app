@@ -26,7 +26,7 @@ function Overview() {
       <div className="space-y-4">
         <PageHeader label="Overview" title={`Halo, ${tenant.name}.`} />
         <p className="text-sm text-muted-foreground">
-          URL toko-mu:{" "}
+          URL toko Anda:{" "}
           <a href={storeUrl} className="text-foreground font-semibold hover:underline">
             {publicHostname}/{tenant.slug} ↗
           </a>

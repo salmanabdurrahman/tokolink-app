@@ -107,7 +107,7 @@ function Onboarding() {
 
         <form onSubmit={submit} className="mt-12 space-y-8">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="slug-input">URL Toko</Label>
+            <Label htmlFor="slug-input">URL toko</Label>
             <div className="flex items-center border-b border-border focus-within:border-foreground transition">
               <span className="font-display text-lg text-muted-foreground pl-1 shrink-0">
                 {publicHostname}/
@@ -132,7 +132,7 @@ function Onboarding() {
             )}
           </div>
 
-          <Field label="Nama Toko">
+          <Field label="Nama toko">
             <Input
               required
               disabled={loading}

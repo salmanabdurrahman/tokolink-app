@@ -232,7 +232,7 @@ function OrdersPage() {
                       className="self-end"
                     >
                       <PackageCheck className="h-4 w-4" />
-                      {savingId === order.id ? "Simpan..." : "Simpan resi"}
+                      {savingId === order.id ? "Menyimpan..." : "Simpan resi"}
                     </Button>
                   </form>
                 </article>
@@ -335,7 +335,7 @@ function OrdersPage() {
                   }
                   onClick={() => updateStatus(selectedOrder.id, "CANCELED")}
                 >
-                  <XCircle className="h-4 w-4" /> Batalkan unpaid
+                  <XCircle className="h-4 w-4" /> Batalkan pesanan
                 </Button>
               </div>
             </aside>

@@ -147,13 +147,13 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
                 <p className="mt-1 text-xs text-destructive">{errors.basePrice}</p>
               )}
             </Field>
-            <Field label="Gambar Produk">
+            <Field label="Gambar produk">
               <ImageUpload value={image} onChange={(url) => setImage(url)} />
             </Field>
             <div className="space-y-4 pt-4 border-t border-border">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                  Tipe Varian Produk
+                  Tipe varian produk
                 </span>
                 <Button
                   type="button"
@@ -165,7 +165,7 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
                     ])
                   }
                 >
-                  + Tipe Varian
+                  + Tipe varian
                 </Button>
               </div>
 
@@ -184,7 +184,7 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
                   >
                     <div className="flex gap-4 items-end">
                       <div className="flex-1">
-                        <Field label={`Nama Tipe Varian #${groupIdx + 1}`}>
+                        <Field label={`Nama tipe varian #${groupIdx + 1}`}>
                           <Input
                             value={group.name}
                             onChange={(e) => {
@@ -206,12 +206,12 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
                         }
                         className="text-muted-foreground hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
                       >
-                        Hapus Grup
+                        Hapus grup
                       </Button>
                     </div>
                     <div className="pl-4 border-l-2 border-border space-y-2">
                       <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground block mb-2">
-                        Pilihan & Harga Ekstra
+                        Pilihan & harga ekstra
                       </span>
 
                       {group.options?.map((option, optionIdx) => (
@@ -275,7 +275,7 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
                           setVariantGroups(copy);
                         }}
                       >
-                        + Tambah Pilihan
+                        + Tambah pilihan
                       </Button>
                     </div>
                   </div>
@@ -293,7 +293,7 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
       <Modal open={showCloseConfirm} onClose={() => setShowCloseConfirm(false)}>
         <h3 className="font-display text-xl font-medium text-foreground">Tutup form?</h3>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-          Perubahan belum disimpan. Yakin ingin menutup form ini?
+          Perubahan belum disimpan. Apakah Anda yakin ingin menutup form ini?
         </p>
         <div className="mt-6 flex justify-end gap-2 text-xs">
           <Button variant="outline" size="sm" onClick={() => setShowCloseConfirm(false)}>

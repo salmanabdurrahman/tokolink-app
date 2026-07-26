@@ -270,7 +270,7 @@ describe("resendSignUpCode", () => {
   it("rejects missing or verified users", async () => {
     vi.mocked(prismaAny.user.findUnique).mockResolvedValueOnce(null);
     await expect(resendSignUpCodeHandler({ data: { email } })).rejects.toThrow(
-      "Email tidak terdaftar.",
+      "Email tidak terdaftar",
     );
 
     vi.mocked(prismaAny.user.findUnique).mockResolvedValueOnce({
@@ -278,7 +278,7 @@ describe("resendSignUpCode", () => {
       emailVerified: new Date(),
     });
     await expect(resendSignUpCodeHandler({ data: { email } })).rejects.toThrow(
-      "Email sudah terverifikasi.",
+      "Email sudah terverifikasi",
     );
   });
 
@@ -426,7 +426,7 @@ describe("syncSession", () => {
 
     await expect(
       syncSessionHandler({ data: {}, request: makeRequest("sb-access-token=good") }),
-    ).rejects.toThrow("Email belum diverifikasi.");
+    ).rejects.toThrow("Email belum diverifikasi");
   });
 
   it("creates user when not found (create-if-missing) for email provider", async () => {

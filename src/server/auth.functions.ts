@@ -84,7 +84,7 @@ export const syncSession = createServerFn({ method: "POST" })
     const emailVerified = provider !== "email" ? new Date() : null;
 
     if (provider === "email" && !supaUser.email_confirmed_at) {
-      throw new Error("Email belum diverifikasi.");
+      throw new Error("Email belum diverifikasi");
     }
 
     const existing = await prisma.user.findUnique({
@@ -228,7 +228,7 @@ export const registerUser = createServerFn({ method: "POST" })
       }
 
       if (!supaUser || !supaUser.user) {
-        throw new Error("Gagal membuat akun.");
+        throw new Error("Gagal membuat akun");
       }
 
       await prisma.user.create({
@@ -245,9 +245,9 @@ export const registerUser = createServerFn({ method: "POST" })
       recordMetric("signup_success");
       return { success: true, message: "Kode verifikasi telah dikirim." };
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Gagal melakukan registrasi.";
+      const message = err instanceof Error ? err.message : "Gagal melakukan registrasi";
       recordMetric("signup_fail", { reason: message });
-      throw new Error(message || "Gagal melakukan registrasi.");
+      throw new Error(message || "Gagal melakukan registrasi");
     }
   });
 
@@ -296,7 +296,7 @@ export const verifySignUpCode = createServerFn({ method: "POST" })
     });
 
     if (!user) {
-      throw new Error("Pengguna tidak ditemukan.");
+      throw new Error("Pengguna tidak ditemukan");
     }
 
     const { error: supaError } = await supabaseAdmin.auth.admin.updateUserById(user.supabaseId, {
@@ -340,11 +340,11 @@ export const resendSignUpCode = createServerFn({ method: "POST" })
     });
 
     if (!user) {
-      throw new Error("Email tidak terdaftar.");
+      throw new Error("Email tidak terdaftar");
     }
 
     if (user.emailVerified) {
-      throw new Error("Email sudah terverifikasi.");
+      throw new Error("Email sudah terverifikasi");
     }
 
     const existing = await prisma.verificationCode.findUnique({

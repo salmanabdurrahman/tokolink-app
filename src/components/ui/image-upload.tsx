@@ -124,7 +124,7 @@ export function ImageUpload({ value, onChange, className }: ImageUploadProps) {
           <div className="flex flex-col items-center gap-3 w-full">
             <img
               src={value}
-              alt="Uploaded Preview"
+              alt="Pratinjau gambar"
               className="h-20 w-20 object-cover rounded-2xl border border-border shadow-sm group-hover:scale-[1.02] transition duration-200"
             />
             {!loading && (

@@ -29,7 +29,7 @@ export function FaqSection() {
             },
             {
               q: "Bisa dipakai untuk produk dengan banyak varian?",
-              a: "Ya bisa",
+              a: "Ya. Tiap produk bisa punya beberapa tipe varian (ukuran, warna, dll.) dengan penyesuaian harga otomatis.",
             },
             {
               q: "Pembayaran?",

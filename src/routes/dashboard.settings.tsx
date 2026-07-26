@@ -128,7 +128,7 @@ function SettingsPage() {
             variant="outline"
             onClick={() => window.location.assign(`/${tenant.slug}`)}
           >
-            Preview storefront
+            Lihat toko
           </Button>
         }
       />

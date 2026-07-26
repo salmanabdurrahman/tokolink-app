@@ -70,7 +70,7 @@ export function HeroSection() {
           className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted-foreground"
         >
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-          Made for everyone.
+          Dibuat untuk semua orang.
         </motion.div>
 
         <motion.h1

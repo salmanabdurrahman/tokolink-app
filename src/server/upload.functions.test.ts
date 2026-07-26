@@ -120,7 +120,7 @@ describe("uploadImage", () => {
         data: { name: "bad.txt", base64: `data:image/webp;base64,${webpBase64}` },
         context: tenantContext,
       }),
-    ).rejects.toThrow("Ekstensi gambar tidak didukung.");
+    ).rejects.toThrow("Ekstensi gambar tidak didukung");
   });
 
   it("rejects invalid image buffer", async () => {
