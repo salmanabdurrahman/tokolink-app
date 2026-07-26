@@ -22,7 +22,8 @@
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed",
     "media:migrate:r2": "bun scripts/migrate-media-to-r2.ts",
-    "db:pool-load-test": "bun scripts/db-pool-load-test.ts"
+    "db:pool-load-test": "bun scripts/db-pool-load-test.ts",
+    "data:cleanup-auth": "bun scripts/cleanup-auth-data.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1093.0",

@@ -12,21 +12,23 @@ import { DeleteConfirmModal } from "@/components/dashboard/delete-confirm-modal"
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { getMyTenantProducts } from "@/server/tenant.functions";
+import { isExpectedLoaderError, logLoaderError } from "@/lib/loader-error";
 
 export const Route = createFileRoute("/dashboard/products")({
   staleTime: 15_000,
   loader: async () => {
     try {
-      return { tenant: await getMyTenantProducts({}) };
-    } catch {
-      return { tenant: null };
+      return { tenant: await getMyTenantProducts({}), loaderError: false };
+    } catch (error) {
+      logLoaderError("dashboard.products", error);
+      return { tenant: null, loaderError: !isExpectedLoaderError(error) };
     }
   },
   component: ProductsPage,
 });
 
 function ProductsPage() {
-  const { tenant: loadedTenant } = Route.useLoaderData();
+  const { tenant: loadedTenant, loaderError } = Route.useLoaderData();
   const tenant = useLoadedTenant(loadedTenant);
   const add = useTenant((s) => s.addProduct);
   const remove = useTenant((s) => s.removeProduct);
@@ -37,6 +39,13 @@ function ProductsPage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   if (!tenant) {
+    if (loaderError) {
+      return (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          Gagal memuat data produk. Periksa koneksi Anda dan coba muat ulang halaman.
+        </div>
+      );
+    }
     return (
       <div className="flex items-center justify-center py-12">
         <Spinner size="md" />

@@ -9,21 +9,23 @@ import { getMyTenantLinks } from "@/server/tenant.functions";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
+import { isExpectedLoaderError, logLoaderError } from "@/lib/loader-error";
 
 export const Route = createFileRoute("/dashboard/links")({
   staleTime: 15_000,
   loader: async () => {
     try {
-      return { tenant: await getMyTenantLinks({}) };
-    } catch {
-      return { tenant: null };
+      return { tenant: await getMyTenantLinks({}), loaderError: false };
+    } catch (error) {
+      logLoaderError("dashboard.links", error);
+      return { tenant: null, loaderError: !isExpectedLoaderError(error) };
     }
   },
   component: LinksPage,
 });
 
 function LinksPage() {
-  const { tenant: loadedTenant } = Route.useLoaderData();
+  const { tenant: loadedTenant, loaderError } = Route.useLoaderData();
   const tenant = useLoadedTenant(loadedTenant);
   const add = useTenant((s) => s.addLink);
   const update = useTenant((s) => s.updateLink);
@@ -46,6 +48,13 @@ function LinksPage() {
   }, [tenantLinks]);
 
   if (!tenant) {
+    if (loaderError) {
+      return (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          Gagal memuat data tautan. Periksa koneksi Anda dan coba muat ulang halaman.
+        </div>
+      );
+    }
     return (
       <div className="flex items-center justify-center py-12">
         <Spinner size="md" />

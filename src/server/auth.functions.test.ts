@@ -15,8 +15,7 @@ vi.mock("../db", () => ({
       delete: vi.fn(),
     },
     authRateLimit: {
-      count: vi.fn(),
-      create: vi.fn(),
+      upsert: vi.fn(),
     },
     authAuditLog: {
       create: vi.fn(),
@@ -85,9 +84,8 @@ beforeEach(() => {
   vi.mocked(prismaAny.verificationCode.upsert).mockReset();
   vi.mocked(prismaAny.verificationCode.update).mockReset();
   vi.mocked(prismaAny.verificationCode.delete).mockReset();
-  vi.mocked(prismaAny.authRateLimit.count).mockReset();
-  vi.mocked(prismaAny.authRateLimit.count).mockResolvedValue(0);
-  vi.mocked(prismaAny.authRateLimit.create).mockReset();
+  vi.mocked(prismaAny.authRateLimit.upsert).mockReset();
+  vi.mocked(prismaAny.authRateLimit.upsert).mockResolvedValue({ count: 1 });
   vi.mocked(prismaAny.authAuditLog.create).mockReset();
   vi.mocked(supabaseAdmin.auth.admin.createUser).mockReset();
   vi.mocked(supabaseAdmin.auth.admin.updateUserById).mockReset();

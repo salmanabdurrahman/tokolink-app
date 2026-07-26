@@ -10,15 +10,18 @@ import { Input } from "@/components/ui/input";
 import { formatDateTimeIndonesia, formatPercentIndonesia } from "@/lib/formatters";
 import { formatIDR } from "@/lib/utils";
 import { withdrawalStatusLabels } from "@/lib/status-labels";
+import { isExpectedLoaderError, logLoaderError } from "@/lib/loader-error";
 
 export const Route = createFileRoute("/dashboard/withdrawals")({
   loader: async () => {
     try {
       const { getTenantWithdrawalSummary } = await import("@/server/withdrawal.functions");
       const summary = await getTenantWithdrawalSummary({});
-      return { summary };
-    } catch {
+      return { summary, loaderError: false };
+    } catch (error) {
+      logLoaderError("dashboard.withdrawals", error);
       return {
+        loaderError: !isExpectedLoaderError(error),
         summary: {
           availableBalance: 0,
           pendingBalance: 0,
@@ -43,7 +46,7 @@ function formatDate(value?: string | Date | null) {
 }
 
 function WithdrawalsPage() {
-  const { summary } = Route.useLoaderData();
+  const { summary, loaderError } = Route.useLoaderData();
   const router = useRouter();
   const [amount, setAmount] = useState(String(summary.availableBalance || ""));
   const [saving, setSaving] = useState(false);
@@ -71,6 +74,12 @@ function WithdrawalsPage() {
   return (
     <div className="space-y-8 bg-background text-foreground">
       <PageHeader label="Pencairan" title="Saldo & withdrawal" />
+
+      {loaderError && (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          Gagal memuat data pencairan. Periksa koneksi Anda dan coba muat ulang halaman.
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         <section className="rounded-2xl border border-border bg-card p-6">

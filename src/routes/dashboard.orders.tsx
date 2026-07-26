@@ -10,15 +10,17 @@ import { Input } from "@/components/ui/input";
 import { formatDateTimeIndonesia } from "@/lib/formatters";
 import { formatIDR } from "@/lib/utils";
 import { orderStatusLabels, paymentStatusLabels } from "@/lib/status-labels";
+import { isExpectedLoaderError, logLoaderError } from "@/lib/loader-error";
 
 export const Route = createFileRoute("/dashboard/orders")({
   loader: async () => {
     try {
       const { getTenantOrders } = await import("@/server/order.functions");
       const orders = await getTenantOrders({});
-      return { orders };
-    } catch {
-      return { orders: [] };
+      return { orders, loaderError: false };
+    } catch (error) {
+      logLoaderError("dashboard.orders", error);
+      return { orders: [], loaderError: !isExpectedLoaderError(error) };
     }
   },
   component: OrdersPage,
@@ -45,7 +47,7 @@ function getWithdrawalDate(value?: string | Date | null) {
 }
 
 function OrdersPage() {
-  const { orders } = Route.useLoaderData();
+  const { orders, loaderError } = Route.useLoaderData();
   const router = useRouter();
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [paymentFilter, setPaymentFilter] = useState("ALL");
@@ -93,6 +95,12 @@ function OrdersPage() {
   return (
     <div className="space-y-8 bg-background text-foreground">
       <PageHeader label="Order" title="Fulfillment toko" />
+
+      {loaderError && (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          Gagal memuat data order. Periksa koneksi Anda dan coba muat ulang halaman.
+        </div>
+      )}
 
       <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-3">
         <Field label="Status order">

@@ -6,7 +6,7 @@ vi.mock("../db", () => ({
     order: { count: vi.fn() },
     product: { count: vi.fn() },
     link: { count: vi.fn() },
-    authRateLimit: { count: vi.fn(), create: vi.fn() },
+    authRateLimit: { upsert: vi.fn() },
     authAuditLog: { create: vi.fn() },
     media: { findFirst: vi.fn(), delete: vi.fn() },
   },
@@ -50,9 +50,8 @@ beforeEach(() => {
   vi.mocked(prismaAny.order.count).mockReset();
   vi.mocked(prismaAny.product.count).mockReset();
   vi.mocked(prismaAny.link.count).mockReset();
-  vi.mocked(prismaAny.authRateLimit.count).mockReset();
-  vi.mocked(prismaAny.authRateLimit.count).mockResolvedValue(0);
-  vi.mocked(prismaAny.authRateLimit.create).mockReset();
+  vi.mocked(prismaAny.authRateLimit.upsert).mockReset();
+  vi.mocked(prismaAny.authRateLimit.upsert).mockResolvedValue({ count: 1 });
   vi.mocked(prismaAny.authAuditLog.create).mockReset();
   vi.mocked(prismaAny.media.findFirst).mockReset();
   vi.mocked(prismaAny.media.delete).mockReset();

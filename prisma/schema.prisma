@@ -89,16 +89,23 @@ model VerificationCode {
   @@map("verification_codes")
 }
 
+// One row per (event, scopeKey, windowStart) fixed window bucket instead of
+// one row per request: `count` is incremented atomically via upsert, which
+// both caps table growth to O(active scopes) and closes the count-then-create
+// race a plain SELECT+INSERT would have under concurrent requests.
 model AuthRateLimit {
-  id        String   @id @default(uuid()) @db.Uuid
-  event     String
-  scopeKey  String   @map("scope_key")
-  emailHash String   @default("") @map("email_hash")
-  ipHash    String   @default("") @map("ip_hash")
-  userHash  String   @default("") @map("user_hash")
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid()) @db.Uuid
+  event       String
+  scopeKey    String   @map("scope_key")
+  windowStart DateTime @map("window_start")
+  count       Int      @default(1)
+  emailHash   String   @default("") @map("email_hash")
+  ipHash      String   @default("") @map("ip_hash")
+  userHash    String   @default("") @map("user_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  @@index([event, scopeKey, createdAt])
+  @@unique([event, scopeKey, windowStart])
   @@map("auth_rate_limits")
 }
 
@@ -364,10 +371,10 @@ model LedgerEntry {
   order             Order?             @relation(fields: [orderId], references: [id], onDelete: SetNull)
   withdrawalRequest WithdrawalRequest? @relation(fields: [withdrawalRequestId], references: [id], onDelete: SetNull)
 
+  @@unique([orderId, type])
   @@index([tenantId, status, availableAt])
   @@index([tenantId, type, status, availableAt])
   @@index([tenantId, createdAt])
-  @@unique([orderId, type])
   @@index([orderId])
   @@index([withdrawalRequestId])
   @@map("ledger_entries")

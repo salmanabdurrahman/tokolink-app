@@ -7,6 +7,7 @@ import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { getDashboardData } from "@/server/tenant.functions";
 import { getPublicUrl } from "@/lib/site-url";
+import { isExpectedLoaderError, logLoaderError } from "@/lib/loader-error";
 
 export const Route = createFileRoute("/dashboard")({
   // Dashboard identity (tenant + badge counts) rarely changes between quick
@@ -15,9 +16,16 @@ export const Route = createFileRoute("/dashboard")({
   staleTime: 15_000,
   loader: async () => {
     try {
-      return await getDashboardData({});
-    } catch {
-      return { tenant: null, orderCount: 0, productCount: 0, linkCount: 0 };
+      return { ...(await getDashboardData({})), loaderError: false };
+    } catch (error) {
+      logLoaderError("dashboard", error);
+      return {
+        tenant: null,
+        orderCount: 0,
+        productCount: 0,
+        linkCount: 0,
+        loaderError: !isExpectedLoaderError(error),
+      };
     }
   },
   head: () => ({
@@ -37,7 +45,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardLayout() {
-  const { tenant: loadedTenant, orderCount } = Route.useLoaderData();
+  const { tenant: loadedTenant, orderCount, loaderError } = Route.useLoaderData();
   const { isLoading: authLoading, user } = useAuthGuard({ requireTenant: true });
   const signOut = useAuth((s) => s.signOut);
   const tenant = useTenant((s) => s.tenant);
@@ -128,6 +136,11 @@ function DashboardLayout() {
           orderCount={orderCount}
         />
         <main className="flex-1 p-6 md:p-10 max-w-6xl w-full mx-auto">
+          {loaderError && (
+            <div className="mb-6 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+              Gagal memuat data dashboard. Periksa koneksi Anda dan coba muat ulang halaman.
+            </div>
+          )}
           <Outlet />
         </main>
       </div>

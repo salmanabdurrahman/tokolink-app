@@ -12,21 +12,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { updateTenantSchema } from "@/lib/schemas";
 import { formatWhatsAppNumber } from "@/lib/utils";
 import { getMyTenantSettings } from "@/server/tenant.functions";
+import { isExpectedLoaderError, logLoaderError } from "@/lib/loader-error";
 
 export const Route = createFileRoute("/dashboard/settings")({
   staleTime: 15_000,
   loader: async () => {
     try {
-      return { tenant: await getMyTenantSettings({}) };
-    } catch {
-      return { tenant: null };
+      return { tenant: await getMyTenantSettings({}), loaderError: false };
+    } catch (error) {
+      logLoaderError("dashboard.settings", error);
+      return { tenant: null, loaderError: !isExpectedLoaderError(error) };
     }
   },
   component: SettingsPage,
 });
 
 function SettingsPage() {
-  const { tenant: loadedTenant } = Route.useLoaderData();
+  const { tenant: loadedTenant, loaderError } = Route.useLoaderData();
   const tenant = useLoadedTenant(loadedTenant);
   const updateSettings = useTenant((s) => s.updateSettings);
 
@@ -101,6 +103,11 @@ function SettingsPage() {
 
   return (
     <div className="max-w-2xl space-y-10 bg-background text-foreground">
+      {!tenant && loaderError && (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          Gagal memuat pengaturan toko. Periksa koneksi Anda dan coba muat ulang halaman.
+        </div>
+      )}
       <PageHeader
         label="Pengaturan"
         title="Identitas toko"

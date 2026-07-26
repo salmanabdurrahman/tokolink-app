@@ -68,21 +68,23 @@ export async function enforceAuthRateLimit({
   const emailHash = hashIdentifier(email);
   const userHash = hashIdentifier(userId);
   const scopeKey = emailHash || userHash || ipHash;
-  const windowStart = new Date(Date.now() - config.windowMs);
+  // Fixed window bucket (not sliding): aligns every request in the same
+  // windowMs slice to one row, so the atomic upsert below both closes the
+  // count-then-create race and keeps one row per active scope per window
+  // instead of one row per request.
+  const windowStart = new Date(Math.floor(Date.now() / config.windowMs) * config.windowMs);
   const prismaAny = prisma as any;
 
-  const current = await prismaAny.authRateLimit.count({
-    where: { event, scopeKey, createdAt: { gte: windowStart } },
+  const bucket = await prismaAny.authRateLimit.upsert({
+    where: { event_scopeKey_windowStart: { event, scopeKey, windowStart } },
+    update: { count: { increment: 1 } },
+    create: { event, scopeKey, windowStart, count: 1, emailHash, ipHash, userHash },
   });
 
-  if (current >= config.limit) {
+  if (bucket.count > config.limit) {
     await logAuthAbuse({ event, email, userId, request, outcome: "blocked" });
     throw new Error("Terlalu banyak percobaan. Silakan coba lagi nanti.");
   }
-
-  await prismaAny.authRateLimit.create({
-    data: { event, scopeKey, emailHash, ipHash, userHash },
-  });
 }
 
 export async function logAuthAbuse({
