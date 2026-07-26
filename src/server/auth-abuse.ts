@@ -73,9 +73,8 @@ export async function enforceAuthRateLimit({
   // count-then-create race and keeps one row per active scope per window
   // instead of one row per request.
   const windowStart = new Date(Math.floor(Date.now() / config.windowMs) * config.windowMs);
-  const prismaAny = prisma as any;
 
-  const bucket = await prismaAny.authRateLimit.upsert({
+  const bucket = await prisma.authRateLimit.upsert({
     where: { event_scopeKey_windowStart: { event, scopeKey, windowStart } },
     update: { count: { increment: 1 } },
     create: { event, scopeKey, windowStart, count: 1, emailHash, ipHash, userHash },
@@ -100,7 +99,7 @@ export async function logAuthAbuse({
   request?: Request;
   outcome: AuthAbuseOutcome;
 }) {
-  await (prisma as any).authAuditLog.create({
+  await prisma.authAuditLog.create({
     data: {
       event,
       emailHash: hashIdentifier(email),

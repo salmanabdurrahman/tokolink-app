@@ -79,7 +79,7 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
     return payload as T;
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error("RajaOngkir terlalu lama merespons. Coba lagi.");
+      throw new Error(RAJAONGKIR_TIMEOUT_MESSAGE);
     }
     throw error;
   } finally {
@@ -135,12 +135,41 @@ export async function searchDomesticDestination(search: string, limit = 5) {
     .filter((item: RajaOngkirDestination) => item.id);
 }
 
-export async function calculateDomesticCost(input: {
+const RAJAONGKIR_TIMEOUT_MESSAGE = "RajaOngkir terlalu lama merespons. Coba lagi.";
+// Short TTL only reduces duplicate calls within one checkout session (pilih
+// tujuan -> revalidate checkout); it must not serve rates stale enough to
+// diverge from what RajaOngkir would quote on a fresh request.
+const COST_CACHE_TTL_MS = 60 * 1000;
+const COST_CACHE_MAX_ENTRIES = 300;
+const MAX_COST_RETRIES = 1;
+
+const costCache = new Map<
+  string,
+  { expiresAt: number; promise: Promise<RajaOngkirCostOption[]> }
+>();
+
+function pruneCostCache() {
+  const now = Date.now();
+  for (const [key, entry] of costCache) {
+    if (entry.expiresAt <= now) costCache.delete(key);
+  }
+
+  if (costCache.size >= COST_CACHE_MAX_ENTRIES) {
+    const oldestKey = costCache.keys().next().value;
+    if (oldestKey) costCache.delete(oldestKey);
+  }
+}
+
+export function __clearRajaOngkirCostCacheForTests() {
+  costCache.clear();
+}
+
+async function requestDomesticCost(input: {
   origin: string;
   destination: string;
   weight: number;
   couriers: string[];
-}) {
+}): Promise<RajaOngkirCostOption[]> {
   const { baseUrl } = getConfig();
   const body = new URLSearchParams();
   body.set("origin", input.origin);
@@ -158,6 +187,38 @@ export async function calculateDomesticCost(input: {
   return payloadData(payload)
     .map(normalizeCost)
     .filter((item: RajaOngkirCostOption) => item.courier && item.service);
+}
+
+async function requestDomesticCostWithRetry(
+  input: { origin: string; destination: string; weight: number; couriers: string[] },
+  attempt = 0,
+): Promise<RajaOngkirCostOption[]> {
+  try {
+    return await requestDomesticCost(input);
+  } catch (error) {
+    const isTimeout = error instanceof Error && error.message === RAJAONGKIR_TIMEOUT_MESSAGE;
+    if (isTimeout && attempt < MAX_COST_RETRIES) {
+      return requestDomesticCostWithRetry(input, attempt + 1);
+    }
+    throw error;
+  }
+}
+
+export async function calculateDomesticCost(input: {
+  origin: string;
+  destination: string;
+  weight: number;
+  couriers: string[];
+}) {
+  pruneCostCache();
+  const cacheKey = `${input.origin}:${input.destination}:${Math.max(1, Math.ceil(input.weight))}:${[...input.couriers].sort().join(",")}`;
+  const cached = costCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const promise = requestDomesticCostWithRetry(input);
+  costCache.set(cacheKey, { expiresAt: Date.now() + COST_CACHE_TTL_MS, promise });
+  promise.catch(() => costCache.delete(cacheKey));
+  return promise;
 }
 
 export async function trackWaybill(courier: string, trackingNumber: string) {

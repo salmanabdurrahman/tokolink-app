@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { calculateDomesticCost, searchDomesticDestination, trackWaybill } from "./rajaongkir";
+import {
+  __clearRajaOngkirCostCacheForTests,
+  calculateDomesticCost,
+  searchDomesticDestination,
+  trackWaybill,
+} from "./rajaongkir";
 import { calculateShippingWeightGram } from "./shipping.functions";
 
 const originalEnv = process.env;
@@ -7,6 +12,7 @@ const originalEnv = process.env;
 describe("rajaongkir client", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    __clearRajaOngkirCostCacheForTests();
     process.env = {
       ...originalEnv,
       RAJAONGKIR_API_KEY: "secret-key",
@@ -114,5 +120,89 @@ describe("rajaongkir client", () => {
         { weightGram: 0, qty: 3 },
       ]),
     ).toBe(503);
+  });
+
+  it("caches domestic cost per origin/destination/weight/courier and skips duplicate calls", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      Response.json({ data: [{ code: "jne", service: "REG", cost: 18000, etd: "1-2 hari" }] }),
+    );
+
+    const input = { origin: "31555", destination: "68423", weight: 1000, couriers: ["jne", "jnt"] };
+
+    await calculateDomesticCost(input);
+    await calculateDomesticCost(input);
+    await calculateDomesticCost({ ...input, couriers: ["jnt", "jne"] });
+
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+  });
+
+  it("misses cache and calls RajaOngkir again for a different destination", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      Response.json({ data: [{ code: "jne", service: "REG", cost: 18000, etd: "1-2 hari" }] }),
+    );
+
+    await calculateDomesticCost({
+      origin: "31555",
+      destination: "68423",
+      weight: 1000,
+      couriers: ["jne"],
+    });
+    await calculateDomesticCost({
+      origin: "31555",
+      destination: "99999",
+      weight: 1000,
+      couriers: ["jne"],
+    });
+
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries once after a timeout then succeeds", async () => {
+    const abortError = new DOMException("Aborted", "AbortError");
+    vi.mocked(fetch)
+      .mockRejectedValueOnce(abortError)
+      .mockResolvedValueOnce(
+        Response.json({ data: [{ code: "jne", service: "REG", cost: 18000, etd: "1-2 hari" }] }),
+      );
+
+    await expect(
+      calculateDomesticCost({
+        origin: "31555",
+        destination: "68423",
+        weight: 1000,
+        couriers: ["jne"],
+      }),
+    ).resolves.toEqual([expect.objectContaining({ courier: "jne", cost: 18000 })]);
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
+  });
+
+  it("stops retrying after the retry limit and surfaces the timeout message", async () => {
+    const abortError = new DOMException("Aborted", "AbortError");
+    vi.mocked(fetch).mockRejectedValue(abortError);
+
+    await expect(
+      calculateDomesticCost({
+        origin: "31555",
+        destination: "68423",
+        weight: 1000,
+        couriers: ["jne"],
+      }),
+    ).rejects.toThrow("RajaOngkir terlalu lama merespons. Coba lagi.");
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not cache a failed request so the next call retries fresh", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(Response.json({}, { status: 500 }))
+      .mockResolvedValueOnce(
+        Response.json({ data: [{ code: "jne", service: "REG", cost: 18000, etd: "1-2 hari" }] }),
+      );
+
+    const input = { origin: "31555", destination: "68423", weight: 1000, couriers: ["jne"] };
+    await expect(calculateDomesticCost(input)).rejects.toThrow();
+    await expect(calculateDomesticCost(input)).resolves.toEqual([
+      expect.objectContaining({ courier: "jne", cost: 18000 }),
+    ]);
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
   });
 });
