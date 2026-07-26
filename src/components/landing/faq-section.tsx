@@ -39,7 +39,7 @@ export function FaqSection() {
             <details key={f.q} className="group py-6">
               <summary className="font-display flex cursor-pointer items-center justify-between text-lg font-medium tracking-tight list-none">
                 {f.q}
-                <span className="text-2xl text-muted-foreground transition group-open:rotate-45">
+                <span className="text-2xl text-muted-foreground transition duration-200 group-open:rotate-45">
                   +
                 </span>
               </summary>

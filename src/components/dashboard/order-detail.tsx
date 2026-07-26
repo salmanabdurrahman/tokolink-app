@@ -16,9 +16,7 @@ export function OrderDetail({ order, savingId, onUpdateStatus }: OrderDetailProp
     <aside className="rounded-2xl border border-border bg-card p-6 lg:sticky lg:top-6 lg:self-start">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Detail order
-          </p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Detail order</p>
           <h2 className="mt-1 font-display text-2xl font-medium">{order.orderNumber}</h2>
         </div>
         <Badge>{paymentLabel(order.payment?.status)}</Badge>

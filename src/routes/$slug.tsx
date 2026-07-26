@@ -148,7 +148,7 @@ function Storefront() {
               <button
                 type="button"
                 onClick={() => setActiveCategoryId(null)}
-                className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
+                className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition duration-200 ${
                   activeCategoryId === null
                     ? "border-foreground bg-foreground text-background"
                     : "border-border text-muted-foreground hover:border-foreground"
@@ -161,7 +161,7 @@ function Storefront() {
                   key={category.id}
                   type="button"
                   onClick={() => setActiveCategoryId(category.id)}
-                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
+                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition duration-200 ${
                     activeCategoryId === category.id
                       ? "border-foreground bg-foreground text-background"
                       : "border-border text-muted-foreground hover:border-foreground"

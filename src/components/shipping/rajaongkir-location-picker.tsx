@@ -258,14 +258,14 @@ export function RajaOngkirLocationPicker({
         <button
           type="button"
           onClick={() => setMode("cascade")}
-          className={`rounded-full px-3 py-1.5 font-medium transition ${mode === "cascade" ? "bg-foreground text-background" : "text-muted-foreground"}`}
+          className={`rounded-full px-3 py-1.5 font-medium transition duration-200 ${mode === "cascade" ? "bg-foreground text-background" : "text-muted-foreground"}`}
         >
           Pilih dari daftar
         </button>
         <button
           type="button"
           onClick={() => setMode("search")}
-          className={`rounded-full px-3 py-1.5 font-medium transition ${mode === "search" ? "bg-foreground text-background" : "text-muted-foreground"}`}
+          className={`rounded-full px-3 py-1.5 font-medium transition duration-200 ${mode === "search" ? "bg-foreground text-background" : "text-muted-foreground"}`}
         >
           Cari cepat
         </button>
@@ -376,7 +376,7 @@ export function RajaOngkirLocationPicker({
                     setSearchResults([]);
                     setSearchQuery(option.label);
                   }}
-                  className="rounded-xl border border-border p-3 text-left text-sm hover:bg-surface transition"
+                  className="rounded-xl border border-border p-3 text-left text-sm hover:bg-surface transition duration-200"
                 >
                   {option.label}
                 </button>

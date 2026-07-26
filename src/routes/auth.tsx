@@ -136,7 +136,7 @@ function AuthPage() {
                 <button
                   type="button"
                   onClick={() => setMode("signup")}
-                  className="text-xs text-muted-foreground hover:text-foreground transition underline underline-offset-4 cursor-pointer"
+                  className="text-xs text-muted-foreground hover:text-foreground transition duration-200 underline underline-offset-4 cursor-pointer"
                 >
                   Kembali
                 </button>
@@ -144,7 +144,7 @@ function AuthPage() {
                   type="button"
                   onClick={resendCode}
                   disabled={loading || cooldown > 0}
-                  className="text-xs font-medium text-foreground hover:opacity-85 disabled:opacity-40 transition underline underline-offset-4 cursor-pointer"
+                  className="text-xs font-medium text-foreground hover:opacity-85 disabled:opacity-40 transition duration-200 underline underline-offset-4 cursor-pointer"
                 >
                   {cooldown > 0 ? `Kirim ulang (${cooldown}s)` : "Kirim ulang kode"}
                 </button>
@@ -224,7 +224,7 @@ function AuthPage() {
                 {mode === "signup" ? "Sudah punya akun?" : "Belum punya akun?"}{" "}
                 <button
                   onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-                  className="text-foreground underline underline-offset-4 cursor-pointer"
+                  className="text-foreground underline underline-offset-4 transition-opacity duration-200 hover:opacity-80 cursor-pointer"
                 >
                   {mode === "signup" ? "Masuk" : "Daftar"}
                 </button>

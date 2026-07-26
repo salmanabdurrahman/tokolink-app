@@ -1,9 +1,10 @@
 import React, { useState, useRef } from "react";
-import { UploadCloud, Image as ImageIcon, AlertCircle, Loader2 } from "lucide-react";
+import { UploadCloud, Image as ImageIcon, AlertCircle } from "lucide-react";
 import { validateImage, compressToWebP } from "@/lib/image-utils";
 import { uploadImage } from "@/server/upload.functions";
 import { getErrorMessage, cn } from "@/lib/utils";
 import { Button } from "./button";
+import { Spinner } from "./spinner";
 
 interface ImageUploadProps {
   value?: string;
@@ -162,7 +163,7 @@ export function ImageUpload({ value, onChange, className }: ImageUploadProps) {
         )}
         {loading && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px] flex flex-col items-center justify-center p-4">
-            <Loader2 className="h-6 w-6 text-accent animate-spin" />
+            <Spinner size="md" />
             <p className="mt-2 text-xs font-semibold tracking-tight">{status}</p>
           </div>
         )}

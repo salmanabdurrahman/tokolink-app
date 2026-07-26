@@ -48,7 +48,7 @@ export function CheckoutActions({
       )}
       <button
         onClick={onClear}
-        className="mt-3 w-full text-xs text-muted-foreground hover:text-destructive transition shrink-0 cursor-pointer"
+        className="mt-3 w-full text-xs text-muted-foreground hover:text-destructive transition duration-200 shrink-0 cursor-pointer"
       >
         Kosongkan keranjang
       </button>

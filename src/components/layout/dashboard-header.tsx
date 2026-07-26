@@ -35,7 +35,7 @@ export function DashboardHeader({ setIsMobileOpen, tenant, orderCount = 0 }: Das
       <Link
         to="/$slug"
         params={{ slug: tenant?.slug || "" }}
-        className="rounded-full border border-border px-4 py-2 text-xs font-medium hover:bg-surface transition"
+        className="rounded-full border border-border px-4 py-2 text-xs font-medium hover:bg-surface transition-colors duration-200"
       >
         Toko ↗
       </Link>

@@ -30,7 +30,11 @@ export function MarketingNav() {
         </Link>
         <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
           {navLinks.map((link) => (
-            <a key={link.href} href={link.href} className="hover:text-foreground transition">
+            <a
+              key={link.href}
+              href={link.href}
+              className="hover:text-foreground transition-colors duration-200"
+            >
               {link.label}
             </a>
           ))}
@@ -57,7 +61,7 @@ export function MarketingNav() {
               key={link.href}
               href={link.href}
               onClick={() => setMobileOpen(false)}
-              className="rounded-xl px-3 py-3 font-medium text-foreground hover:bg-surface transition"
+              className="rounded-xl px-3 py-3 font-medium text-foreground hover:bg-surface transition-colors duration-200"
             >
               {link.label}
             </a>

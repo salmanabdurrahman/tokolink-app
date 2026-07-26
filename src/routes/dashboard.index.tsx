@@ -140,7 +140,7 @@ function Overview() {
               <Link
                 key={cta.key}
                 to={cta.to}
-                className="group rounded-2xl border border-border bg-card p-8 transition hover:border-foreground/30"
+                className="group rounded-2xl border border-border bg-card p-8 transition duration-200 hover:border-foreground/30"
               >
                 {content}
               </Link>
@@ -152,7 +152,7 @@ function Overview() {
               key={cta.key}
               type="button"
               onClick={shareStore}
-              className="group rounded-2xl border border-border bg-card p-8 text-left transition hover:border-foreground/30"
+              className="group rounded-2xl border border-border bg-card p-8 text-left transition duration-200 hover:border-foreground/30"
             >
               {content}
             </button>

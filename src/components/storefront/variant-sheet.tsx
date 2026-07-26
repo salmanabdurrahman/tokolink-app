@@ -84,7 +84,7 @@ export function VariantSheet({ product, onClose }: VariantSheetProps) {
                       onClick={() =>
                         setSelectedOptions((prev) => ({ ...prev, [groupKey]: option }))
                       }
-                      className={`rounded-full border px-4 py-2 text-sm font-medium transition active:scale-[0.97] cursor-pointer ${
+                      className={`rounded-full border px-4 py-2 text-sm font-medium transition duration-200 active:scale-[0.97] cursor-pointer ${
                         isSelected
                           ? "border-foreground bg-foreground text-background"
                           : "border-border hover:border-foreground"

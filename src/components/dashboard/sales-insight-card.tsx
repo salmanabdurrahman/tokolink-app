@@ -54,7 +54,7 @@ export function SalesInsightCard() {
           <button
             type="button"
             onClick={() => loadInsight(true)}
-            className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+            className="text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors duration-200"
           >
             Perbarui
           </button>

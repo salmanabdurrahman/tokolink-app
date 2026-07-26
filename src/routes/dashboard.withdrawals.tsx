@@ -83,18 +83,14 @@ function WithdrawalsPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <section className="rounded-2xl border border-border bg-card p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Saldo tersedia
-          </p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Saldo tersedia</p>
           <h2 className="mt-3 font-display text-4xl font-light tracking-tight">
             {formatIDR(summary.availableBalance)}
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">Bisa diajukan untuk payout manual.</p>
         </section>
         <section className="rounded-2xl border border-border bg-card p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Saldo hold
-          </p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Saldo hold</p>
           <h2 className="mt-3 font-display text-4xl font-light tracking-tight">
             {formatIDR(summary.pendingBalance)}
           </h2>
@@ -103,9 +99,7 @@ function WithdrawalsPage() {
           </p>
         </section>
         <section className="rounded-2xl border border-border bg-card p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Policy
-          </p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Policy</p>
           <h2 className="mt-3 font-display text-4xl font-light tracking-tight">
             {formatPercentIndonesia(summary.feeRate * 100)}
           </h2>

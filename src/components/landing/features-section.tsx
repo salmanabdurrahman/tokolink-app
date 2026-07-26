@@ -37,7 +37,7 @@ export function FeaturesSection() {
               key={f.no}
               delay={i * 0.1}
               whileHover="hover"
-              className="group relative overflow-hidden rounded-2xl border border-border bg-card p-8 transition hover:border-foreground/30 hover:shadow-lg cursor-pointer"
+              className="group relative overflow-hidden rounded-2xl border border-border bg-card p-8 transition duration-200 hover:border-foreground/30 hover:shadow-lg cursor-pointer"
             >
               <div className="flex items-baseline justify-between">
                 <span className="font-display text-sm text-muted-foreground">{f.no}</span>

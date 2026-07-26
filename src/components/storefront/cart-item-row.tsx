@@ -28,7 +28,7 @@ export function CartItemRow({ item, onInc, onDec }: CartItemRowProps) {
         <button
           aria-label={`Kurangi ${item.productName}`}
           onClick={() => onDec(item.key)}
-          className="h-8 w-8 rounded-full border border-border hover:bg-surface transition cursor-pointer"
+          className="h-8 w-8 rounded-full border border-border hover:bg-surface transition duration-200 cursor-pointer"
         >
           −
         </button>
@@ -36,7 +36,7 @@ export function CartItemRow({ item, onInc, onDec }: CartItemRowProps) {
         <button
           aria-label={`Tambah ${item.productName}`}
           onClick={() => onInc(item.key)}
-          className="h-8 w-8 rounded-full border border-border bg-surface hover:bg-muted transition cursor-pointer"
+          className="h-8 w-8 rounded-full border border-border bg-surface hover:bg-muted transition duration-200 cursor-pointer"
         >
           +
         </button>

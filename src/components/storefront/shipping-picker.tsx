@@ -39,7 +39,7 @@ export function ShippingPicker({
               key={`${option.courier}-${option.service}-${option.cost}`}
               type="button"
               onClick={() => onSelectShipping(option)}
-              className={`rounded-xl border p-3 text-left text-sm transition ${shipping.courier === option.courier && shipping.service === option.service ? "border-foreground bg-surface" : "border-border hover:bg-surface"}`}
+              className={`rounded-xl border p-3 text-left text-sm transition duration-200 ${shipping.courier === option.courier && shipping.service === option.service ? "border-foreground bg-surface" : "border-border hover:bg-surface"}`}
             >
               <span className="font-medium uppercase">
                 {option.courier} {option.service}

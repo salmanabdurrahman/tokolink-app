@@ -59,7 +59,7 @@ function OrderStatusPage() {
       <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
               Order Tokolink
             </p>
             <h1 className="mt-2 font-display text-3xl font-medium">{order.orderNumber}</h1>
