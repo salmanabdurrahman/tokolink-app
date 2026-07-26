@@ -1,25 +1,19 @@
 import { motion } from "framer-motion";
-
-const fadeUp = {
-  initial: { y: 24, opacity: 0 },
-  whileInView: { y: 0, opacity: 1 },
-  viewport: { once: true, margin: "-80px" },
-  transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
-};
+import { FadeUp } from "@/components/motion/fade-up";
 
 export function FeaturesSection() {
   return (
     <section id="features" className="px-6 py-32 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid-pattern [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_100%)] opacity-25 pointer-events-none -z-10" />
       <div className="mx-auto max-w-6xl">
-        <motion.div {...fadeUp} className="max-w-2xl">
+        <FadeUp className="max-w-2xl">
           <span className="text-xs uppercase tracking-widest text-muted-foreground">
             01 — Fitur
           </span>
           <h2 className="font-display mt-3 text-5xl font-medium tracking-tight sm:text-6xl text-balance">
             Tiga hal yang <em className="font-light">benar-benar</em> dipakai UMKM.
           </h2>
-        </motion.div>
+        </FadeUp>
 
         <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">
           {[
@@ -39,12 +33,9 @@ export function FeaturesSection() {
               copy: "Keranjang otomatis jadi pesan terstruktur ke WhatsApp. Tanpa payment gateway ribet.",
             },
           ].map((f, i) => (
-            <motion.div
+            <FadeUp
               key={f.no}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.7, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+              delay={i * 0.1}
               whileHover="hover"
               className="group relative overflow-hidden rounded-2xl border border-border bg-card p-8 transition hover:border-foreground/30 hover:shadow-lg cursor-pointer"
             >
@@ -63,7 +54,7 @@ export function FeaturesSection() {
               </div>
               <h3 className="font-display mt-12 text-2xl font-medium tracking-tight">{f.title}</h3>
               <p className="mt-3 text-sm text-muted-foreground">{f.copy}</p>
-            </motion.div>
+            </FadeUp>
           ))}
         </div>
       </div>

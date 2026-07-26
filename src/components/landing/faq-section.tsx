@@ -1,12 +1,5 @@
-import { motion } from "framer-motion";
 import { getPublicHostname } from "@/lib/site-url";
-
-const fadeUp = {
-  initial: { y: 24, opacity: 0 },
-  whileInView: { y: 0, opacity: 1 },
-  viewport: { once: true, margin: "-80px" },
-  transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
-};
+import { FadeUp } from "@/components/motion/fade-up";
 
 export function FaqSection() {
   const publicHostname = getPublicHostname();
@@ -14,12 +7,12 @@ export function FaqSection() {
   return (
     <section id="faq" className="border-t border-border px-6 py-32">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-16 md:grid-cols-[1fr_2fr]">
-        <motion.div {...fadeUp}>
+        <FadeUp>
           <span className="text-xs uppercase tracking-widest text-muted-foreground">04 — FAQ</span>
-          <h2 className="font-display mt-3 text-4xl font-medium tracking-tight sm:text-5xl">
+          <h2 className="font-display mt-3 text-5xl font-medium tracking-tight text-balance sm:text-6xl">
             Hal yang sering ditanya.
           </h2>
-        </motion.div>
+        </FadeUp>
         <div className="divide-y divide-border border-y border-border">
           {[
             {

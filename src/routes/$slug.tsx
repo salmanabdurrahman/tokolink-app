@@ -149,10 +149,12 @@ function Storefront() {
         )}
         {filteredProducts.length === 0 ? (
           <div className="mt-4 rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-            Produk tidak ditemukan. Coba kata kunci lain.
+            {tenant.products.length === 0
+              ? "Belum ada produk di toko ini."
+              : "Produk tidak ditemukan. Coba kata kunci lain."}
           </div>
         ) : (
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {filteredProducts.map((p, i) => (
               <ProductCard
                 key={p.id}

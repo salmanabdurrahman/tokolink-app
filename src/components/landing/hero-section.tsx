@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function HeroSection() {
   return (
@@ -94,10 +96,7 @@ export function HeroSection() {
 
         <div className="mt-10 flex flex-wrap items-center gap-3">
           <motion.div whileTap={{ scale: 0.97 }} whileHover="hover" className="inline-block">
-            <Link
-              to="/auth"
-              className="group inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3.5 text-sm font-medium text-background transition hover:bg-foreground/90"
-            >
+            <Link to="/auth" className={cn("group", buttonVariants("default", "lg"))}>
               Klaim slug kamu
               <motion.span
                 variants={{
@@ -115,7 +114,7 @@ export function HeroSection() {
             <Link
               to="/$slug"
               params={{ slug: "tokolink" }}
-              className="rounded-full border border-border px-6 py-3.5 text-sm font-medium hover:bg-surface transition inline-block"
+              className={buttonVariants("outline", "lg")}
             >
               Lihat demo storefront
             </Link>

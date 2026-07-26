@@ -4,6 +4,7 @@ import { formatIDR } from "@/lib/utils";
 import { useCart } from "@/lib/store";
 import type { Product } from "@/lib/types";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface ProductCardProps {
   product: Product;
@@ -49,15 +50,12 @@ export function ProductCard({ product, delay = 0, onSelect }: ProductCardProps) 
       </div>
       <div className="p-3 flex-1 flex flex-col justify-between">
         <div>
-          <div className="font-display text-sm font-medium leading-snug">{product.name}</div>
+          <div className="text-sm font-medium leading-snug">{product.name}</div>
           <div className="mt-1 text-xs text-muted-foreground">{formatIDR(product.basePrice)}</div>
         </div>
-        <button
-          onClick={handleAdd}
-          className="mt-3 w-full rounded-full bg-foreground py-2 text-xs font-medium text-background hover:bg-foreground/90 active:scale-[0.97] transition"
-        >
+        <Button onClick={handleAdd} size="sm" className="mt-3 w-full active:scale-[0.97]">
           + Keranjang
-        </button>
+        </Button>
       </div>
     </motion.div>
   );

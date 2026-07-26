@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { X } from "lucide-react";
 import type { Product, ProductVariantGroup } from "@/lib/types";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 import { createProductSchema } from "@/lib/schemas";
 
 interface ProductFormProps {
@@ -24,6 +26,7 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   const initialSnapshot = useMemo(
     () =>
@@ -52,7 +55,10 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
   }, [isDirty]);
 
   const closeForm = () => {
-    if (isDirty && !window.confirm("Perubahan belum disimpan. Tutup form?")) return;
+    if (isDirty) {
+      setShowCloseConfirm(true);
+      return;
+    }
     onClose();
   };
 
@@ -75,12 +81,15 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
           <h2 className="font-display text-2xl font-medium text-foreground">
             {initial ? "Edit produk" : "Produk baru"}
           </h2>
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
             onClick={closeForm}
-            className="text-2xl text-muted-foreground hover:text-foreground transition cursor-pointer"
+            aria-label="Tutup form"
           >
-            ×
-          </button>
+            <X className="h-4 w-4" />
+          </Button>
         </div>
         <div className="flex-1 overflow-y-auto p-6 space-y-5 min-h-0 hide-scrollbar">
           <form
@@ -146,18 +155,18 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
                 <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                   Tipe Varian Produk
                 </span>
-                <button
+                <Button
                   type="button"
+                  size="sm"
                   onClick={() =>
                     setVariantGroups([
                       ...variantGroups,
                       { id: crypto.randomUUID(), name: "", options: [] },
                     ])
                   }
-                  className="text-xs hover:opacity-90 bg-foreground text-background px-3 py-1.5 rounded-full font-medium transition cursor-pointer"
                 >
                   + Tipe Varian
-                </button>
+                </Button>
               </div>
 
               {variantGroups.length === 0 && (
@@ -188,15 +197,17 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
                           />
                         </Field>
                       </div>
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() =>
                           setVariantGroups(variantGroups.filter((_, idx) => idx !== groupIdx))
                         }
-                        className="text-xs text-muted-foreground hover:text-destructive border border-border bg-background hover:bg-destructive/10 px-3 py-2.5 rounded-xl transition cursor-pointer"
+                        className="text-muted-foreground hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
                       >
                         Hapus Grup
-                      </button>
+                      </Button>
                     </div>
                     <div className="pl-4 border-l-2 border-border space-y-2">
                       <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground block mb-2">
@@ -231,8 +242,12 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
                             placeholder="+Harga (Rp)"
                             className="w-32 shrink-0"
                           />
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 shrink-0"
+                            aria-label="Hapus pilihan"
                             onClick={() => {
                               const copy = [...variantGroups];
                               copy[groupIdx] = {
@@ -241,15 +256,17 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
                               };
                               setVariantGroups(copy);
                             }}
-                            className="text-muted-foreground hover:text-foreground font-semibold px-1.5 py-1 text-base transition cursor-pointer shrink-0"
                           >
-                            ×
-                          </button>
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
                       ))}
 
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="px-0 hover:bg-transparent"
                         onClick={() => {
                           const copy = [...variantGroups];
                           const opts = [...(group.options || [])];
@@ -257,10 +274,9 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
                           copy[groupIdx] = { ...group, options: opts };
                           setVariantGroups(copy);
                         }}
-                        className="text-xs text-muted-foreground hover:text-foreground font-medium transition cursor-pointer"
                       >
                         + Tambah Pilihan
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -273,6 +289,28 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
           </form>
         </div>
       </motion.div>
+
+      <Modal open={showCloseConfirm} onClose={() => setShowCloseConfirm(false)}>
+        <h3 className="font-display text-xl font-medium text-foreground">Tutup form?</h3>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+          Perubahan belum disimpan. Yakin ingin menutup form ini?
+        </p>
+        <div className="mt-6 flex justify-end gap-2 text-xs">
+          <Button variant="outline" size="sm" onClick={() => setShowCloseConfirm(false)}>
+            Batal
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              setShowCloseConfirm(false);
+              onClose();
+            }}
+          >
+            Tutup tanpa menyimpan
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

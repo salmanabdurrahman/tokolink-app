@@ -18,8 +18,8 @@ const containerVariants = (staggerMs: number) => ({
 });
 
 const itemVariants = {
-  hidden: { y: 16, opacity: 0 },
-  show: { y: 0, opacity: 1, transition: { duration: 0.4, ease: [0.23, 1, 0.32, 1] as const } },
+  hidden: { y: 24, opacity: 0 },
+  show: { y: 0, opacity: 1, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const } },
 };
 
 export function StaggerList({

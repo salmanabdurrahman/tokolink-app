@@ -42,22 +42,24 @@ export function StorefrontHeader({ tenant }: StorefrontHeaderProps) {
           </motion.p>
         </div>
       </header>
-      <section className="mx-auto mt-8 max-w-md px-6">
-        <div className="flex flex-wrap justify-center gap-2">
-          {tenant.links.map((l, i) => (
-            <motion.a
-              key={l.id}
-              initial={{ y: 8, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.15 + i * 0.04, ease: [0.23, 1, 0.32, 1] }}
-              href={l.url}
-              className="rounded-full border border-border bg-card px-4 py-2 text-sm transition hover:bg-foreground hover:text-background active:scale-[0.97]"
-            >
-              {l.label} ↗
-            </motion.a>
-          ))}
-        </div>
-      </section>
+      {tenant.links.length > 0 && (
+        <section className="mx-auto mt-8 max-w-md px-6">
+          <div className="flex flex-wrap justify-center gap-2">
+            {tenant.links.map((l, i) => (
+              <motion.a
+                key={l.id}
+                initial={{ y: 8, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.15 + i * 0.04, ease: [0.23, 1, 0.32, 1] }}
+                href={l.url}
+                className="rounded-full border border-border bg-card px-4 py-2 text-sm transition hover:bg-foreground hover:text-background active:scale-[0.97]"
+              >
+                {l.label} ↗
+              </motion.a>
+            ))}
+          </div>
+        </section>
+      )}
     </>
   );
 }

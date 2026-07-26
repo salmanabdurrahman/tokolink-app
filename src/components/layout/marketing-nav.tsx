@@ -1,8 +1,22 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
+import { Menu } from "lucide-react";
 import { TokolinkLogo } from "@/components/brand/logo";
+import { buttonVariants } from "@/components/ui/button";
+import { Sheet } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+
+const navLinks = [
+  { href: "#features", label: "Fitur" },
+  { href: "#usecases", label: "Use cases" },
+  { href: "#how", label: "Cara kerja" },
+  { href: "#faq", label: "FAQ" },
+];
 
 export function MarketingNav() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
     <motion.header
       initial={{ y: -20, opacity: 0 }}
@@ -14,27 +28,49 @@ export function MarketingNav() {
         <Link to="/" aria-label="Tokolink — Kembali ke beranda" className="flex items-center">
           <TokolinkLogo size={28} showWordmark />
         </Link>
-        <nav className="hidden items-center gap-7 text-sm text-muted-foreground sm:flex">
-          <a href="#features" className="hover:text-foreground transition">
-            Fitur
-          </a>
-          <a href="#usecases" className="hover:text-foreground transition">
-            Use cases
-          </a>
-          <a href="#how" className="hover:text-foreground transition">
-            Cara kerja
-          </a>
-          <a href="#faq" className="hover:text-foreground transition">
-            FAQ
-          </a>
+        <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
+          {navLinks.map((link) => (
+            <a key={link.href} href={link.href} className="hover:text-foreground transition">
+              {link.label}
+            </a>
+          ))}
+        </nav>
+        <div className="flex items-center gap-2">
+          <Link to="/auth" className={cn("hidden md:inline-flex", buttonVariants("default", "sm"))}>
+            Mulai gratis
+          </Link>
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Buka menu"
+            className="p-1 text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer md:hidden"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+        </div>
+      </div>
+
+      <Sheet open={mobileOpen} onClose={() => setMobileOpen(false)} className="max-w-sm">
+        <nav className="flex flex-col gap-1 text-base">
+          {navLinks.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              onClick={() => setMobileOpen(false)}
+              className="rounded-xl px-3 py-3 font-medium text-foreground hover:bg-surface transition"
+            >
+              {link.label}
+            </a>
+          ))}
         </nav>
         <Link
           to="/auth"
-          className="rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition hover:bg-foreground/90"
+          onClick={() => setMobileOpen(false)}
+          className={cn("mt-4 w-full justify-center", buttonVariants("default", "md"))}
         >
           Mulai gratis
         </Link>
-      </div>
+      </Sheet>
     </motion.header>
   );
 }

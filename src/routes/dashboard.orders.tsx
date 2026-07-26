@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { formatDateTimeIndonesia } from "@/lib/formatters";
 import { formatIDR } from "@/lib/utils";
 import { orderStatusLabels, paymentStatusLabels } from "@/lib/status-labels";
@@ -104,48 +105,39 @@ function OrdersPage() {
 
       <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-3">
         <Field label="Status order">
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-accent"
-          >
+          <Select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
             <option value="ALL">Semua status</option>
             <option value="PENDING_PAYMENT">Menunggu pembayaran</option>
             <option value="PAID">Sudah dibayar</option>
             <option value="SHIPPED">Dikirim</option>
             <option value="COMPLETED">Selesai</option>
             <option value="CANCELED">Dibatalkan</option>
-          </select>
+          </Select>
         </Field>
         <Field label="Pembayaran">
-          <select
-            value={paymentFilter}
-            onChange={(event) => setPaymentFilter(event.target.value)}
-            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-accent"
-          >
+          <Select value={paymentFilter} onChange={(event) => setPaymentFilter(event.target.value)}>
             <option value="ALL">Semua pembayaran</option>
             <option value="PENDING">Menunggu</option>
             <option value="PAID">Lunas</option>
             <option value="FAILED">Gagal</option>
             <option value="EXPIRED">Kedaluwarsa</option>
             <option value="CANCELED">Dibatalkan</option>
-          </select>
+          </Select>
         </Field>
         <Field label="Pengiriman">
-          <select
+          <Select
             value={shippingFilter}
             onChange={(event) => setShippingFilter(event.target.value)}
-            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-accent"
           >
             <option value="ALL">Semua pengiriman</option>
             <option value="WITH_TRACKING">Sudah ada resi</option>
             <option value="WITHOUT_TRACKING">Belum ada resi</option>
-          </select>
+          </Select>
         </Field>
       </div>
 
       {filteredOrders.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
+        <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
           Belum ada order sesuai filter.
         </div>
       ) : (

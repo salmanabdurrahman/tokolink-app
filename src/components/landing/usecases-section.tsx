@@ -1,12 +1,5 @@
-import { motion } from "framer-motion";
 import { CoffeeIcon, ShirtIcon, PackageIcon, JasaIcon } from "@/components/animated-usecase-icons";
-
-const fadeUp = {
-  initial: { y: 24, opacity: 0 },
-  whileInView: { y: 0, opacity: 1 },
-  viewport: { once: true, margin: "-80px" },
-  transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
-};
+import { FadeUp } from "@/components/motion/fade-up";
 
 export function UsecasesSection() {
   return (
@@ -15,7 +8,7 @@ export function UsecasesSection() {
       className="border-t border-border bg-surface px-6 py-32 relative overflow-hidden"
     >
       <div className="mx-auto max-w-6xl">
-        <motion.div {...fadeUp} className="flex items-end justify-between">
+        <FadeUp className="flex items-end justify-between">
           <div>
             <span className="text-xs uppercase tracking-widest text-muted-foreground">
               02 — Use cases
@@ -24,7 +17,7 @@ export function UsecasesSection() {
               Cocok untuk siapa saja.
             </h2>
           </div>
-        </motion.div>
+        </FadeUp>
 
         <div className="mt-16 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border lg:grid-cols-4">
           {[
@@ -33,13 +26,10 @@ export function UsecasesSection() {
             { tag: "Reseller", desc: "Dropship, agen, pre-order", icon: <PackageIcon /> },
             { tag: "Jasa", desc: "Desain, fotografi, edit video", icon: <JasaIcon /> },
           ].map((u, i) => (
-            <motion.div
+            <FadeUp
               key={u.tag}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              delay={i * 0.05}
               whileHover="hover"
-              transition={{ duration: 0.5, delay: i * 0.05 }}
               className="group flex flex-col aspect-square bg-background p-6 transition duration-300 hover:bg-accent cursor-pointer"
             >
               <div className="h-12 w-12 flex items-center justify-center bg-muted/40 rounded-2xl group-hover:bg-background/25 transition-colors duration-300">
@@ -49,7 +39,7 @@ export function UsecasesSection() {
               <div className="mt-1 text-xs text-muted-foreground group-hover:text-foreground/70">
                 {u.desc}
               </div>
-            </motion.div>
+            </FadeUp>
           ))}
         </div>
       </div>

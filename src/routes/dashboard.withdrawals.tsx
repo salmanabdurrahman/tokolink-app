@@ -144,7 +144,7 @@ function WithdrawalsPage() {
         <section className="rounded-2xl border border-border bg-card p-6">
           <h2 className="font-display text-2xl font-medium">Riwayat pencairan</h2>
           {summary.withdrawals.length === 0 ? (
-            <p className="mt-4 rounded-xl bg-surface p-4 text-sm text-muted-foreground">
+            <p className="mt-4 rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
               Belum ada request pencairan.
             </p>
           ) : (

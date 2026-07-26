@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { MessageCircle, PackageCheck } from "lucide-react";
 import { buildWhatsAppUrl } from "../lib/store";
 import { orderStatusLabels, paymentStatusLabels } from "../lib/status-labels";
-import { formatIDR } from "../lib/utils";
+import { formatIDR, formatWhatsAppNumber, isValidWhatsAppNumber } from "../lib/utils";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 
@@ -36,8 +36,10 @@ function paymentLabel(status = "") {
 function OrderStatusPage() {
   const { order } = Route.useLoaderData();
   const paymentUrl = order.payment?.paymentUrl || "";
+  const formattedTenantPhone = formatWhatsAppNumber(order.tenant.whatsapp);
+  const hasWhatsApp = isValidWhatsAppNumber(formattedTenantPhone);
   const whatsappUrl = buildWhatsAppUrl(
-    order.tenant.whatsapp,
+    formattedTenantPhone,
     order.tenant.name,
     order.items.map((item) => ({
       key: item.id,
@@ -54,7 +56,7 @@ function OrderStatusPage() {
 
   return (
     <main className="min-h-screen bg-background px-4 py-10">
-      <div className="mx-auto max-w-2xl rounded-3xl border border-border bg-card p-6 shadow-sm">
+      <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -130,13 +132,19 @@ function OrderStatusPage() {
               <PackageCheck className="h-4 w-4" /> Bayar sekarang
             </Button>
           )}
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => window.location.assign(whatsappUrl)}
-          >
-            <MessageCircle className="h-4 w-4" /> Chat tenant
-          </Button>
+          {hasWhatsApp ? (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => window.location.assign(whatsappUrl)}
+            >
+              <MessageCircle className="h-4 w-4" /> Chat tenant
+            </Button>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-border bg-card p-4 text-center text-xs text-muted-foreground sm:col-span-2">
+              Nomor WhatsApp toko belum tersedia.
+            </div>
+          )}
           <p className="text-center text-xs text-muted-foreground sm:col-span-2">
             Email receipt dikirim setelah pembayaran terkonfirmasi.
           </p>

@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { UploadCloud, Image as ImageIcon, AlertCircle, Loader2 } from "lucide-react";
 import { validateImage, compressToWebP } from "@/lib/image-utils";
 import { uploadImage } from "@/server/upload.functions";
+import { getErrorMessage, cn } from "@/lib/utils";
 import { Button } from "./button";
 
 interface ImageUploadProps {
@@ -10,7 +11,7 @@ interface ImageUploadProps {
   className?: string;
 }
 
-export function ImageUpload({ value, onChange, className = "" }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, className }: ImageUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string>("");
@@ -48,7 +49,6 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
       setStatus("Upload selesai (100%)");
     } catch (err: any) {
       console.error(err);
-      const { getErrorMessage } = await import("@/lib/utils");
       setError(getErrorMessage(err) || "Gagal mengunggah gambar");
     } finally {
       setLoading(false);
@@ -98,7 +98,7 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
   };
 
   return (
-    <div className={`space-y-4 w-full ${className}`}>
+    <div className={cn("space-y-4 w-full", className)}>
       <input
         ref={inputRef}
         type="file"
@@ -112,11 +112,13 @@ export function ImageUpload({ value, onChange, className = "" }: ImageUploadProp
         onDragOver={handleDrag}
         onDragLeave={handleDrag}
         onDrop={handleDrop}
-        className={`relative flex flex-col items-center justify-center min-h-[160px] border-2 border-dashed rounded-2xl p-6 transition duration-200 text-center select-none overflow-hidden group ${
+        className={cn(
+          "relative flex flex-col items-center justify-center min-h-[160px] border-2 border-dashed rounded-2xl p-6 transition duration-200 text-center select-none overflow-hidden group",
           dragActive
             ? "border-accent bg-accent/5"
-            : "border-border hover:border-foreground/40 hover:bg-muted/10"
-        } ${loading ? "pointer-events-none opacity-80" : ""}`}
+            : "border-border hover:border-foreground/40 hover:bg-muted/10",
+          loading && "pointer-events-none opacity-80",
+        )}
       >
         {value ? (
           <div className="flex flex-col items-center gap-3 w-full">

@@ -9,6 +9,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Spinner } from "@/components/ui/spinner";
 import { updateTenantSchema } from "@/lib/schemas";
 import { formatWhatsAppNumber } from "@/lib/utils";
 import { getMyTenantSettings } from "@/server/tenant.functions";
@@ -101,26 +102,34 @@ function SettingsPage() {
     }
   };
 
-  return (
-    <div className="max-w-2xl space-y-10 bg-background text-foreground">
-      {!tenant && loaderError && (
+  if (!tenant) {
+    if (loaderError) {
+      return (
         <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           Gagal memuat pengaturan toko. Periksa koneksi Anda dan coba muat ulang halaman.
         </div>
-      )}
+      );
+    }
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Spinner size="md" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl space-y-10 bg-background text-foreground">
       <PageHeader
         label="Pengaturan"
         title="Identitas toko"
         action={
-          tenant ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => window.location.assign(`/${tenant.slug}`)}
-            >
-              Preview storefront
-            </Button>
-          ) : null
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => window.location.assign(`/${tenant.slug}`)}
+          >
+            Preview storefront
+          </Button>
         }
       />
 

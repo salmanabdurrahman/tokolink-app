@@ -24,18 +24,17 @@ const sizeStyles: Record<ButtonSize, string> = {
   icon: "h-9 w-9 rounded-full flex items-center justify-center",
 };
 
+export function buttonVariants(variant: ButtonVariant = "default", size: ButtonSize = "md") {
+  return cn(
+    "inline-flex items-center justify-center gap-2 font-medium transition duration-200 select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",
+    variantStyles[variant],
+    sizeStyles[size],
+  );
+}
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "default", size = "md", ...props }, ref) => (
-    <button
-      ref={ref}
-      className={cn(
-        "inline-flex items-center justify-center gap-2 font-medium transition duration-200 select-none cursor-pointer disabled:opacity-50 disabled:pointer-events-none",
-        variantStyles[variant],
-        sizeStyles[size],
-        className,
-      )}
-      {...props}
-    />
+    <button ref={ref} className={cn(buttonVariants(variant, size), className)} {...props} />
   ),
 );
 Button.displayName = "Button";

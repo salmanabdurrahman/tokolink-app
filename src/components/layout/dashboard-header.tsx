@@ -20,10 +20,12 @@ export function DashboardHeader({ setIsMobileOpen, tenant, orderCount = 0 }: Das
         >
           <Menu className="h-6 w-6" />
         </button>
-        <TokolinkLogo size={20} showWordmark />
-        <span className="font-display text-sm font-semibold text-muted-foreground -ml-1.5">
-          {tenant?.slug || ""}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <TokolinkLogo size={20} showWordmark />
+          <span className="font-display text-sm font-semibold text-muted-foreground">
+            {tenant?.slug || ""}
+          </span>
+        </div>
         {orderCount > 0 && (
           <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-foreground">
             {orderCount > 99 ? "99+" : orderCount}

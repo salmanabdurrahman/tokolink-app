@@ -32,3 +32,7 @@ export function formatWhatsAppNumber(value: string) {
   if (digits.startsWith("8")) return `62${digits}`;
   return digits;
 }
+
+export function isValidWhatsAppNumber(formattedPhone: string) {
+  return /^62\d{9,15}$/.test(formattedPhone);
+}

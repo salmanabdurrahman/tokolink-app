@@ -1,12 +1,5 @@
-import { motion } from "framer-motion";
 import { getPublicHostname } from "@/lib/site-url";
-
-const fadeUp = {
-  initial: { y: 24, opacity: 0 },
-  whileInView: { y: 0, opacity: 1 },
-  viewport: { once: true, margin: "-80px" },
-  transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
-};
+import { FadeUp } from "@/components/motion/fade-up";
 
 export function HowItWorks() {
   const publicHostname = getPublicHostname();
@@ -14,14 +7,14 @@ export function HowItWorks() {
   return (
     <section id="how" className="px-6 py-32 relative overflow-hidden">
       <div className="mx-auto max-w-6xl">
-        <motion.div {...fadeUp} className="max-w-2xl">
+        <FadeUp className="max-w-2xl">
           <span className="text-xs uppercase tracking-widest text-muted-foreground">
             03 — Cara kerja
           </span>
           <h2 className="font-display mt-3 text-5xl font-medium tracking-tight sm:text-6xl text-balance">
             Tiga langkah. <em className="font-light">Tidak lebih.</em>
           </h2>
-        </motion.div>
+        </FadeUp>
 
         <div className="mt-16 grid grid-cols-1 gap-12 md:grid-cols-3">
           {[
@@ -41,7 +34,7 @@ export function HowItWorks() {
               copy: "Sebar link di bio, terima pesanan WhatsApp otomatis.",
             },
           ].map((s, i) => (
-            <motion.div key={s.step} {...fadeUp} transition={{ duration: 0.7, delay: i * 0.1 }}>
+            <FadeUp key={s.step} delay={i * 0.1}>
               <div className="flex items-center gap-3">
                 <span className="font-display text-6xl font-light tracking-tighter text-foreground/20">
                   {s.step}
@@ -50,7 +43,7 @@ export function HowItWorks() {
               </div>
               <h3 className="font-display mt-6 text-2xl font-medium">{s.title}</h3>
               <p className="mt-2 text-sm text-muted-foreground">{s.copy}</p>
-            </motion.div>
+            </FadeUp>
           ))}
         </div>
       </div>

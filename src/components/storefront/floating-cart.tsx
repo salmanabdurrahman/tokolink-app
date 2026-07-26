@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { useCart, buildWhatsAppUrl } from "@/lib/store";
-import { formatIDR, formatWhatsAppNumber } from "@/lib/utils";
+import { formatIDR, formatWhatsAppNumber, isValidWhatsAppNumber } from "@/lib/utils";
 import { FallbackImage } from "@/components/fallback-image";
 import { toast } from "sonner";
 import { Sheet } from "@/components/ui/sheet";
@@ -70,7 +70,7 @@ export function FloatingCart({
   if (totalQty === 0) return null;
 
   const formattedPhone = formatWhatsAppNumber(phone);
-  const hasWhatsApp = /^62\d{9,15}$/.test(formattedPhone);
+  const hasWhatsApp = isValidWhatsAppNumber(formattedPhone);
 
   const checkoutWhatsApp = () => {
     if (!hasWhatsApp) {
@@ -193,7 +193,7 @@ export function FloatingCart({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
         onClick={() => setOpen(true)}
-        className="fixed bottom-4 left-1/2 z-40 flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center justify-between rounded-full bg-foreground p-2 pl-5 text-background shadow-[0_20px_50px_-15px_rgba(0,0,0,0.4)] hover:scale-[1.01] transition duration-200 cursor-pointer"
+        className="fixed bottom-4 left-1/2 z-40 flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center justify-between rounded-full bg-foreground p-2 pl-5 text-background shadow-2xl hover:scale-[1.01] transition duration-200 cursor-pointer"
       >
         <span className="text-sm">
           <span className="font-medium">{totalQty} item</span>
