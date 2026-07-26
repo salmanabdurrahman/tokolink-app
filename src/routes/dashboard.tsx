@@ -9,6 +9,10 @@ import { getDashboardData } from "@/server/tenant.functions";
 import { getPublicUrl } from "@/lib/site-url";
 
 export const Route = createFileRoute("/dashboard")({
+  // Dashboard identity (tenant + badge counts) rarely changes between quick
+  // in-app navigations; avoid refetching on every route change within this
+  // window. Mirrors the auth user cache TTL in `user-cache.server.ts`.
+  staleTime: 15_000,
   loader: async () => {
     try {
       return await getDashboardData({});

@@ -11,6 +11,7 @@ import {
 } from "../lib/supabase-jwt.server";
 import { enforceAuthRateLimit, hashOtp, logAuthAbuse, normalizeEmail } from "./auth-abuse";
 import { recordMetric } from "../lib/metrics.server";
+import { getCachedUserBySupabaseId, invalidateCachedUser } from "./user-cache.server";
 
 type ServerFnRequestContext = { request?: Request };
 type ServerFnDataContext<TData> = ServerFnRequestContext & { data: TData };
@@ -48,11 +49,7 @@ export const getSessionUser = createServerFn({ method: "GET" }).handler(async (c
 
     if (!supabaseId) return null;
 
-    const user = await prisma.user.findUnique({
-      where: { supabaseId },
-      include: { tenant: true },
-    });
-    return user;
+    return await getCachedUserBySupabaseId(supabaseId);
   } catch (e) {
     console.error("Error fetching session user:", e);
     return null;
@@ -83,33 +80,68 @@ export const syncSession = createServerFn({ method: "POST" })
       data?.name || supaUser.user_metadata?.name || supaUser.user_metadata?.full_name || null;
     const avatarUrl = data?.avatarUrl || supaUser.user_metadata?.avatar_url || null;
     const provider = supaUser.app_metadata.provider || "email";
+    const email = normalizeEmail(supaUser.email!);
+    const emailVerified = provider !== "email" ? new Date() : null;
 
     if (provider === "email" && !supaUser.email_confirmed_at) {
       throw new Error("Email belum diverifikasi.");
     }
 
-    const user = await prisma.user.upsert({
+    const existing = await prisma.user.findUnique({
       where: { supabaseId: supaUser.id },
-      create: {
-        supabaseId: supaUser.id,
-        email: normalizeEmail(supaUser.email!),
-        name,
-        avatarUrl,
-        provider,
-        emailVerified: provider !== "email" ? new Date() : null,
-      },
-      update: {
-        email: normalizeEmail(supaUser.email!),
+      include: { tenant: true },
+    });
+
+    if (!existing) {
+      try {
+        const user = await prisma.user.create({
+          data: {
+            supabaseId: supaUser.id,
+            email,
+            name,
+            avatarUrl,
+            provider,
+            emailVerified,
+          },
+          include: { tenant: true },
+        });
+        return user;
+      } catch {
+        // Race: another request created this user concurrently (e.g. multi-tab
+        // sign-in). Fall through to read-then-update using the row that won.
+        const created = await prisma.user.findUnique({
+          where: { supabaseId: supaUser.id },
+          include: { tenant: true },
+        });
+        if (!created) throw new Error("Tidak terautentikasi: Sesi tidak valid");
+        return created;
+      }
+    }
+
+    const changed =
+      existing.email !== email ||
+      existing.name !== name ||
+      existing.avatarUrl !== avatarUrl ||
+      existing.provider !== provider ||
+      (emailVerified !== null && existing.emailVerified === null);
+
+    if (!changed) {
+      return existing;
+    }
+
+    const user = await prisma.user.update({
+      where: { supabaseId: supaUser.id },
+      data: {
+        email,
         name: name || undefined,
         avatarUrl: avatarUrl || undefined,
         provider,
-        emailVerified: provider !== "email" ? new Date() : undefined,
+        emailVerified: emailVerified !== null ? emailVerified : existing.emailVerified,
       },
-      include: {
-        tenant: true,
-      },
+      include: { tenant: true },
     });
 
+    invalidateCachedUser(supaUser.id);
     return user;
   });
 

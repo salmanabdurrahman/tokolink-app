@@ -4,8 +4,8 @@ import {
   canVerifySupabaseAccessTokenLocally,
   verifySupabaseAccessTokenLocally,
 } from "../lib/supabase-jwt.server";
-import { prisma } from "../db";
 import { parseCookie } from "../lib/cookies";
+import { getCachedUserBySupabaseId } from "./user-cache.server";
 
 async function resolveSupabaseUserId(token: string): Promise<string> {
   if (canVerifySupabaseAccessTokenLocally()) {
@@ -42,10 +42,7 @@ export const authMiddleware = createMiddleware().server(async ({ next, request }
 
   const supabaseId = await resolveSupabaseUserId(token);
 
-  const user = await prisma.user.findUnique({
-    where: { supabaseId },
-    include: { tenant: true },
-  });
+  const user = await getCachedUserBySupabaseId(supabaseId);
 
   if (!user) {
     throw new Error("Tidak terautentikasi: Pengguna tidak ditemukan");

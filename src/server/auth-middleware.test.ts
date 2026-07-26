@@ -26,6 +26,7 @@ import {
   verifySupabaseAccessTokenLocally,
 } from "../lib/supabase-jwt.server";
 import { authMiddleware } from "./auth-middleware";
+import { __clearUserCacheForTests } from "./user-cache.server";
 
 const prismaAny = prisma as any;
 const authMiddlewareHandler = authMiddleware as any;
@@ -37,6 +38,7 @@ beforeEach(() => {
   vi.mocked(supabaseAdmin.auth.getUser).mockReset();
   vi.mocked(canVerifySupabaseAccessTokenLocally).mockReset().mockReturnValue(false);
   vi.mocked(verifySupabaseAccessTokenLocally).mockReset();
+  __clearUserCacheForTests();
 });
 
 afterEach(() => {
@@ -123,5 +125,18 @@ describe("authMiddleware", () => {
       authMiddlewareHandler({ request: requestWithCookie("sb-access-token=good"), next: vi.fn() }),
     ).rejects.toThrow("Tidak terautentikasi: Konfigurasi sesi tidak lengkap");
     expect(supabaseAdmin.auth.getUser).not.toHaveBeenCalled();
+  });
+
+  it("reuses cached user across calls within TTL, skipping a second Prisma query", async () => {
+    const user = { id: "user-1", supabaseId: "supa-1", tenant: { id: "tenant-1" } };
+    const next = vi.fn(async ({ context }) => context);
+    vi.mocked(canVerifySupabaseAccessTokenLocally).mockReturnValue(true);
+    vi.mocked(verifySupabaseAccessTokenLocally).mockResolvedValue({ supabaseId: "supa-1" });
+    vi.mocked(prismaAny.user.findUnique).mockResolvedValue(user);
+
+    await authMiddlewareHandler({ request: requestWithCookie("sb-access-token=good"), next });
+    await authMiddlewareHandler({ request: requestWithCookie("sb-access-token=good"), next });
+
+    expect(prisma.user.findUnique).toHaveBeenCalledTimes(1);
   });
 });

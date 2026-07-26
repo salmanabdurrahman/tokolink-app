@@ -14,6 +14,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { getMyTenantProducts } from "@/server/tenant.functions";
 
 export const Route = createFileRoute("/dashboard/products")({
+  staleTime: 15_000,
   loader: async () => {
     try {
       return { tenant: await getMyTenantProducts({}) };

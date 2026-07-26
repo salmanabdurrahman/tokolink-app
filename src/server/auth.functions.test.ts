@@ -60,6 +60,7 @@ import {
   resendSignUpCode,
   verifySignUpCode,
 } from "./auth.functions";
+import { __clearUserCacheForTests } from "./user-cache.server";
 
 const prismaAny = prisma as any;
 const getSessionUserHandler = getSessionUser as any;
@@ -94,6 +95,7 @@ beforeEach(() => {
   vi.mocked(verifySupabaseAccessTokenLocally).mockReset();
   vi.mocked(supabaseAdmin.auth.getUser).mockReset();
   vi.mocked(sendVerificationEmail).mockReset();
+  __clearUserCacheForTests();
 });
 
 afterEach(() => {
@@ -428,7 +430,7 @@ describe("syncSession", () => {
     ).rejects.toThrow("Email belum diverifikasi.");
   });
 
-  it("upserts user from Supabase session for email provider", async () => {
+  it("creates user when not found (create-if-missing) for email provider", async () => {
     vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValue({
       data: {
         user: {
@@ -441,8 +443,45 @@ describe("syncSession", () => {
       },
       error: null,
     });
-    vi.mocked(prismaAny.user.upsert).mockResolvedValue({
+    vi.mocked(prismaAny.user.findUnique).mockResolvedValue(null);
+    vi.mocked(prismaAny.user.create).mockResolvedValue({
       ...mockUser,
+      name: "Owner",
+      tenant: null,
+    });
+
+    const result = await syncSessionHandler({
+      data: {},
+      request: makeRequest("sb-access-token=good"),
+    });
+
+    expect(result).toMatchObject({ email, name: "Owner" });
+    expect(prisma.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ email, supabaseId: "supa-1" }),
+      }),
+    );
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it("does not write when nothing changed (read-first, no-op update)", async () => {
+    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValue({
+      data: {
+        user: {
+          id: "supa-1",
+          email,
+          email_confirmed_at: new Date().toISOString(),
+          app_metadata: { provider: "email" },
+          user_metadata: { name: "Owner" },
+        },
+      },
+      error: null,
+    });
+    vi.mocked(prismaAny.user.findUnique).mockResolvedValue({
+      ...mockUser,
+      name: "Owner",
+      avatarUrl: null,
+      provider: "email",
       emailVerified: new Date(),
       tenant: null,
     });
@@ -453,16 +492,52 @@ describe("syncSession", () => {
     });
 
     expect(result).toMatchObject({ email, name: "Owner" });
-    expect(prisma.user.upsert).toHaveBeenCalledWith(
+    expect(prisma.user.create).not.toHaveBeenCalled();
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it("updates only when metadata actually changed", async () => {
+    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValue({
+      data: {
+        user: {
+          id: "supa-1",
+          email,
+          email_confirmed_at: new Date().toISOString(),
+          app_metadata: { provider: "email" },
+          user_metadata: { name: "New Name" },
+        },
+      },
+      error: null,
+    });
+    vi.mocked(prismaAny.user.findUnique).mockResolvedValue({
+      ...mockUser,
+      name: "Owner",
+      avatarUrl: null,
+      provider: "email",
+      emailVerified: new Date(),
+      tenant: null,
+    });
+    vi.mocked(prismaAny.user.update).mockResolvedValue({
+      ...mockUser,
+      name: "New Name",
+      tenant: null,
+    });
+
+    const result = await syncSessionHandler({
+      data: {},
+      request: makeRequest("sb-access-token=good"),
+    });
+
+    expect(result).toMatchObject({ email, name: "New Name" });
+    expect(prisma.user.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { supabaseId: "supa-1" },
-        create: expect.objectContaining({ email, supabaseId: "supa-1" }),
-        update: expect.objectContaining({ email }),
+        data: expect.objectContaining({ name: "New Name" }),
       }),
     );
   });
 
-  it("sets emailVerified immediately for OAuth provider", async () => {
+  it("sets emailVerified immediately for OAuth provider on create", async () => {
     vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValue({
       data: {
         user: {
@@ -475,10 +550,11 @@ describe("syncSession", () => {
       },
       error: null,
     });
-    vi.mocked(prismaAny.user.upsert).mockResolvedValue({
+    vi.mocked(prismaAny.user.findUnique).mockResolvedValue(null);
+    vi.mocked(prismaAny.user.create).mockResolvedValue({
       ...mockUser,
       supabaseId: "supa-2",
-      emailVerified: expect.any(Date),
+      emailVerified: new Date(),
       tenant: null,
     });
 
@@ -487,13 +563,42 @@ describe("syncSession", () => {
       request: makeRequest("sb-access-token=oauth"),
     });
 
-    expect(prisma.user.upsert).toHaveBeenCalledWith(
+    expect(prisma.user.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        create: expect.objectContaining({
+        data: expect.objectContaining({
           emailVerified: expect.any(Date),
           provider: "google",
         }),
       }),
     );
+  });
+
+  it("recovers from a concurrent create race (duplicate signup, multi-tab)", async () => {
+    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValue({
+      data: {
+        user: {
+          id: "supa-1",
+          email,
+          email_confirmed_at: new Date().toISOString(),
+          app_metadata: { provider: "email" },
+          user_metadata: { name: "Owner" },
+        },
+      },
+      error: null,
+    });
+    vi.mocked(prismaAny.user.findUnique)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ ...mockUser, name: "Owner", tenant: null });
+    vi.mocked(prismaAny.user.create).mockRejectedValue(
+      Object.assign(new Error("Unique constraint failed"), { code: "P2002" }),
+    );
+
+    const result = await syncSessionHandler({
+      data: {},
+      request: makeRequest("sb-access-token=good"),
+    });
+
+    expect(result).toMatchObject({ email, name: "Owner" });
+    expect(prisma.user.findUnique).toHaveBeenCalledTimes(2);
   });
 });

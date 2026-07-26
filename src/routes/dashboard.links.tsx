@@ -11,6 +11,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/dashboard/links")({
+  staleTime: 15_000,
   loader: async () => {
     try {
       return { tenant: await getMyTenantLinks({}) };

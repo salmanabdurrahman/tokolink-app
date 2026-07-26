@@ -14,6 +14,7 @@ import {
   withEmptyCatalog,
 } from "./catalog.queries.server";
 import { requireTenant } from "./tenant-context.server";
+import { invalidateCachedUser } from "./user-cache.server";
 import { z } from "zod";
 
 export const getTenant = createServerFn({ method: "GET" })
@@ -137,6 +138,7 @@ export const createTenant = createServerFn({ method: "POST" })
     });
 
     clearStorefrontCatalogCache(tenant.slug);
+    invalidateCachedUser(context.user.supabaseId);
     await logAuthAbuse({ event: "onboarding", userId, request, outcome: "success" });
 
     return tenant;
@@ -165,6 +167,7 @@ export const updateTenant = createServerFn({ method: "POST" })
 
     clearStorefrontCatalogCache(context.tenant?.slug);
     clearStorefrontCatalogCache(tenant.slug);
+    invalidateCachedUser(context.user.supabaseId);
 
     if (data.avatar !== undefined && data.avatar !== oldAvatar) {
       await deleteTenantMediaByUrl(tenantId, oldAvatar);

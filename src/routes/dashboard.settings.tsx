@@ -14,6 +14,7 @@ import { formatWhatsAppNumber } from "@/lib/utils";
 import { getMyTenantSettings } from "@/server/tenant.functions";
 
 export const Route = createFileRoute("/dashboard/settings")({
+  staleTime: 15_000,
   loader: async () => {
     try {
       return { tenant: await getMyTenantSettings({}) };
