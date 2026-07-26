@@ -83,12 +83,12 @@ describe("shipping functions", () => {
   it("requires tenant origin before quoting shipping", async () => {
     mockTenant({ rajaOngkirOriginId: null });
 
-    await expect(handler({ data: input })).rejects.toThrow("Toko belum mengatur origin pengiriman");
+    await expect(handler(input)).rejects.toThrow("Toko belum mengatur origin pengiriman");
     expect(calculateDomesticCost).not.toHaveBeenCalled();
   });
 
   it("uses tenant allowed couriers and calculated weight", async () => {
-    await expect(handler({ data: input })).resolves.toMatchObject({
+    await expect(handler(input)).resolves.toMatchObject({
       weightGram: 1000,
       options: [{ courier: "jne", service: "REG" }],
     });
@@ -104,7 +104,7 @@ describe("shipping functions", () => {
   it("falls back to default couriers when tenant has none", async () => {
     mockTenant({ allowedCouriers: [] });
 
-    await handler({ data: input });
+    await handler(input);
 
     expect(calculateDomesticCost).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -116,7 +116,7 @@ describe("shipping functions", () => {
   it("rejects unavailable route with user-facing error", async () => {
     vi.mocked(calculateDomesticCost).mockResolvedValueOnce([]);
 
-    await expect(handler({ data: input })).rejects.toThrow(
+    await expect(handler(input)).rejects.toThrow(
       "Layanan pengiriman untuk rute ini belum tersedia",
     );
   });
@@ -124,20 +124,20 @@ describe("shipping functions", () => {
   it("propagates provider error", async () => {
     vi.mocked(calculateDomesticCost).mockRejectedValueOnce(new Error("RajaOngkir timeout"));
 
-    await expect(handler({ data: input })).rejects.toThrow("RajaOngkir timeout");
+    await expect(handler(input)).rejects.toThrow("RajaOngkir timeout");
   });
 
   it("throws when tenant is not found", async () => {
     vi.mocked(prismaAny.tenant.findUnique).mockResolvedValue(null);
 
-    await expect(handler({ data: input })).rejects.toThrow("Toko tidak ditemukan");
+    await expect(handler(input)).rejects.toThrow("Toko tidak ditemukan");
     expect(calculateDomesticCost).not.toHaveBeenCalled();
   });
 
   it("throws when some products from cart are not found in tenant catalog", async () => {
     mockTenant({ products: [{ id: input.items[0].productId, weightGram: 250 }] });
 
-    await expect(handler({ data: input })).rejects.toThrow("Sebagian produk tidak ditemukan");
+    await expect(handler(input)).rejects.toThrow("Sebagian produk tidak ditemukan");
     expect(calculateDomesticCost).not.toHaveBeenCalled();
   });
 });
@@ -163,7 +163,7 @@ describe("searchRajaOngkirDestinations", () => {
     ];
     vi.mocked(searchDomesticDestination).mockResolvedValue(destinations);
 
-    const result = await searchHandler({ data: { search: "menteng", limit: 5 } });
+    const result = await searchHandler({ search: "menteng", limit: 5 });
 
     expect(result).toEqual(destinations);
     expect(searchDomesticDestination).toHaveBeenCalledWith("menteng", 5);
@@ -183,8 +183,8 @@ describe("searchRajaOngkirDestinations", () => {
     ];
     vi.mocked(searchDomesticDestination).mockResolvedValue(destinations);
 
-    await searchHandler({ data: { search: "cache-key", limit: 5 } });
-    await searchHandler({ data: { search: "cache-key", limit: 5 } });
+    await searchHandler({ search: "cache-key", limit: 5 });
+    await searchHandler({ search: "cache-key", limit: 5 });
 
     expect(searchDomesticDestination).toHaveBeenCalledTimes(1);
   });
@@ -199,10 +199,10 @@ describe("RajaOngkir cascading location lookups", () => {
   it("lists and caches provinces", async () => {
     vi.mocked(listProvinces).mockResolvedValue([{ id: "6", name: "JAWA BARAT", zipCode: "" }]);
 
-    await expect((getRajaOngkirProvinces as any)({})).resolves.toEqual([
+    await expect((getRajaOngkirProvinces as any)()).resolves.toEqual([
       { id: "6", name: "JAWA BARAT", zipCode: "" },
     ]);
-    await (getRajaOngkirProvinces as any)({});
+    await (getRajaOngkirProvinces as any)();
 
     expect(listProvinces).toHaveBeenCalledTimes(1);
   });
@@ -210,10 +210,10 @@ describe("RajaOngkir cascading location lookups", () => {
   it("lists cities scoped by province id and caches per parent", async () => {
     vi.mocked(listCities).mockResolvedValue([{ id: "23", name: "KARAWANG", zipCode: "" }]);
 
-    await expect((getRajaOngkirCities as any)({ data: { parentId: "6" } })).resolves.toEqual([
+    await expect((getRajaOngkirCities as any)({ parentId: "6" })).resolves.toEqual([
       { id: "23", name: "KARAWANG", zipCode: "" },
     ]);
-    await (getRajaOngkirCities as any)({ data: { parentId: "6" } });
+    await (getRajaOngkirCities as any)({ parentId: "6" });
 
     expect(listCities).toHaveBeenCalledTimes(1);
     expect(listCities).toHaveBeenCalledWith("6");
@@ -224,7 +224,7 @@ describe("RajaOngkir cascading location lookups", () => {
       { id: "575", name: "KARAWANG TIMUR", zipCode: "" },
     ]);
 
-    await expect((getRajaOngkirDistricts as any)({ data: { parentId: "23" } })).resolves.toEqual([
+    await expect((getRajaOngkirDistricts as any)({ parentId: "23" })).resolves.toEqual([
       { id: "575", name: "KARAWANG TIMUR", zipCode: "" },
     ]);
     expect(listDistricts).toHaveBeenCalledWith("23");
@@ -235,9 +235,9 @@ describe("RajaOngkir cascading location lookups", () => {
       { id: "37965", name: "KARAWANG WETAN", zipCode: "41314" },
     ]);
 
-    await expect(
-      (getRajaOngkirSubdistricts as any)({ data: { parentId: "575" } }),
-    ).resolves.toEqual([{ id: "37965", name: "KARAWANG WETAN", zipCode: "41314" }]);
+    await expect((getRajaOngkirSubdistricts as any)({ parentId: "575" })).resolves.toEqual([
+      { id: "37965", name: "KARAWANG WETAN", zipCode: "41314" },
+    ]);
     expect(listSubdistricts).toHaveBeenCalledWith("575");
   });
 
@@ -246,8 +246,8 @@ describe("RajaOngkir cascading location lookups", () => {
       .mockResolvedValueOnce([{ id: "23", name: "KARAWANG", zipCode: "" }])
       .mockResolvedValueOnce([{ id: "24", name: "BEKASI", zipCode: "" }]);
 
-    await (getRajaOngkirCities as any)({ data: { parentId: "6" } });
-    await (getRajaOngkirCities as any)({ data: { parentId: "7" } });
+    await (getRajaOngkirCities as any)({ parentId: "6" });
+    await (getRajaOngkirCities as any)({ parentId: "7" });
 
     expect(listCities).toHaveBeenCalledTimes(2);
   });
@@ -270,9 +270,7 @@ describe("checkRajaOngkirWaybill", () => {
     };
     vi.mocked(trackWaybill).mockResolvedValue(waybillResult);
 
-    const result = await waybillHandler({
-      data: { courier: "jne", trackingNumber: "JNE123" },
-    });
+    const result = await waybillHandler({ courier: "jne", trackingNumber: "JNE123" });
 
     expect(result).toEqual(waybillResult);
     expect(trackWaybill).toHaveBeenCalledWith("jne", "JNE123");

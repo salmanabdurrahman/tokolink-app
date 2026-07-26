@@ -1,4 +1,3 @@
-import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import {
   calculateDomesticCost,
@@ -73,76 +72,66 @@ export function calculateShippingWeightGram(items: { weightGram?: number | null;
   return Math.max(1, total);
 }
 
-export const searchRajaOngkirDestinations = createServerFn({ method: "GET" })
-  .validator(destinationSearchSchema)
-  .handler(async ({ data }) => {
-    const cacheKey = `${data.search.toLowerCase()}:${data.limit}`;
-    const cached = destinationCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) return cached.data;
+export async function searchRajaOngkirDestinations(data: z.infer<typeof destinationSearchSchema>) {
+  const cacheKey = `${data.search.toLowerCase()}:${data.limit}`;
+  const cached = destinationCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.data;
 
-    const destinations = await searchDomesticDestination(data.search, data.limit);
-    destinationCache.set(cacheKey, { expiresAt: Date.now() + 5 * 60 * 1000, data: destinations });
-    return destinations;
+  const destinations = await searchDomesticDestination(data.search, data.limit);
+  destinationCache.set(cacheKey, { expiresAt: Date.now() + 5 * 60 * 1000, data: destinations });
+  return destinations;
+}
+
+export async function getRajaOngkirProvinces() {
+  return cachedLocations("province", () => listProvinces());
+}
+
+export async function getRajaOngkirCities(data: z.infer<typeof locationParentSchema>) {
+  return cachedLocations(`city:${data.parentId}`, () => listCities(data.parentId));
+}
+
+export async function getRajaOngkirDistricts(data: z.infer<typeof locationParentSchema>) {
+  return cachedLocations(`district:${data.parentId}`, () => listDistricts(data.parentId));
+}
+
+export async function getRajaOngkirSubdistricts(data: z.infer<typeof locationParentSchema>) {
+  return cachedLocations(`subdistrict:${data.parentId}`, () => listSubdistricts(data.parentId));
+}
+
+export async function getRajaOngkirShippingCosts(data: z.infer<typeof shippingCostSchema>) {
+  const tenant = await getShippingCatalogBySlug(
+    data.tenantSlug,
+    data.items.map((item) => item.productId),
+  );
+
+  if (!tenant) throw new Error("Toko tidak ditemukan");
+  if (!tenant.rajaOngkirOriginId) {
+    throw new Error("Toko belum mengatur origin pengiriman. Hubungi penjual.");
+  }
+  if (tenant.products.length !== new Set(data.items.map((item) => item.productId)).size) {
+    throw new Error("Sebagian produk tidak ditemukan");
+  }
+
+  const products = new Map(tenant.products.map((product) => [product.id, product]));
+  const weight = calculateShippingWeightGram(
+    data.items.map((item) => ({
+      weightGram: products.get(item.productId)?.weightGram,
+      qty: item.qty,
+    })),
+  );
+  const couriers = tenant.allowedCouriers.length ? tenant.allowedCouriers : [...DEFAULT_COURIERS];
+
+  const costs = await calculateDomesticCost({
+    origin: tenant.rajaOngkirOriginId,
+    destination: data.destinationId,
+    weight,
+    couriers,
   });
 
-export const getRajaOngkirProvinces = createServerFn({ method: "GET" }).handler(async () =>
-  cachedLocations("province", () => listProvinces()),
-);
+  if (!costs.length) throw new Error("Layanan pengiriman untuk rute ini belum tersedia");
+  return { weightGram: weight, options: costs };
+}
 
-export const getRajaOngkirCities = createServerFn({ method: "GET" })
-  .validator(locationParentSchema)
-  .handler(async ({ data }) =>
-    cachedLocations(`city:${data.parentId}`, () => listCities(data.parentId)),
-  );
-
-export const getRajaOngkirDistricts = createServerFn({ method: "GET" })
-  .validator(locationParentSchema)
-  .handler(async ({ data }) =>
-    cachedLocations(`district:${data.parentId}`, () => listDistricts(data.parentId)),
-  );
-
-export const getRajaOngkirSubdistricts = createServerFn({ method: "GET" })
-  .validator(locationParentSchema)
-  .handler(async ({ data }) =>
-    cachedLocations(`subdistrict:${data.parentId}`, () => listSubdistricts(data.parentId)),
-  );
-
-export const getRajaOngkirShippingCosts = createServerFn({ method: "POST" })
-  .validator(shippingCostSchema)
-  .handler(async ({ data }) => {
-    const tenant = await getShippingCatalogBySlug(
-      data.tenantSlug,
-      data.items.map((item) => item.productId),
-    );
-
-    if (!tenant) throw new Error("Toko tidak ditemukan");
-    if (!tenant.rajaOngkirOriginId) {
-      throw new Error("Toko belum mengatur origin pengiriman. Hubungi penjual.");
-    }
-    if (tenant.products.length !== new Set(data.items.map((item) => item.productId)).size) {
-      throw new Error("Sebagian produk tidak ditemukan");
-    }
-
-    const products = new Map(tenant.products.map((product) => [product.id, product]));
-    const weight = calculateShippingWeightGram(
-      data.items.map((item) => ({
-        weightGram: products.get(item.productId)?.weightGram,
-        qty: item.qty,
-      })),
-    );
-    const couriers = tenant.allowedCouriers.length ? tenant.allowedCouriers : [...DEFAULT_COURIERS];
-
-    const costs = await calculateDomesticCost({
-      origin: tenant.rajaOngkirOriginId,
-      destination: data.destinationId,
-      weight,
-      couriers,
-    });
-
-    if (!costs.length) throw new Error("Layanan pengiriman untuk rute ini belum tersedia");
-    return { weightGram: weight, options: costs };
-  });
-
-export const checkRajaOngkirWaybill = createServerFn({ method: "POST" })
-  .validator(waybillSchema)
-  .handler(async ({ data }) => trackWaybill(data.courier, data.trackingNumber));
+export async function checkRajaOngkirWaybill(data: z.infer<typeof waybillSchema>) {
+  return trackWaybill(data.courier, data.trackingNumber);
+}

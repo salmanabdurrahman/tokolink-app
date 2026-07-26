@@ -5,14 +5,20 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 vi.mock("../server/auth-abuse", () => ({ enforceAuthRateLimit: vi.fn() }));
 vi.mock("../server/checkout.server", () => ({ createCheckoutOrderData: vi.fn() }));
-vi.mock("../server/shipping.functions", () => ({
-  getRajaOngkirShippingCosts: vi.fn(),
-  searchRajaOngkirDestinations: vi.fn(),
-  getRajaOngkirProvinces: vi.fn(),
-  getRajaOngkirCities: vi.fn(),
-  getRajaOngkirDistricts: vi.fn(),
-  getRajaOngkirSubdistricts: vi.fn(),
-}));
+vi.mock("../server/shipping.functions", async () => {
+  const actual = await vi.importActual<typeof import("../server/shipping.functions")>(
+    "../server/shipping.functions",
+  );
+  return {
+    ...actual,
+    getRajaOngkirShippingCosts: vi.fn(),
+    searchRajaOngkirDestinations: vi.fn(),
+    getRajaOngkirProvinces: vi.fn(),
+    getRajaOngkirCities: vi.fn(),
+    getRajaOngkirDistricts: vi.fn(),
+    getRajaOngkirSubdistricts: vi.fn(),
+  };
+});
 vi.mock("../db", () => ({ prisma: { $queryRaw: vi.fn() } }));
 
 import { prisma } from "../db";
@@ -126,8 +132,9 @@ describe("API route contracts", () => {
   });
 
   it("api.shipping.costs rate limits and returns shipping JSON", async () => {
+    const items = [{ productId: "11111111-1111-4111-8111-111111111111", qty: 1 }];
     const response = await costsPost({
-      request: jsonRequest({ tenantSlug: "kopi-ibu", destinationId: "dest-1", items: [] }),
+      request: jsonRequest({ tenantSlug: "kopi-ibu", destinationId: "dest-1", items }),
     });
 
     expect(response.status).toBe(200);
@@ -137,7 +144,9 @@ describe("API route contracts", () => {
       request: expect.any(Request),
     });
     expect(getRajaOngkirShippingCosts).toHaveBeenCalledWith({
-      data: { tenantSlug: "kopi-ibu", destinationId: "dest-1", items: [] },
+      tenantSlug: "kopi-ibu",
+      destinationId: "dest-1",
+      items,
     });
   });
 
@@ -150,9 +159,7 @@ describe("API route contracts", () => {
       event: "shipping_destinations",
       request: expect.any(Request),
     });
-    expect(searchRajaOngkirDestinations).toHaveBeenCalledWith({
-      data: { search: "jak", limit: 5 },
-    });
+    expect(searchRajaOngkirDestinations).toHaveBeenCalledWith({ search: "jak", limit: 5 });
   });
 
   it("api.shipping.provinces rate limits and returns province list", async () => {
@@ -175,7 +182,7 @@ describe("API route contracts", () => {
 
     expect(response.status).toBe(200);
     await expect(json(response)).resolves.toEqual([{ id: "23", name: "KARAWANG", zipCode: "" }]);
-    expect(getRajaOngkirCities).toHaveBeenCalledWith({ data: { parentId: "6" } });
+    expect(getRajaOngkirCities).toHaveBeenCalledWith({ parentId: "6" });
   });
 
   it("api.shipping.districts rate limits and forwards cityId as parentId", async () => {
@@ -187,7 +194,7 @@ describe("API route contracts", () => {
     await expect(json(response)).resolves.toEqual([
       { id: "575", name: "KARAWANG TIMUR", zipCode: "" },
     ]);
-    expect(getRajaOngkirDistricts).toHaveBeenCalledWith({ data: { parentId: "23" } });
+    expect(getRajaOngkirDistricts).toHaveBeenCalledWith({ parentId: "23" });
   });
 
   it("api.shipping.subdistricts rate limits and forwards districtId as parentId", async () => {
@@ -199,7 +206,7 @@ describe("API route contracts", () => {
     await expect(json(response)).resolves.toEqual([
       { id: "37965", name: "KARAWANG WETAN", zipCode: "41314" },
     ]);
-    expect(getRajaOngkirSubdistricts).toHaveBeenCalledWith({ data: { parentId: "575" } });
+    expect(getRajaOngkirSubdistricts).toHaveBeenCalledWith({ parentId: "575" });
   });
 
   it("api.shipping.cities returns 400 message when the underlying lookup fails", async () => {

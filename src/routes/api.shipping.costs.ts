@@ -7,9 +7,10 @@ export const Route = createFileRoute("/api/shipping/costs")({
         try {
           const data = await request.json();
           const { enforceAuthRateLimit } = await import("../server/auth-abuse");
-          const { getRajaOngkirShippingCosts } = await import("../server/shipping.functions");
+          const { getRajaOngkirShippingCosts, shippingCostSchema } =
+            await import("../server/shipping.functions");
           await enforceAuthRateLimit({ event: "shipping_costs", request });
-          const result = await getRajaOngkirShippingCosts({ data });
+          const result = await getRajaOngkirShippingCosts(shippingCostSchema.parse(data));
           return Response.json(result);
         } catch (error) {
           return Response.json(

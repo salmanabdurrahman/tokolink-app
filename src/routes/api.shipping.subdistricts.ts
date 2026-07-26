@@ -7,9 +7,12 @@ export const Route = createFileRoute("/api/shipping/subdistricts")({
         try {
           const districtId = new URL(request.url).searchParams.get("districtId") || "";
           const { enforceAuthRateLimit } = await import("../server/auth-abuse");
-          const { getRajaOngkirSubdistricts } = await import("../server/shipping.functions");
+          const { getRajaOngkirSubdistricts, locationParentSchema } =
+            await import("../server/shipping.functions");
           await enforceAuthRateLimit({ event: "shipping_locations", request });
-          const result = await getRajaOngkirSubdistricts({ data: { parentId: districtId } });
+          const result = await getRajaOngkirSubdistricts(
+            locationParentSchema.parse({ parentId: districtId }),
+          );
           return Response.json(result);
         } catch (error) {
           return Response.json(

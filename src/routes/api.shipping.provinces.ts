@@ -8,7 +8,7 @@ export const Route = createFileRoute("/api/shipping/provinces")({
           const { enforceAuthRateLimit } = await import("../server/auth-abuse");
           const { getRajaOngkirProvinces } = await import("../server/shipping.functions");
           await enforceAuthRateLimit({ event: "shipping_locations", request });
-          const result = await getRajaOngkirProvinces({});
+          const result = await getRajaOngkirProvinces();
           return Response.json(result);
         } catch (error) {
           return Response.json(

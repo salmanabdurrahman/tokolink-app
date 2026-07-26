@@ -7,9 +7,10 @@ export const Route = createFileRoute("/api/shipping/destinations")({
         try {
           const data = await request.json();
           const { enforceAuthRateLimit } = await import("../server/auth-abuse");
-          const { searchRajaOngkirDestinations } = await import("../server/shipping.functions");
+          const { searchRajaOngkirDestinations, destinationSearchSchema } =
+            await import("../server/shipping.functions");
           await enforceAuthRateLimit({ event: "shipping_destinations", request });
-          const result = await searchRajaOngkirDestinations({ data });
+          const result = await searchRajaOngkirDestinations(destinationSearchSchema.parse(data));
           return Response.json(result);
         } catch (error) {
           return Response.json(
