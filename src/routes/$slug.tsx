@@ -67,14 +67,16 @@ function Storefront() {
   const [selecting, setSelecting] = useState<Product | null>(null);
   const [query, setQuery] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const storeUrl = getPublicUrl(`/${tenant.slug}`);
   const filteredProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return tenant.products;
-    return tenant.products.filter((product) =>
-      [product.name, product.description].join(" ").toLowerCase().includes(normalized),
-    );
-  }, [query, tenant.products]);
+    return tenant.products.filter((product) => {
+      if (activeCategoryId && product.categoryId !== activeCategoryId) return false;
+      if (!normalized) return true;
+      return [product.name, product.description].join(" ").toLowerCase().includes(normalized);
+    });
+  }, [activeCategoryId, query, tenant.products]);
 
   const copyStoreLink = async () => {
     trackEvent("storefront_share_click", { tenantSlug: tenant.slug });
@@ -135,6 +137,35 @@ function Storefront() {
               Share
             </Button>
           </div>
+          {tenant.categories.length > 0 && (
+            <div className="mt-3 flex gap-2 overflow-x-auto hide-scrollbar">
+              <button
+                type="button"
+                onClick={() => setActiveCategoryId(null)}
+                className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
+                  activeCategoryId === null
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border text-muted-foreground hover:border-foreground"
+                }`}
+              >
+                Semua
+              </button>
+              {tenant.categories.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => setActiveCategoryId(category.id)}
+                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
+                    activeCategoryId === category.id
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border text-muted-foreground hover:border-foreground"
+                  }`}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         {shareOpen && (
           <div className="mt-4 rounded-2xl border border-border bg-card p-4 text-center">
@@ -151,7 +182,7 @@ function Storefront() {
           <div className="mt-4 rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
             {tenant.products.length === 0
               ? "Belum ada produk di toko ini."
-              : "Produk tidak ditemukan. Coba kata kunci lain."}
+              : "Produk tidak ditemukan. Coba kata kunci atau kategori lain."}
           </div>
         ) : (
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">

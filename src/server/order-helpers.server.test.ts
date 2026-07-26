@@ -22,7 +22,7 @@ const baseOrder = {
   payment: { id: "payment-1", status: "PENDING" },
 };
 
-function makeTx(order = baseOrder, updateCount = 1) {
+function makeTx(order = baseOrder, updateCount = 1, items: unknown[] = []) {
   return {
     order: {
       findUnique: vi.fn().mockResolvedValue(order),
@@ -30,12 +30,16 @@ function makeTx(order = baseOrder, updateCount = 1) {
       findUniqueOrThrow: vi.fn().mockResolvedValue({
         ...order,
         status: "PAID",
-        items: [],
+        items,
         tenant: { user: { email: "tenant@example.com" } },
       }),
     },
     payment: { update: vi.fn() },
     ledgerEntry: { createMany: vi.fn() },
+    product: {
+      update: vi.fn().mockResolvedValue({}),
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
   };
 }
 
@@ -87,6 +91,43 @@ describe("markOrderPaid", () => {
 
     expect(tx.payment.update).not.toHaveBeenCalled();
     expect(tx.ledgerEntry.createMany).not.toHaveBeenCalled();
+  });
+
+  it("decrements stock only for tracked products and clamps at zero", async () => {
+    const tx = makeTx(baseOrder, 1, [
+      { productId: "p1", qty: 3, product: { trackStock: true, stock: 2 } },
+      { productId: "p2", qty: 1, product: { trackStock: false, stock: 10 } },
+      { productId: "p3", qty: 1, product: null },
+    ]);
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await expect(markOrderPaid("TL1", { ok: true }, "qris")).resolves.toMatchObject({
+      status: "PAID",
+    });
+
+    expect(tx.product.update).toHaveBeenCalledTimes(1);
+    expect(tx.product.update).toHaveBeenCalledWith({
+      where: { id: "p1" },
+      data: { stock: { decrement: 3 } },
+    });
+    expect(tx.product.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ["p1"] }, stock: { lt: 0 } },
+      data: { stock: 0 },
+    });
+  });
+
+  it("skips stock decrement entirely when no items track stock", async () => {
+    const tx = makeTx(baseOrder, 1, [
+      { productId: "p1", qty: 1, product: { trackStock: false, stock: null } },
+    ]);
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await expect(markOrderPaid("TL1", { ok: true }, "qris")).resolves.toMatchObject({
+      status: "PAID",
+    });
+
+    expect(tx.product.update).not.toHaveBeenCalled();
+    expect(tx.product.updateMany).not.toHaveBeenCalled();
   });
 
   it("does not fail order paid flow when notification emails fail (fire-and-forget)", async () => {

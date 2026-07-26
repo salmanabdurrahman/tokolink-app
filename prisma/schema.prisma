@@ -147,6 +147,7 @@ model Tenant {
   allowedCouriers       String[] @default(["jne", "jnt", "sicepat", "anteraja", "pos", "tiki", "ninja"]) @map("allowed_couriers")
 
   products           Product[]
+  categories         ProductCategory[]
   links              Link[]
   media              Media[]
   customers          Customer[]
@@ -167,18 +168,38 @@ model Product {
   image       String   @default("")
   weightGram  Int      @default(1) @map("weight_gram")
   sortOrder   Int      @default(0) @map("sort_order")
+  stock       Int?     @map("stock")
+  trackStock  Boolean  @default(false) @map("track_stock")
   tenantId    String   @map("tenant_id") @db.Uuid
+  categoryId  String?  @map("category_id") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   tenant        Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category      ProductCategory?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   variantGroups ProductVariantGroup[]
   media         Media[]
   orderItems    OrderItem[]
 
   @@index([tenantId, sortOrder])
   @@index([tenantId, createdAt])
+  @@index([categoryId])
   @@map("products")
+}
+
+model ProductCategory {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  sortOrder Int      @default(0) @map("sort_order")
+  tenantId  String   @map("tenant_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@index([tenantId, sortOrder])
+  @@map("product_categories")
 }
 
 model Media {

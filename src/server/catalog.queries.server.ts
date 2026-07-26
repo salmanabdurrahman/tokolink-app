@@ -76,6 +76,7 @@ export const linksOrderBy = { sortOrder: "asc" } as const;
 export const productsOrderBy = { sortOrder: "asc" } as const;
 export const variantGroupsOrderBy = { sortOrder: "asc" } as const;
 export const variantOptionsOrderBy = { sortOrder: "asc" } as const;
+export const categoriesOrderBy = { sortOrder: "asc" } as const;
 
 export const productVariantInclude = {
   variantGroups: {
@@ -101,9 +102,16 @@ export const tenantLinkInclude = {
   },
 } as const;
 
+export const tenantCategoryInclude = {
+  categories: {
+    orderBy: categoriesOrderBy,
+  },
+} as const;
+
 export const tenantCatalogInclude = {
   ...tenantLinkInclude,
   ...tenantProductInclude,
+  ...tenantCategoryInclude,
 } as const;
 
 export const checkoutProductsInclude = {
@@ -117,7 +125,7 @@ export const checkoutProductsInclude = {
 } as const;
 
 export function withEmptyCatalog<T extends object>(tenant: T | null) {
-  return tenant ? { ...tenant, links: [], products: [] } : null;
+  return tenant ? { ...tenant, links: [], products: [], categories: [] } : null;
 }
 
 function loadStorefrontCatalogBySlug(slug: string) {

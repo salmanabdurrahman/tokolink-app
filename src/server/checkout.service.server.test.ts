@@ -100,6 +100,50 @@ describe("validateCheckoutTenant", () => {
   it("passes for a valid tenant/input pair", () => {
     expect(() => validateCheckoutTenant(makeTenant(), makeCheckoutInput())).not.toThrow();
   });
+
+  it("throws when requested qty exceeds tracked stock", () => {
+    const tenant = makeTenant({
+      products: [
+        {
+          id: productId,
+          name: "Kopi Susu",
+          image: "",
+          basePrice: 10000,
+          weightGram: 500,
+          trackStock: true,
+          stock: 1,
+          variantGroups: [
+            { name: "Ukuran", options: [{ id: optionId, name: "Large", priceDelta: 2000 }] },
+          ],
+        },
+      ],
+    });
+
+    expect(() => validateCheckoutTenant(tenant, makeCheckoutInput())).toThrow(
+      'Stok "Kopi Susu" tidak cukup. Sisa stok: 1',
+    );
+  });
+
+  it("allows checkout when product does not track stock", () => {
+    const tenant = makeTenant({
+      products: [
+        {
+          id: productId,
+          name: "Kopi Susu",
+          image: "",
+          basePrice: 10000,
+          weightGram: 500,
+          trackStock: false,
+          stock: null,
+          variantGroups: [
+            { name: "Ukuran", options: [{ id: optionId, name: "Large", priceDelta: 2000 }] },
+          ],
+        },
+      ],
+    });
+
+    expect(() => validateCheckoutTenant(tenant, makeCheckoutInput())).not.toThrow();
+  });
 });
 
 describe("buildCheckoutOrderItems", () => {

@@ -49,4 +49,19 @@ describe("VariantSheet", () => {
     ]);
     expect(onClose).toHaveBeenCalled();
   });
+
+  it("disables add to cart and shows sold out state when stock is tracked and depleted", () => {
+    const onClose = vi.fn();
+    const soldOutProduct = { ...product, trackStock: true, stock: 0 };
+    render(<VariantSheet product={soldOutProduct} onClose={onClose} />);
+
+    expect(screen.getAllByText("Stok habis").length).toBeGreaterThan(0);
+    const button = screen.getByRole("button", { name: "Stok habis" });
+    expect(button).toBeDisabled();
+
+    fireEvent.click(button);
+
+    expect(useCart.getState().items).toEqual([]);
+    expect(onClose).not.toHaveBeenCalled();
+  });
 });

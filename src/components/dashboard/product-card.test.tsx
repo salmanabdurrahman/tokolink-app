@@ -66,4 +66,20 @@ describe("ProductCard (dashboard)", () => {
 
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
+
+  it("shows sold out badge and stock count when stock is tracked and depleted", () => {
+    const soldOutProduct: Product = { ...product, trackStock: true, stock: 0 };
+    render(<ProductCard product={soldOutProduct} onEdit={vi.fn()} onDelete={vi.fn()} />);
+
+    expect(screen.getByText("Stok habis")).toBeInTheDocument();
+    expect(screen.getByText("Stok: 0")).toBeInTheDocument();
+  });
+
+  it("shows category name badge when categoryName is provided", () => {
+    render(
+      <ProductCard product={product} categoryName="Minuman" onEdit={vi.fn()} onDelete={vi.fn()} />,
+    );
+
+    expect(screen.getByText("Minuman")).toBeInTheDocument();
+  });
 });

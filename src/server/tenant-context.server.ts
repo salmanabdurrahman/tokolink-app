@@ -17,12 +17,13 @@ type TenantScopedModel = {
   findFirst(args: Record<string, unknown>): Promise<unknown>;
 };
 
-type TenantScopedModelName = "product" | "link" | "order";
+type TenantScopedModelName = "product" | "link" | "order" | "productCategory";
 
 const ownershipMessages: Record<TenantScopedModelName, string> = {
   product: "Produk tidak ditemukan atau bukan milik toko Anda",
   link: "Tautan tidak ditemukan atau bukan milik toko Anda",
   order: "Order tidak ditemukan",
+  productCategory: "Kategori tidak ditemukan atau bukan milik toko Anda",
 };
 
 export async function requireOwnedRecord(

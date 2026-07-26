@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { LinkItem, Product, Tenant } from "./types";
+import type { LinkItem, Product, ProductCategory, Tenant } from "./types";
 
 type TenantState = {
   tenant: Tenant | null;
@@ -13,6 +13,10 @@ type TenantState = {
   updateProduct: (id: string, p: Partial<Product>) => Promise<void>;
   removeProduct: (id: string) => Promise<void>;
   reorderProducts: (ids: string[]) => Promise<void>;
+  addCategory: (c: Omit<ProductCategory, "id">) => Promise<void>;
+  updateCategory: (id: string, c: Partial<ProductCategory>) => Promise<void>;
+  removeCategory: (id: string) => Promise<void>;
+  reorderCategories: (ids: string[]) => Promise<void>;
 };
 
 export const useTenant = create<TenantState>((set) => ({
@@ -167,6 +171,80 @@ export const useTenant = create<TenantState>((set) => ({
     try {
       const { reorderProducts } = await import("../server/product.functions");
       await reorderProducts({ data: ids });
+    } catch (error) {
+      set({ tenant: previous });
+      throw error;
+    }
+  },
+  addCategory: async (c) => {
+    const { addCategory } = await import("../server/category.functions");
+    const newCategory = await addCategory({ data: c });
+    set((s) =>
+      s.tenant
+        ? { tenant: { ...s.tenant, categories: [...s.tenant.categories, newCategory] } }
+        : {},
+    );
+  },
+  updateCategory: async (id, c) => {
+    const previous = useTenant.getState().tenant;
+    set((s) =>
+      s.tenant
+        ? {
+            tenant: {
+              ...s.tenant,
+              categories: s.tenant.categories.map((x) => (x.id === id ? { ...x, ...c } : x)),
+            },
+          }
+        : {},
+    );
+    try {
+      const { updateCategory } = await import("../server/category.functions");
+      const updated = await updateCategory({ data: { id, data: c } });
+      set((s) =>
+        s.tenant
+          ? {
+              tenant: {
+                ...s.tenant,
+                categories: s.tenant.categories.map((x) => (x.id === id ? updated : x)),
+              },
+            }
+          : {},
+      );
+    } catch (error) {
+      set({ tenant: previous });
+      throw error;
+    }
+  },
+  removeCategory: async (id) => {
+    const previous = useTenant.getState().tenant;
+    set((s) =>
+      s.tenant
+        ? { tenant: { ...s.tenant, categories: s.tenant.categories.filter((x) => x.id !== id) } }
+        : {},
+    );
+    try {
+      const { deleteCategory } = await import("../server/category.functions");
+      await deleteCategory({ data: id });
+    } catch (error) {
+      set({ tenant: previous });
+      throw error;
+    }
+  },
+  reorderCategories: async (ids) => {
+    const previous = useTenant.getState().tenant;
+    set((s) => {
+      if (!s.tenant) return {};
+      const byId = new Map(s.tenant.categories.map((category) => [category.id, category]));
+      const categories = ids.reduce<ProductCategory[]>((result, id, index) => {
+        const category = byId.get(id);
+        if (category) result.push({ ...category, sortOrder: index });
+        return result;
+      }, []);
+      return { tenant: { ...s.tenant, categories } };
+    });
+    try {
+      const { reorderCategories } = await import("../server/category.functions");
+      await reorderCategories({ data: ids });
     } catch (error) {
       set({ tenant: previous });
       throw error;

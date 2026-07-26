@@ -9,6 +9,7 @@ import {
   getStorefrontCatalogBySlug,
   tenantCatalogIdentitySelect,
   tenantCatalogInclude,
+  tenantCategoryInclude,
   tenantDashboardShellSelect,
   tenantIdentitySelect,
   tenantLinkInclude,
@@ -77,6 +78,7 @@ export const getMyTenantProducts = createServerFn({ method: "GET" })
         select: {
           ...tenantCatalogIdentitySelect,
           ...tenantProductInclude,
+          ...tenantCategoryInclude,
         },
       });
 
@@ -97,7 +99,7 @@ export const getMyTenantLinks = createServerFn({ method: "GET" })
         },
       });
 
-      return tenant ? { ...tenant, products: [] } : null;
+      return tenant ? { ...tenant, products: [], categories: [] } : null;
     }),
   );
 

@@ -20,6 +20,7 @@ async function main() {
   await prisma.productVariantOption.deleteMany();
   await prisma.productVariantGroup.deleteMany();
   await prisma.product.deleteMany();
+  await prisma.productCategory.deleteMany();
   await prisma.tenant.deleteMany();
   await prisma.user.deleteMany();
 
@@ -56,6 +57,19 @@ async function main() {
     },
   });
   console.log("🏪 Created demo tenant:", tenant.name);
+
+  const [categoryBeans, categoryMerch, categoryReadyToDrink] = await Promise.all([
+    prisma.productCategory.create({
+      data: { name: "Biji & Bubuk Kopi", sortOrder: 0, tenantId: tenant.id },
+    }),
+    prisma.productCategory.create({
+      data: { name: "Merchandise", sortOrder: 1, tenantId: tenant.id },
+    }),
+    prisma.productCategory.create({
+      data: { name: "Minuman Siap Minum", sortOrder: 2, tenantId: tenant.id },
+    }),
+  ]);
+  console.log("🗂️  Created demo product categories.");
 
   await prisma.link.createMany({
     data: [
@@ -95,7 +109,10 @@ async function main() {
       image: "https://images.unsplash.com/photo-1559525839-d9acfd4ed4cf?w=800&q=80",
       weightGram: 200,
       sortOrder: 0,
+      stock: 12,
+      trackStock: true,
       tenantId: tenant.id,
+      categoryId: categoryBeans.id,
       variantGroups: {
         create: [
           {
@@ -134,6 +151,7 @@ async function main() {
       weightGram: 250,
       sortOrder: 1,
       tenantId: tenant.id,
+      categoryId: categoryBeans.id,
       variantGroups: {
         create: [
           {
@@ -160,6 +178,7 @@ async function main() {
       weightGram: 350,
       sortOrder: 2,
       tenantId: tenant.id,
+      categoryId: categoryMerch.id,
       variantGroups: {
         create: [
           {
@@ -195,11 +214,16 @@ async function main() {
       image: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=800&q=80",
       weightGram: 300,
       sortOrder: 3,
+      stock: 0,
+      trackStock: true,
       tenantId: tenant.id,
+      categoryId: categoryReadyToDrink.id,
     },
   });
 
-  console.log("☕ Seeded products with variants.");
+  console.log(
+    "☕ Seeded products with variants (Arabika Gayo: 12 stok, Cold Brew Bottle: stok habis).",
+  );
 
   const customer = await prisma.customer.create({
     data: {

@@ -56,6 +56,7 @@ const tenant: Tenant = {
       sortOrder: 1,
     },
   ],
+  categories: [],
 };
 
 const resetTenant = () => {

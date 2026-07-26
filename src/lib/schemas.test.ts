@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  createCategorySchema,
   createLinkSchema,
   createProductSchema,
   createTenantSchema,
@@ -52,6 +53,25 @@ describe("schemas", () => {
     expectInvalid({ name: "Kopi", basePrice: -1 }, createProductSchema);
     expectInvalid({ name: "Ukuran", options: [] }, productVariantGroupSchema);
     expectInvalid({ name: "Large", priceDelta: -1 }, productVariantOptionSchema);
+  });
+
+  it("validates product stock/category payloads", () => {
+    expectValid(
+      { name: "Kopi", basePrice: 15000, trackStock: true, stock: 10 },
+      createProductSchema,
+    );
+    expectValid({ name: "Kopi", basePrice: 15000, trackStock: false }, createProductSchema);
+    expectInvalid(
+      { name: "Kopi", basePrice: 15000, trackStock: true, stock: -1 },
+      createProductSchema,
+    );
+    expectInvalid(
+      { name: "Kopi", basePrice: 15000, trackStock: true, stock: null },
+      createProductSchema,
+    );
+    expectInvalid({ name: "Kopi", basePrice: 15000, trackStock: true }, createProductSchema);
+    expectValid({ name: "Minuman" }, createCategorySchema);
+    expectInvalid({ name: "" }, createCategorySchema);
   });
 
   it("validates link payloads", () => {

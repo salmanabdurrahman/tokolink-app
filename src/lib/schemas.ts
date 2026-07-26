@@ -49,15 +49,29 @@ export const productVariantGroupSchema = z.object({
   options: z.array(productVariantOptionSchema).min(1, "Harus ada minimal 1 opsi varian"),
 });
 
-export const createProductSchema = z.object({
+const productBaseSchema = z.object({
   name: z.string().min(1, "Nama produk harus diisi").max(100),
   description: z.string().max(500, "Deskripsi maksimal 500 karakter").default(""),
   basePrice: z.number().int().min(0, "Harga dasar tidak boleh negatif"),
   image: z.string().url("URL gambar tidak valid").or(z.literal("")).default(""),
   variantGroups: z.array(productVariantGroupSchema).optional().default([]),
+  trackStock: z.boolean().default(false),
+  stock: z.number().int().min(0, "Stok tidak boleh negatif").nullable().optional(),
+  categoryId: z.string().uuid().nullable().optional(),
 });
 
-export const updateProductSchema = createProductSchema.partial();
+export const createProductSchema = productBaseSchema.refine(
+  (data) => !data.trackStock || typeof data.stock === "number",
+  { message: "Isi jumlah stok atau matikan pelacakan stok", path: ["stock"] },
+);
+
+export const updateProductSchema = productBaseSchema.partial();
+
+export const createCategorySchema = z.object({
+  name: z.string().min(1, "Nama kategori harus diisi").max(50),
+});
+
+export const updateCategorySchema = createCategorySchema.partial();
 
 export const createLinkSchema = z.object({
   label: z.string().min(1, "Label harus diisi").max(50),

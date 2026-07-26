@@ -38,6 +38,7 @@ describe("catalog.queries.server", () => {
       slug: "toko",
       links: [],
       products: [],
+      categories: [],
     });
   });
 

@@ -12,6 +12,7 @@ const tenant: Tenant = {
   whatsapp: "6281234567890",
   links: [],
   products: [],
+  categories: [],
 };
 
 describe("useLoadedTenant", () => {

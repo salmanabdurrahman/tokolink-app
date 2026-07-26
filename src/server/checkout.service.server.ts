@@ -31,6 +31,25 @@ export function validateCheckoutTenant(
   if (tenant.products.length !== new Set(data.items.map((item) => item.productId)).size) {
     throw new Error("Sebagian produk tidak ditemukan");
   }
+
+  const requestedQtyByProduct = new Map<string, number>();
+  for (const item of data.items) {
+    requestedQtyByProduct.set(
+      item.productId,
+      (requestedQtyByProduct.get(item.productId) ?? 0) + item.qty,
+    );
+  }
+  for (const product of tenant.products) {
+    if (!product.trackStock || product.stock === null || product.stock === undefined) continue;
+    const requestedQty = requestedQtyByProduct.get(product.id) ?? 0;
+    if (requestedQty > product.stock) {
+      throw new Error(
+        product.stock <= 0
+          ? `Stok "${product.name}" habis`
+          : `Stok "${product.name}" tidak cukup. Sisa stok: ${product.stock}`,
+      );
+    }
+  }
 }
 
 export function buildCheckoutOrderItems(tenant: CheckoutTenant, data: CheckoutInput) {

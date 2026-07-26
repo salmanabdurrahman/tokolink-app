@@ -24,10 +24,12 @@ Tokolink is a TanStack Start app with React routes, Server Functions, Prisma/Pos
 Core ownership:
 
 - `User` owns optional `Tenant`.
-- `Tenant` owns products, links, media, customers, orders, ledger entries, and withdrawal requests.
+- `Tenant` owns products, product categories, links, media, customers, orders, ledger entries, and withdrawal requests.
 - Tenant-owned writes must be scoped by `tenantId` from auth context.
-- Shared tenant helpers live in `src/server/tenant-context.server.ts`: `requireTenant(context)` for protected tenant context and `requireOwnedRecord(...)` for product/link/order ownership checks.
+- Shared tenant helpers live in `src/server/tenant-context.server.ts`: `requireTenant(context)` for protected tenant context and `requireOwnedRecord(...)` for product/link/order/product-category ownership checks.
 - Catalog/read query shapes live in `src/server/catalog.queries.server.ts` so route loaders and server services share include/select/order rules.
+- `Product.trackStock`/`Product.stock` are optional, opt-in per product: `stock` is `null` and untracked (always available) unless `trackStock` is enabled. Stock is checked at checkout time, decremented only on the `pending_payment -> paid` transition (`markOrderPaid` in `src/server/order-helpers.server.ts`), and clamped at 0. Stock is tracked per product only, not per variant option/combination.
+- `ProductCategory` groups products for storefront navigation; `Product.categoryId` is optional and set to `null` (not cascaded) when its category is deleted.
 
 Commerce flow:
 

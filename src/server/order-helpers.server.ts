@@ -7,6 +7,34 @@ function toPrismaJson(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value ?? null)) as Prisma.InputJsonValue;
 }
 
+type PaidOrderItem = {
+  productId: string | null;
+  qty: number;
+  product?: { trackStock: boolean; stock: number | null } | null;
+};
+
+// Decrement stock only for products opted into tracking; only ever called once
+// per order, inside the same tx as the PENDING_PAYMENT -> PAID transition, so
+// concurrent webhook retries never double-decrement (guarded by the caller's
+// updateMany count check). Clamps at 0 defensively against cross-order races
+// the checkout-time stock guard cannot fully prevent.
+async function decrementTrackedProductStock(tx: Prisma.TransactionClient, items: PaidOrderItem[]) {
+  const trackedProductIds: string[] = [];
+  for (const item of items) {
+    if (!item.productId || !item.product?.trackStock || item.product.stock === null) continue;
+    trackedProductIds.push(item.productId);
+    await tx.product.update({
+      where: { id: item.productId },
+      data: { stock: { decrement: item.qty } },
+    });
+  }
+  if (trackedProductIds.length === 0) return;
+  await tx.product.updateMany({
+    where: { id: { in: trackedProductIds }, stock: { lt: 0 } },
+    data: { stock: 0 },
+  });
+}
+
 export async function markOrderPaid(orderNumber: string, rawPayload: unknown, method = "") {
   const availableAt = new Date(Date.now() + WITHDRAWAL_HOLD_DAYS * 24 * 60 * 60 * 1000);
 
@@ -54,10 +82,14 @@ export async function markOrderPaid(orderNumber: string, rawPayload: unknown, me
       ],
       skipDuplicates: true,
     });
-    return tx.order.findUniqueOrThrow({
+    const fullOrder = await tx.order.findUniqueOrThrow({
       where: { id: order.id },
-      include: { items: true, tenant: { include: { user: true } } },
+      include: { items: { include: { product: true } }, tenant: { include: { user: true } } },
     });
+
+    await decrementTrackedProductStock(tx, fullOrder.items);
+
+    return fullOrder;
   });
 
   // Fire-and-forget: webhook response must not block on Resend, otherwise
@@ -78,6 +110,10 @@ export async function markOrderPaid(orderNumber: string, rawPayload: unknown, me
   return paidOrder;
 }
 
+// No stock restore here: tracked stock is only ever decremented on the
+// PENDING_PAYMENT -> PAID transition in markOrderPaid, and this function only
+// cancels orders still in PENDING_PAYMENT (guarded below), so nothing was
+// decremented yet for the order being canceled.
 export async function markOrderCanceled(orderNumber: string, rawPayload: unknown) {
   return prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({ where: { orderNumber }, include: { payment: true } });

@@ -23,6 +23,10 @@ export const createProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const tenantId = requireTenant(context);
 
+    if (data.categoryId) {
+      await requireOwnedRecord(prisma, "productCategory", data.categoryId, tenantId);
+    }
+
     const maxProduct = await prisma.product.findFirst({
       where: { tenantId },
       orderBy: { sortOrder: "desc" },
@@ -36,6 +40,9 @@ export const createProduct = createServerFn({ method: "POST" })
         basePrice: data.basePrice,
         image: data.image || "",
         sortOrder: nextSortOrder,
+        trackStock: data.trackStock ?? false,
+        stock: data.trackStock ? (data.stock ?? null) : null,
+        categoryId: data.categoryId || null,
         tenantId,
         variantGroups: {
           create: data.variantGroups?.map((group, groupIdx) => ({
@@ -79,6 +86,10 @@ export const updateProduct = createServerFn({ method: "POST" })
       image: string;
     };
 
+    if (data.categoryId) {
+      await requireOwnedRecord(prisma, "productCategory", data.categoryId, tenantId);
+    }
+
     const shouldDeleteOldImage = data.image !== undefined && data.image !== existingProduct.image;
 
     const updatedProduct = await prisma.$transaction(async (tx) => {
@@ -95,6 +106,14 @@ export const updateProduct = createServerFn({ method: "POST" })
           description: data.description,
           basePrice: data.basePrice,
           image: data.image,
+          trackStock: data.trackStock,
+          stock:
+            data.trackStock === undefined
+              ? undefined
+              : data.trackStock
+                ? (data.stock ?? null)
+                : null,
+          categoryId: data.categoryId === undefined ? undefined : data.categoryId || null,
           variantGroups: data.variantGroups
             ? {
                 create: data.variantGroups.map((group, groupIdx) => ({

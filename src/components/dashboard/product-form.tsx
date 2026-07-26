@@ -1,26 +1,31 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
-import type { Product, ProductVariantGroup } from "@/lib/types";
+import type { Product, ProductCategory, ProductVariantGroup } from "@/lib/types";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { Select } from "@/components/ui/select";
 import { createProductSchema } from "@/lib/schemas";
 
 interface ProductFormProps {
   initial: Product | null;
+  categories?: ProductCategory[];
   onClose: () => void;
   onSubmit: (data: Omit<Product, "id">) => void | Promise<void>;
 }
 
-export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
+export function ProductForm({ initial, categories = [], onClose, onSubmit }: ProductFormProps) {
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [basePrice, setBasePrice] = useState(initial?.basePrice ?? 0);
   const [image, setImage] = useState(initial?.image ?? "");
+  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? "");
+  const [trackStock, setTrackStock] = useState(initial?.trackStock ?? false);
+  const [stock, setStock] = useState(initial?.stock ?? 0);
   const [variantGroups, setVariantGroups] = useState<ProductVariantGroup[]>(
     initial?.variantGroups ?? [],
   );
@@ -35,13 +40,26 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
         description: initial?.description ?? "",
         basePrice: initial?.basePrice ?? 0,
         image: initial?.image ?? "",
+        categoryId: initial?.categoryId ?? "",
+        trackStock: initial?.trackStock ?? false,
+        stock: initial?.stock ?? 0,
         variantGroups: initial?.variantGroups ?? [],
       }),
     [initial],
   );
   const currentSnapshot = useMemo(
-    () => JSON.stringify({ name, description, basePrice, image, variantGroups }),
-    [basePrice, description, image, name, variantGroups],
+    () =>
+      JSON.stringify({
+        name,
+        description,
+        basePrice,
+        image,
+        categoryId,
+        trackStock,
+        stock,
+        variantGroups,
+      }),
+    [basePrice, categoryId, description, image, name, stock, trackStock, variantGroups],
   );
   const isDirty = initialSnapshot !== currentSnapshot;
 
@@ -101,6 +119,9 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
                 basePrice: Number(basePrice),
                 image:
                   image || "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80",
+                categoryId: categoryId || null,
+                trackStock,
+                stock: trackStock ? Number(stock) : null,
                 variantGroups: variantGroups.length > 0 ? variantGroups : undefined,
               };
               const parsed = createProductSchema.safeParse(data);
@@ -150,6 +171,39 @@ export function ProductForm({ initial, onClose, onSubmit }: ProductFormProps) {
             <Field label="Gambar produk">
               <ImageUpload value={image} onChange={(url) => setImage(url)} />
             </Field>
+            <Field label="Kategori">
+              <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+                <option value="">Tanpa kategori</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <div className="space-y-3 rounded-xl border border-border p-4">
+              <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <input
+                  type="checkbox"
+                  checked={trackStock}
+                  onChange={(e) => setTrackStock(e.target.checked)}
+                  className="h-4 w-4 rounded border-border accent-foreground"
+                />
+                Lacak stok produk ini
+              </label>
+              {trackStock && (
+                <Field label="Jumlah stok">
+                  <Input
+                    type="number"
+                    min={0}
+                    value={stock}
+                    onChange={(e) => setStock(+e.target.value)}
+                    required
+                  />
+                  {errors.stock && <p className="mt-1 text-xs text-destructive">{errors.stock}</p>}
+                </Field>
+              )}
+            </div>
             <div className="space-y-4 pt-4 border-t border-border">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">

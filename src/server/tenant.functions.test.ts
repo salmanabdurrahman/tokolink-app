@@ -102,7 +102,7 @@ describe("getDashboardData", () => {
     vi.mocked(prismaAny.link.count).mockResolvedValue(3);
 
     await expect(getDashboardDataHandler({ context })).resolves.toEqual({
-      tenant: { ...mockTenant, links: [], products: [] },
+      tenant: { ...mockTenant, links: [], products: [], categories: [] },
       orderCount: 2,
       productCount: 4,
       linkCount: 3,
@@ -152,6 +152,7 @@ describe("getMyTenantSettings", () => {
       ...mockTenant,
       products: [],
       links: [],
+      categories: [],
     });
     expect(prisma.tenant.findUnique).toHaveBeenCalledWith({
       where: { userId: "user-1" },
@@ -197,6 +198,7 @@ describe("getMyTenantLinks", () => {
     await expect(getMyTenantLinksHandler({ context })).resolves.toEqual({
       ...mockTenant,
       products: [],
+      categories: [],
     });
 
     expect(prisma.tenant.findUnique).toHaveBeenCalledWith({
@@ -219,7 +221,7 @@ describe("getDashboardData without a resolved tenant", () => {
 
     await expect(getDashboardDataHandler({ context: { user: { id: "user-1" } } })).resolves.toEqual(
       {
-        tenant: { ...mockTenant, links: [], products: [] },
+        tenant: { ...mockTenant, links: [], products: [], categories: [] },
         orderCount: 0,
         productCount: 0,
         linkCount: 0,

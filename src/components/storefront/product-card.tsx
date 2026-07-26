@@ -5,6 +5,7 @@ import { useCart } from "@/lib/store";
 import type { Product } from "@/lib/types";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface ProductCardProps {
   product: Product;
@@ -15,8 +16,10 @@ interface ProductCardProps {
 export function ProductCard({ product, delay = 0, onSelect }: ProductCardProps) {
   const add = useCart((s) => s.add);
   const hasVariants = product.variantGroups && product.variantGroups.length > 0;
+  const isSoldOut = product.trackStock && (product.stock ?? 0) <= 0;
 
   const handleAdd = () => {
+    if (isSoldOut) return;
     if (hasVariants) {
       onSelect();
     } else {
@@ -47,14 +50,24 @@ export function ProductCard({ product, delay = 0, onSelect }: ProductCardProps) 
           fallbackText={product.name}
           className="h-full w-full object-cover"
         />
+        {isSoldOut && (
+          <Badge variant="destructive" className="absolute left-2 top-2 bg-background">
+            Stok habis
+          </Badge>
+        )}
       </div>
       <div className="p-3 flex-1 flex flex-col justify-between">
         <div>
           <div className="text-sm font-medium leading-snug">{product.name}</div>
           <div className="mt-1 text-xs text-muted-foreground">{formatIDR(product.basePrice)}</div>
         </div>
-        <Button onClick={handleAdd} size="sm" className="mt-3 w-full active:scale-[0.97]">
-          + Keranjang
+        <Button
+          onClick={handleAdd}
+          disabled={isSoldOut}
+          size="sm"
+          className="mt-3 w-full active:scale-[0.97]"
+        >
+          {isSoldOut ? "Stok habis" : "+ Keranjang"}
         </Button>
       </div>
     </motion.div>

@@ -18,6 +18,12 @@ export type ProductVariantGroup = {
   options: ProductVariantOption[];
 };
 
+export type ProductCategory = {
+  id: string;
+  name: string;
+  sortOrder?: number;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -27,6 +33,9 @@ export type Product = {
   weightGram?: number;
   sortOrder?: number;
   variantGroups?: ProductVariantGroup[];
+  stock?: number | null;
+  trackStock?: boolean;
+  categoryId?: string | null;
 };
 
 export type Tenant = {
@@ -48,6 +57,7 @@ export type Tenant = {
   whatsappTemplate?: string;
   links: LinkItem[];
   products: Product[];
+  categories: ProductCategory[];
 };
 
 export type CartItem = {

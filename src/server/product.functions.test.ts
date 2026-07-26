@@ -9,6 +9,7 @@ vi.mock("../db", () => ({
       delete: vi.fn(),
       create: vi.fn(),
     },
+    productCategory: { findFirst: vi.fn() },
     productVariantGroup: { deleteMany: vi.fn() },
     media: { findFirst: vi.fn(), delete: vi.fn() },
     $transaction: vi.fn(async (callbackOrQueries) => {
@@ -416,6 +417,59 @@ describe("createProduct", () => {
     const callData = vi.mocked(prisma.product.create).mock.calls[0][0];
     expect(callData).toMatchObject({
       data: { sortOrder: 0 },
+    });
+  });
+
+  it("rejects create when categoryId belongs to another tenant", async () => {
+    vi.mocked(prismaAny.productCategory.findFirst).mockResolvedValue(null);
+
+    await expect(
+      createProductHandler({
+        data: { name: "Kopi", basePrice: 15000, categoryId: otherId },
+        context: tenantContext,
+      }),
+    ).rejects.toThrow("Kategori tidak ditemukan atau bukan milik toko Anda");
+    expect(prisma.product.create).not.toHaveBeenCalled();
+  });
+
+  it("rejects update when categoryId belongs to another tenant", async () => {
+    vi.mocked(prismaAny.product.findFirst).mockResolvedValue({ id: otherId, tenantId: "tenant-1" });
+    vi.mocked(prismaAny.productCategory.findFirst).mockResolvedValue(null);
+
+    await expect(
+      updateProductHandler({
+        data: { id: otherId, data: { categoryId: otherId } },
+        context: tenantContext,
+      }),
+    ).rejects.toThrow("Kategori tidak ditemukan atau bukan milik toko Anda");
+    expect(prisma.product.update).not.toHaveBeenCalled();
+  });
+
+  it("creates product with stock tracking fields", async () => {
+    vi.mocked(prismaAny.product.findFirst).mockResolvedValue(null);
+    vi.mocked(prismaAny.productCategory.findFirst).mockResolvedValue({
+      id: otherId,
+      tenantId: "tenant-1",
+    });
+    vi.mocked(prismaAny.product.create).mockResolvedValue({
+      id: "new-prod",
+      name: "Kopi",
+      basePrice: 15000,
+      sortOrder: 0,
+      trackStock: true,
+      stock: 5,
+      categoryId: otherId,
+      variantGroups: [],
+    });
+
+    await createProductHandler({
+      data: { name: "Kopi", basePrice: 15000, trackStock: true, stock: 5, categoryId: otherId },
+      context: tenantContext,
+    });
+
+    const callData = vi.mocked(prisma.product.create).mock.calls[0][0];
+    expect(callData).toMatchObject({
+      data: { trackStock: true, stock: 5, categoryId: otherId },
     });
   });
 });

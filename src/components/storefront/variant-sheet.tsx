@@ -31,9 +31,10 @@ export function VariantSheet({ product, onClose }: VariantSheetProps) {
 
   const allSelected =
     product.variantGroups?.every((g) => selectedOptions[g.id ?? g.name] !== undefined) ?? true;
+  const isSoldOut = product.trackStock && (product.stock ?? 0) <= 0;
 
   const handleAdd = () => {
-    if (!allSelected) return;
+    if (!allSelected || isSoldOut) return;
     const selectedArray = Object.values(selectedOptions);
     const optionIds = selectedArray.map((o) => o.id ?? o.name).join(",");
     const optionNames = selectedArray.map((o) => o.name).join(", ");
@@ -63,6 +64,7 @@ export function VariantSheet({ product, onClose }: VariantSheetProps) {
         <div className="flex-1">
           <div className="font-display text-lg font-medium">{product.name}</div>
           <div className="mt-1 text-sm text-muted-foreground">{formatIDR(price)}</div>
+          {isSoldOut && <div className="mt-1 text-xs font-medium text-destructive">Stok habis</div>}
         </div>
       </div>
       <div className="mt-4 overflow-y-auto pr-1 space-y-5 flex-1 min-h-0 hide-scrollbar">
@@ -102,8 +104,12 @@ export function VariantSheet({ product, onClose }: VariantSheetProps) {
           );
         })}
       </div>
-      <Button onClick={handleAdd} disabled={!allSelected} className="mt-6 w-full shrink-0 py-3.5">
-        Tambah ke keranjang — {formatIDR(price)}
+      <Button
+        onClick={handleAdd}
+        disabled={!allSelected || isSoldOut}
+        className="mt-6 w-full shrink-0 py-3.5"
+      >
+        {isSoldOut ? "Stok habis" : `Tambah ke keranjang — ${formatIDR(price)}`}
       </Button>
     </Sheet>
   );

@@ -77,4 +77,19 @@ describe("ProductCard", () => {
     expect(useCart.getState().items).toEqual([]);
     expect(toast.success).not.toHaveBeenCalled();
   });
+
+  it("shows sold out badge and disables adding to cart when stock is tracked and depleted", () => {
+    const soldOutProduct: Product = { ...baseProduct, trackStock: true, stock: 0 };
+    const onSelect = vi.fn();
+    render(<ProductCard product={soldOutProduct} onSelect={onSelect} />);
+
+    expect(screen.getAllByText("Stok habis").length).toBeGreaterThan(0);
+    const button = screen.getByRole("button", { name: "Stok habis" });
+    expect(button).toBeDisabled();
+
+    fireEvent.click(button);
+
+    expect(useCart.getState().items).toEqual([]);
+    expect(onSelect).not.toHaveBeenCalled();
+  });
 });

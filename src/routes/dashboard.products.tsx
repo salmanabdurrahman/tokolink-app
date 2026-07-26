@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { ProductForm } from "@/components/dashboard/product-form";
 import { ProductCard } from "@/components/dashboard/product-card";
+import { CategoryManager } from "@/components/dashboard/category-manager";
 import { DeleteConfirmModal } from "@/components/dashboard/delete-confirm-modal";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -33,6 +34,10 @@ function ProductsPage() {
   const add = useTenant((s) => s.addProduct);
   const remove = useTenant((s) => s.removeProduct);
   const reorderProducts = useTenant((s) => s.reorderProducts);
+  const addCategory = useTenant((s) => s.addCategory);
+  const updateCategory = useTenant((s) => s.updateCategory);
+  const removeCategory = useTenant((s) => s.removeCategory);
+  const reorderCategories = useTenant((s) => s.reorderCategories);
   const [editing, setEditing] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
@@ -54,6 +59,8 @@ function ProductsPage() {
   }
 
   const products = tenant.products;
+  const categories = tenant.categories;
+  const categoryNameById = new Map(categories.map((category) => [category.id, category.name]));
 
   const moveProduct = async (targetId: string) => {
     if (!draggingId || draggingId === targetId) return;
@@ -85,6 +92,14 @@ function ProductsPage() {
   return (
     <div className="space-y-10 bg-background text-foreground animate-fade-in">
       <PageHeader label="Manajemen" title="Produk" action={headerAction} />
+
+      <CategoryManager
+        categories={categories}
+        onAdd={addCategory}
+        onRename={(id, name) => updateCategory(id, { name })}
+        onRemove={removeCategory}
+        onReorder={reorderCategories}
+      />
 
       {error && (
         <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
@@ -122,6 +137,7 @@ function ProductsPage() {
             >
               <ProductCard
                 product={p}
+                categoryName={p.categoryId ? categoryNameById.get(p.categoryId) : undefined}
                 onEdit={() => {
                   setEditing(p);
                   setShowForm(true);
@@ -137,6 +153,7 @@ function ProductsPage() {
         {showForm && (
           <ProductForm
             initial={editing}
+            categories={categories}
             onClose={() => setShowForm(false)}
             onSubmit={async (data) => {
               setError("");

@@ -3,6 +3,7 @@ import type {
   CartItem,
   LinkItem,
   Product,
+  ProductCategory,
   ProductVariantGroup,
   ProductVariantOption,
   Tenant,
@@ -80,6 +81,15 @@ export function makeLink(overrides: Partial<LinkItem> = {}): LinkItem {
   };
 }
 
+export function makeCategory(overrides: Partial<ProductCategory> = {}): ProductCategory {
+  return {
+    id: "99999999-9999-4999-8999-999999999999",
+    name: "Kategori Test",
+    sortOrder: 0,
+    ...overrides,
+  };
+}
+
 export function makeTenant(overrides: Partial<Tenant> = {}): Tenant {
   return {
     slug: "toko-test",
@@ -89,6 +99,7 @@ export function makeTenant(overrides: Partial<Tenant> = {}): Tenant {
     whatsapp: "6281234567890",
     links: [makeLink()],
     products: [makeProduct()],
+    categories: [],
     ...overrides,
   };
 }
