@@ -1,7 +1,11 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { FallbackImage } from "./fallback-image";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("FallbackImage", () => {
   it("renders the image when src is provided", () => {
@@ -50,6 +54,26 @@ describe("FallbackImage", () => {
 
     fireEvent.load(img);
 
+    expect(img.className).toContain("opacity-100");
+  });
+
+  it("treats an already-complete image with zero natural width as an error on mount", () => {
+    vi.spyOn(HTMLImageElement.prototype, "complete", "get").mockReturnValue(true);
+    vi.spyOn(HTMLImageElement.prototype, "naturalWidth", "get").mockReturnValue(0);
+
+    render(<FallbackImage src="https://cdn.example.com/broken.webp" alt="Kopi Susu" />);
+
+    expect(screen.queryByAltText("Kopi Susu")).not.toBeInTheDocument();
+    expect(screen.getByText("KS")).toBeInTheDocument();
+  });
+
+  it("marks an already-complete image as loaded on mount without waiting for the load event", () => {
+    vi.spyOn(HTMLImageElement.prototype, "complete", "get").mockReturnValue(true);
+    vi.spyOn(HTMLImageElement.prototype, "naturalWidth", "get").mockReturnValue(200);
+
+    render(<FallbackImage src="https://cdn.example.com/foto.webp" alt="Kopi Susu" />);
+
+    const img = screen.getByAltText("Kopi Susu");
     expect(img.className).toContain("opacity-100");
   });
 

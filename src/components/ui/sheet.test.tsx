@@ -129,6 +129,27 @@ describe("Sheet", () => {
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Aksi" }));
   });
 
+  it("keeps focus on the panel and prevents default when no element is focusable", () => {
+    render(
+      <Sheet open onClose={vi.fn()}>
+        <p>Isi panel</p>
+      </Sheet>,
+    );
+
+    const dialog = screen.getByRole("dialog");
+    const querySelectorAllSpy = vi
+      .spyOn(HTMLElement.prototype, "querySelectorAll")
+      .mockReturnValue([] as unknown as NodeListOf<HTMLElement>);
+    const focusSpy = vi.spyOn(dialog, "focus");
+
+    const event = fireEvent.keyDown(document, { key: "Tab", cancelable: true });
+
+    expect(event).toBe(false);
+    expect(focusSpy).toHaveBeenCalled();
+
+    querySelectorAllSpy.mockRestore();
+  });
+
   it("restores focus to the previously focused element on close", () => {
     const trigger = document.createElement("button");
     trigger.textContent = "Buka panel";

@@ -120,6 +120,28 @@ describe("ImageUpload", () => {
     expect(await screen.findByText("Gagal mengunggah gambar ke CDN")).toBeInTheDocument();
   });
 
+  it("opens the native file picker when the select-image button is clicked", () => {
+    const clickSpy = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(() => {});
+
+    render(<ImageUpload onChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Pilih gambar" }));
+
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+
+    clickSpy.mockRestore();
+  });
+
+  it("opens the native file picker when the replace-image button is clicked", () => {
+    const clickSpy = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(() => {});
+
+    render(<ImageUpload value="https://cdn.example.com/foto.webp" onChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Ganti gambar" }));
+
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+
+    clickSpy.mockRestore();
+  });
+
   it("toggles drag active styling on drag events", () => {
     const { container } = render(<ImageUpload onChange={vi.fn()} />);
     const dropzone = container.querySelector("div.relative") as HTMLElement;

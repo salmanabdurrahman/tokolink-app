@@ -236,6 +236,50 @@ describe("ProductForm", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it("updates the description field when edited", () => {
+    render(<ProductForm initial={null} onClose={vi.fn()} onSubmit={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText("Deskripsi"), {
+      target: { value: "Kopi susu gula aren dingin" },
+    });
+
+    expect(screen.getByLabelText("Deskripsi")).toHaveValue("Kopi susu gula aren dingin");
+  });
+
+  it("prevents the tab from closing when the form is dirty", () => {
+    render(<ProductForm initial={initialProduct} onClose={vi.fn()} onSubmit={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText("Nama"), { target: { value: "Kopi Susu Baru" } });
+
+    const event = fireEvent(window, new Event("beforeunload", { cancelable: true }));
+
+    expect(event).toBe(false);
+  });
+
+  it("does not prevent the tab from closing when the form is not dirty", () => {
+    render(<ProductForm initial={initialProduct} onClose={vi.fn()} onSubmit={vi.fn()} />);
+
+    const event = fireEvent(window, new Event("beforeunload", { cancelable: true }));
+
+    expect(event).toBe(true);
+  });
+
+  it("closes the confirmation modal without discarding changes when dismissed via Escape", () => {
+    const onClose = vi.fn();
+    render(<ProductForm initial={initialProduct} onClose={onClose} onSubmit={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText("Nama"), { target: { value: "Kopi Susu Baru" } });
+    fireEvent.click(screen.getByRole("button", { name: "Tutup form" }));
+
+    expect(screen.getByText("Tutup form?")).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(screen.queryByText("Tutup form?")).not.toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Nama")).toHaveValue("Kopi Susu Baru");
+  });
+
   it("closes a dirty form without saving when the confirmation is accepted", () => {
     const onClose = vi.fn();
     render(<ProductForm initial={initialProduct} onClose={onClose} onSubmit={vi.fn()} />);

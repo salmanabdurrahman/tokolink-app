@@ -90,4 +90,41 @@ describe("Modal", () => {
 
     expect(document.activeElement).toBe(closeButton);
   });
+
+  it("shift+tab from first focusable element wraps to last", () => {
+    render(
+      <Modal open onClose={vi.fn()}>
+        <button type="button">Aksi</button>
+      </Modal>,
+    );
+
+    const closeButton = screen.getByRole("button", { name: "Tutup modal" });
+    closeButton.focus();
+    expect(document.activeElement).toBe(closeButton);
+
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Aksi" }));
+  });
+
+  it("keeps focus on the dialog and prevents default when no element is focusable", () => {
+    render(
+      <Modal open onClose={vi.fn()}>
+        <p>Isi modal</p>
+      </Modal>,
+    );
+
+    const dialog = screen.getByRole("dialog");
+    const querySelectorAllSpy = vi
+      .spyOn(HTMLElement.prototype, "querySelectorAll")
+      .mockReturnValue([] as unknown as NodeListOf<HTMLElement>);
+    const focusSpy = vi.spyOn(dialog, "focus");
+
+    const event = fireEvent.keyDown(document, { key: "Tab", cancelable: true });
+
+    expect(event).toBe(false);
+    expect(focusSpy).toHaveBeenCalled();
+
+    querySelectorAllSpy.mockRestore();
+  });
 });
