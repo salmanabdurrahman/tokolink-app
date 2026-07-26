@@ -182,10 +182,20 @@ Create/apply a local migration when needed:
 bun run db:migrate
 ```
 
-Reload deterministic demo data after schema changes:
+Reload demo data after schema changes:
 
 ```bash
 bun run db:seed
+```
+
+Wipe all table data back to zero (keeps schema and migration history). Runs a
+dry-run by default; pass `--yes` to actually truncate. Use `db:reset-seed` to
+wipe then reseed in one step:
+
+```bash
+bun run db:reset-data        # dry-run preview
+bun run db:reset-data --yes  # truncate every table
+bun run db:reset-seed        # truncate + reseed demo data
 ```
 
 ### 5. Start development server
@@ -254,6 +264,8 @@ Never commit real `.env` files or production credentials.
 | `bun run db:migrate`        | Create/apply local Prisma migration                                                                              |
 | `bun run db:studio`         | Open Prisma Studio                                                                                               |
 | `bun run db:seed`           | Run database seed script                                                                                         |
+| `bun run db:reset-data`     | Wipe all table data (keeps schema/migrations); dry-run unless passed `--yes`                                     |
+| `bun run db:reset-seed`     | Wipe all table data then reseed demo data (`reset-db --yes` + `db:seed`)                                         |
 | `bun run media:migrate:r2`  | Dry-run legacy Blob media inventory for R2 migration                                                             |
 | `bun run db:pool-load-test` | Local concurrent-query load check against the Supabase pooler                                                    |
 | `bun run data:cleanup-auth` | Retention sweep: delete expired auth-rate-limit buckets, audit logs, verification codes, and old canceled orders |
