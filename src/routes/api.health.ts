@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { prisma } from "../db";
+import { logger } from "../lib/logger.server";
 
 const REQUIRED_ENV = [
   "DATABASE_URL",
@@ -27,11 +28,15 @@ export const Route = createFileRoute("/api/health")({
       GET: async () => {
         const missingEnv = REQUIRED_ENV.filter((key) => !process.env[key]);
         let db = "ok";
+        let dbLatencyMs: number | null = null;
 
+        const dbStart = performance.now();
         try {
           await prisma.$queryRaw`SELECT 1`;
-        } catch {
+          dbLatencyMs = Math.round(performance.now() - dbStart);
+        } catch (error) {
           db = "error";
+          logger.error("health.db.check_failed", { error });
         }
 
         const ok = db === "ok" && missingEnv.length === 0;
@@ -41,6 +46,7 @@ export const Route = createFileRoute("/api/health")({
             ok,
             checks: {
               db,
+              dbLatencyMs,
               env: missingEnv.length === 0 ? "ok" : "missing",
               storage:
                 process.env.R2_BUCKET && process.env.R2_PUBLIC_BASE_URL ? "configured" : "missing",

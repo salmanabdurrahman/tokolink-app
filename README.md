@@ -166,8 +166,10 @@ Schema updates add auth abuse, media metadata, commerce order/payment/ledger tab
 
 Database workflow:
 
-- `DATABASE_URL` is used by the runtime Prisma adapter. Use pooled URLs here when your provider requires pooling.
-- `DIRECT_URL` is used by Prisma CLI through `prisma.config.ts` for direct generate/migrate/push/seed workflows.
+- `DATABASE_URL` is used by the runtime Prisma adapter. Must be the Supabase transaction pooler URL (port `6543`, `pgbouncer=true`) so serverless invocations reuse a shared pooled connection budget instead of exhausting Postgres connections.
+- `DIRECT_URL` is used by Prisma CLI through `prisma.config.ts` for direct generate/migrate/push/seed workflows (port `5432`, no pgbouncer). Never point runtime app traffic at it.
+- `DATABASE_POOL_MAX` caps the Prisma pool size per app instance (default `3`); keep it small in serverless so concurrent warm instances don't overshoot the pooler's connection limit.
+- The Prisma client is a global singleton (`src/db.ts`) reused across invocations in every environment, including production, and `GET /api/health` reports `checks.dbLatencyMs` as a lightweight connection signal.
 - Use `bun run db:push` for disposable local prototyping.
 - Use `bun run db:migrate` when schema changes should be captured as a durable migration.
 - Use deploy-time Prisma migrate commands against `DIRECT_URL`; never run destructive reset against production.
@@ -194,35 +196,36 @@ Open `http://localhost:3000`.
 
 ## Environment Variables
 
-| Variable                      | Purpose                                                                              |
-| ----------------------------- | ------------------------------------------------------------------------------------ |
-| `DATABASE_URL`                | Runtime PostgreSQL connection URL                                                    |
-| `DIRECT_URL`                  | Direct PostgreSQL URL for Prisma CLI generate/migrate/push/seed workflows            |
-| `VITE_SUPABASE_URL`           | Public Supabase project URL for browser client                                       |
-| `VITE_SUPABASE_ANON_KEY`      | Public Supabase anon key for browser client                                          |
-| `SUPABASE_URL`                | Server-side Supabase project URL                                                     |
-| `SUPABASE_ANON_KEY`           | Server-side Supabase anon key                                                        |
-| `SUPABASE_SERVICE_ROLE_KEY`   | Server-side Supabase admin key; keep secret                                          |
-| `OTP_HASH_SECRET`             | Server-side HMAC secret for OTP hashes; keep secret                                  |
-| `BLOB_READ_WRITE_TOKEN`       | Legacy Vercel Blob token for rollback/migration only                                 |
-| `R2_ACCOUNT_ID`               | Cloudflare account ID for R2 S3-compatible endpoint                                  |
-| `R2_ACCESS_KEY_ID`            | R2 access key ID; keep secret                                                        |
-| `R2_SECRET_ACCESS_KEY`        | R2 secret access key; keep secret                                                    |
-| `R2_BUCKET`                   | R2 bucket name for public media uploads                                              |
-| `R2_PUBLIC_BASE_URL`          | Public R2 custom domain/base URL for uploaded media                                  |
-| `VITE_TURNSTILE_SITE_KEY`     | Public Cloudflare Turnstile site key                                                 |
-| `TURNSTILE_SECRET_KEY`        | Server-side Turnstile secret key; keep secret                                        |
-| `TURNSTILE_ALLOWED_HOSTNAMES` | Optional comma-separated Turnstile hostname allowlist                                |
-| `PAKASIR_PROJECT_SLUG`        | Pakasir project slug for checkout/payment URLs                                       |
-| `PAKASIR_API_KEY`             | Pakasir API key for server-side transaction checks; keep secret                      |
-| `PAKASIR_BASE_URL`            | Optional Pakasir base URL, defaults to `https://app.pakasir.com`                     |
-| `SITE_URL`                    | Server-side public app URL used for Pakasir redirect/webhook links                   |
-| `VITE_PUBLIC_SITE_URL`        | Browser-exposed public app URL for canonical links, OG, sitemap, email links         |
-| `VITE_SITE_URL`               | Legacy browser-exposed public app URL fallback                                       |
-| `RAJAONGKIR_API_KEY`          | RajaOngkir API key for server-side destination, cost, and waybill calls; keep secret |
-| `RAJAONGKIR_BASE_URL`         | Optional RajaOngkir base URL, defaults to `https://rajaongkir.komerce.id/api/v1`     |
-| `RESEND_API_KEY`              | Resend API key; keep secret                                                          |
-| `RESEND_SENDER_EMAIL`         | Verified sender identity for email delivery                                          |
+| Variable                      | Purpose                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                | Runtime PostgreSQL connection URL, Supabase pooler port 6543 with `pgbouncer=true`    |
+| `DIRECT_URL`                  | Direct PostgreSQL URL (port 5432) for Prisma CLI generate/migrate/push/seed workflows |
+| `DATABASE_POOL_MAX`           | Optional, max Prisma pool connections per instance (default `3`)                      |
+| `VITE_SUPABASE_URL`           | Public Supabase project URL for browser client                                        |
+| `VITE_SUPABASE_ANON_KEY`      | Public Supabase anon key for browser client                                           |
+| `SUPABASE_URL`                | Server-side Supabase project URL                                                      |
+| `SUPABASE_ANON_KEY`           | Server-side Supabase anon key                                                         |
+| `SUPABASE_SERVICE_ROLE_KEY`   | Server-side Supabase admin key; keep secret                                           |
+| `OTP_HASH_SECRET`             | Server-side HMAC secret for OTP hashes; keep secret                                   |
+| `BLOB_READ_WRITE_TOKEN`       | Legacy Vercel Blob token for rollback/migration only                                  |
+| `R2_ACCOUNT_ID`               | Cloudflare account ID for R2 S3-compatible endpoint                                   |
+| `R2_ACCESS_KEY_ID`            | R2 access key ID; keep secret                                                         |
+| `R2_SECRET_ACCESS_KEY`        | R2 secret access key; keep secret                                                     |
+| `R2_BUCKET`                   | R2 bucket name for public media uploads                                               |
+| `R2_PUBLIC_BASE_URL`          | Public R2 custom domain/base URL for uploaded media                                   |
+| `VITE_TURNSTILE_SITE_KEY`     | Public Cloudflare Turnstile site key                                                  |
+| `TURNSTILE_SECRET_KEY`        | Server-side Turnstile secret key; keep secret                                         |
+| `TURNSTILE_ALLOWED_HOSTNAMES` | Optional comma-separated Turnstile hostname allowlist                                 |
+| `PAKASIR_PROJECT_SLUG`        | Pakasir project slug for checkout/payment URLs                                        |
+| `PAKASIR_API_KEY`             | Pakasir API key for server-side transaction checks; keep secret                       |
+| `PAKASIR_BASE_URL`            | Optional Pakasir base URL, defaults to `https://app.pakasir.com`                      |
+| `SITE_URL`                    | Server-side public app URL used for Pakasir redirect/webhook links                    |
+| `VITE_PUBLIC_SITE_URL`        | Browser-exposed public app URL for canonical links, OG, sitemap, email links          |
+| `VITE_SITE_URL`               | Legacy browser-exposed public app URL fallback                                        |
+| `RAJAONGKIR_API_KEY`          | RajaOngkir API key for server-side destination, cost, and waybill calls; keep secret  |
+| `RAJAONGKIR_BASE_URL`         | Optional RajaOngkir base URL, defaults to `https://rajaongkir.komerce.id/api/v1`      |
+| `RESEND_API_KEY`              | Resend API key; keep secret                                                           |
+| `RESEND_SENDER_EMAIL`         | Verified sender identity for email delivery                                           |
 
 Never commit real `.env` files or production credentials.
 
