@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getPublicSiteUrlServer, getPublicUrlServer, getServerConfig } from "./config.server";
+import {
+  getPublicSiteUrlServer,
+  getPublicUrlServer,
+  getServerConfig,
+  isAiConfigured,
+} from "./config.server";
 
 describe("config.server", () => {
   afterEach(() => {
@@ -39,10 +44,20 @@ describe("config.server", () => {
   it("returns server config snapshot", () => {
     vi.stubEnv("SITE_URL", "https://tokolink.test/");
     vi.stubEnv("NODE_ENV", "test");
+    vi.stubEnv("OPENAI_API_KEY", "");
 
     expect(getServerConfig()).toEqual({
       nodeEnv: "test",
       publicSiteUrl: "https://tokolink.test",
+      aiConfigured: false,
     });
+  });
+
+  it("reports AI configured only when OPENAI_API_KEY is present", () => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+    expect(isAiConfigured()).toBe(false);
+
+    vi.stubEnv("OPENAI_API_KEY", "secret-key");
+    expect(isAiConfigured()).toBe(true);
   });
 });

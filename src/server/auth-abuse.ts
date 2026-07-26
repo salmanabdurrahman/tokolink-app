@@ -11,7 +11,9 @@ export type AuthAbuseEvent =
   | "shipping_costs"
   | "shipping_locations"
   | "payment_webhook_lookup"
-  | "analytics_event";
+  | "analytics_event"
+  | "ai_product_copy"
+  | "ai_sales_insight";
 export type AuthAbuseOutcome = "success" | "blocked" | "failed";
 
 const RATE_LIMITS: Record<AuthAbuseEvent, { limit: number; windowMs: number }> = {
@@ -31,6 +33,9 @@ const RATE_LIMITS: Record<AuthAbuseEvent, { limit: number; windowMs: number }> =
   // several times per real browsing session; ceiling only needs to catch
   // scripted abuse, not normal shopping behavior.
   analytics_event: { limit: 120, windowMs: 10 * 60 * 1000 },
+  // AI calls cost real tokens; keep ceilings tight per tenant/user.
+  ai_product_copy: { limit: 20, windowMs: 60 * 60 * 1000 },
+  ai_sales_insight: { limit: 10, windowMs: 60 * 60 * 1000 },
 };
 
 function sha256(value: string) {

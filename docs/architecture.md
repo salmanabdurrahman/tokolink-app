@@ -85,6 +85,7 @@ Examples:
 - Checkout: `src/routes/api.checkout.ts` → `createCheckout(...)` → checkout service helpers → Prisma + RajaOngkir + Pakasir.
 - Dashboard product/link/order writes: route UI → authenticated Server Function → tenant helper/ownership guard → Prisma.
 - Media upload: dashboard UI → `uploadImage` Server Function → upload validation → R2 storage adapter → Prisma media metadata.
+- AI draft generation: dashboard UI → authenticated Server Function (`src/server/ai.functions.ts`) → rate limit → `src/server/ai.server.ts` (OpenAI-compatible chat completion) → Zod-validated JSON output. Product copy sends only name/keyword/category; sales insight sends only aggregated tenant numbers (no customer PII). AI failures fall back to raw metrics or a clear error, never block the underlying mutation/read.
 
 ## Policy, config, labels, formatters
 

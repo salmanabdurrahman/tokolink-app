@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { prisma } from "../db";
 import { logger } from "../lib/logger.server";
+import { isAiConfigured } from "../lib/config.server";
 
 const REQUIRED_ENV = [
   "DATABASE_URL",
@@ -50,6 +51,8 @@ export const Route = createFileRoute("/api/health")({
               env: missingEnv.length === 0 ? "ok" : "missing",
               storage:
                 process.env.R2_BUCKET && process.env.R2_PUBLIC_BASE_URL ? "configured" : "missing",
+              // Optional feature: absence does not fail overall health `ok`.
+              ai: isAiConfigured() ? "configured" : "missing",
             },
             missingEnv,
           },

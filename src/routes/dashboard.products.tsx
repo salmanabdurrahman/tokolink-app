@@ -155,6 +155,10 @@ function ProductsPage() {
             initial={editing}
             categories={categories}
             onClose={() => setShowForm(false)}
+            onGenerateCopy={async (input) => {
+              const { generateProductCopy } = await import("@/server/ai.functions");
+              return generateProductCopy({ data: input });
+            }}
             onSubmit={async (data) => {
               setError("");
               try {

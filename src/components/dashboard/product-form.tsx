@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
+import { toast } from "sonner";
 import type { Product, ProductCategory, ProductVariantGroup } from "@/lib/types";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Field } from "@/components/ui/field";
@@ -9,16 +10,33 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { createProductSchema } from "@/lib/schemas";
+
+interface ProductCopyResult {
+  description: string;
+  variantSuggestions: string[];
+}
 
 interface ProductFormProps {
   initial: Product | null;
   categories?: ProductCategory[];
   onClose: () => void;
   onSubmit: (data: Omit<Product, "id">) => void | Promise<void>;
+  onGenerateCopy?: (input: {
+    name: string;
+    keywords: string;
+    categoryName: string;
+  }) => Promise<ProductCopyResult>;
 }
 
-export function ProductForm({ initial, categories = [], onClose, onSubmit }: ProductFormProps) {
+export function ProductForm({
+  initial,
+  categories = [],
+  onClose,
+  onSubmit,
+  onGenerateCopy,
+}: ProductFormProps) {
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [basePrice, setBasePrice] = useState(initial?.basePrice ?? 0);
@@ -32,6 +50,9 @@ export function ProductForm({ initial, categories = [], onClose, onSubmit }: Pro
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [aiKeywords, setAiKeywords] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiVariantSuggestions, setAiVariantSuggestions] = useState<string[]>([]);
 
   const initialSnapshot = useMemo(
     () =>
@@ -157,6 +178,54 @@ export function ProductForm({ initial, categories = [], onClose, onSubmit }: Pro
                 <p className="mt-1 text-xs text-destructive">{errors.description}</p>
               )}
             </Field>
+            {onGenerateCopy && (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    value={aiKeywords}
+                    onChange={(e) => setAiKeywords(e.target.value)}
+                    placeholder="Kata kunci untuk AI (opsional, pisah koma)"
+                    className="flex-1 text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={aiLoading || !name.trim()}
+                    onClick={async () => {
+                      setAiLoading(true);
+                      try {
+                        const categoryName =
+                          categories.find((category) => category.id === categoryId)?.name ?? "";
+                        const result = await onGenerateCopy({
+                          name,
+                          keywords: aiKeywords,
+                          categoryName,
+                        });
+                        setDescription(result.description);
+                        setAiVariantSuggestions(result.variantSuggestions);
+                        toast.success(
+                          "Draft deskripsi AI dibuat. Periksa dan sunting sebelum disimpan.",
+                        );
+                      } catch (err) {
+                        toast.error(
+                          err instanceof Error ? err.message : "Gagal membuat deskripsi AI",
+                        );
+                      } finally {
+                        setAiLoading(false);
+                      }
+                    }}
+                  >
+                    {aiLoading ? <Spinner size="sm" /> : "Buatkan deskripsi (AI)"}
+                  </Button>
+                </div>
+                {aiVariantSuggestions.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Saran varian dari AI: {aiVariantSuggestions.join(", ")}
+                  </p>
+                )}
+              </div>
+            )}
             <Field label="Harga dasar (Rp)">
               <Input
                 type="number"

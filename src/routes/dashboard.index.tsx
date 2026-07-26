@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout/page-header";
+import { SalesInsightCard } from "@/components/dashboard/sales-insight-card";
 import { getPublicHostname, getPublicUrl } from "@/lib/site-url";
 import { Route as DashboardRoute } from "./dashboard";
 
@@ -41,6 +42,8 @@ function Overview() {
           </div>
         ))}
       </div>
+
+      <SalesInsightCard />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Link

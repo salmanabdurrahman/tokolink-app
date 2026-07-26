@@ -55,6 +55,14 @@ Security controls are layered across middleware, Server Functions, validation, p
 - Tenant origin, buyer destination, allowed courier, selected service, calculated weight, and provider cost are validated before checkout.
 - Errors are mapped to user-safe Indonesian messages.
 
+## AI feature safety
+
+- `OPENAI_API_KEY` stays server-only; the feature degrades gracefully (button/insight fallback, no crash) when the key is absent.
+- AI product copy input is limited to product name, keywords, and category name only.
+- AI sales insight sends only aggregated tenant numbers (totals, counts, top product name); no customer name/email/WhatsApp/address is ever sent to the provider.
+- Provider responses are parsed and Zod-validated before use; invalid/malformed output is rejected with a user-safe Indonesian message instead of rendered as-is.
+- Rate limits (`enforceAuthRateLimit`) apply per user to bound cost and abuse, same pattern as other external providers.
+
 ## Ledger and withdrawal safety
 
 - Merchant balance is calculated from `LedgerEntry`, not a mutable balance column.

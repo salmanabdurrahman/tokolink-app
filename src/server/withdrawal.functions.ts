@@ -21,7 +21,11 @@ function getNow() {
   return new Date();
 }
 
-async function calculateAvailableBalance(tx: typeof prisma, tenantId: string, now = getNow()) {
+export async function calculateAvailableBalance(
+  tx: typeof prisma,
+  tenantId: string,
+  now = getNow(),
+) {
   const [availableLedger, pendingWithdrawal] = await Promise.all([
     tx.ledgerEntry.aggregate({
       where: {

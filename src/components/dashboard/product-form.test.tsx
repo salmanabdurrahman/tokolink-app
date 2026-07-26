@@ -276,6 +276,75 @@ describe("ProductForm", () => {
     expect(event).toBe(true);
   });
 
+  it("does not render the AI copy button when onGenerateCopy is not provided", () => {
+    render(<ProductForm initial={null} onClose={vi.fn()} onSubmit={vi.fn()} />);
+
+    expect(
+      screen.queryByRole("button", { name: "Buatkan deskripsi (AI)" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("disables the AI copy button until a product name is filled in", () => {
+    render(
+      <ProductForm initial={null} onClose={vi.fn()} onSubmit={vi.fn()} onGenerateCopy={vi.fn()} />,
+    );
+
+    expect(screen.getByRole("button", { name: "Buatkan deskripsi (AI)" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Nama"), { target: { value: "Kopi Arabika" } });
+    expect(screen.getByRole("button", { name: "Buatkan deskripsi (AI)" })).toBeEnabled();
+  });
+
+  it("fills description and shows variant suggestions from AI on success", async () => {
+    const onGenerateCopy = vi.fn().mockResolvedValue({
+      description: "Kopi arabika single origin, aroma kuat.",
+      variantSuggestions: ["250g", "500g"],
+    });
+    render(
+      <ProductForm
+        initial={null}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        onGenerateCopy={onGenerateCopy}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Nama"), { target: { value: "Kopi Arabika" } });
+    fireEvent.change(screen.getByPlaceholderText("Kata kunci untuk AI (opsional, pisah koma)"), {
+      target: { value: "gayo, single origin" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Buatkan deskripsi (AI)" }));
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Deskripsi")).toHaveValue(
+        "Kopi arabika single origin, aroma kuat.",
+      ),
+    );
+    expect(onGenerateCopy).toHaveBeenCalledWith({
+      name: "Kopi Arabika",
+      keywords: "gayo, single origin",
+      categoryName: "",
+    });
+    expect(await screen.findByText("Saran varian dari AI: 250g, 500g")).toBeInTheDocument();
+  });
+
+  it("shows an error toast and keeps the description unchanged when AI generation fails", async () => {
+    const onGenerateCopy = vi.fn().mockRejectedValue(new Error("AI terlalu lama merespons."));
+    render(
+      <ProductForm
+        initial={null}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        onGenerateCopy={onGenerateCopy}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Nama"), { target: { value: "Kopi Arabika" } });
+    fireEvent.click(screen.getByRole("button", { name: "Buatkan deskripsi (AI)" }));
+
+    await waitFor(() => expect(onGenerateCopy).toHaveBeenCalledTimes(1));
+    expect(screen.getByLabelText("Deskripsi")).toHaveValue("");
+  });
+
   it("closes the confirmation modal without discarding changes when dismissed via Escape", () => {
     const onClose = vi.fn();
     render(<ProductForm initial={initialProduct} onClose={onClose} onSubmit={vi.fn()} />);
