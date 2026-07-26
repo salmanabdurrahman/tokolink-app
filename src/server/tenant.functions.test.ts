@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../db", () => ({
   prisma: {
     tenant: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
-    order: { count: vi.fn() },
+    order: { count: vi.fn(), aggregate: vi.fn() },
     product: { count: vi.fn() },
     link: { count: vi.fn() },
+    ledgerEntry: { aggregate: vi.fn() },
     authRateLimit: { upsert: vi.fn() },
     authAuditLog: { create: vi.fn() },
     media: { findFirst: vi.fn(), delete: vi.fn() },
@@ -52,8 +53,12 @@ beforeEach(() => {
   vi.mocked(prismaAny.tenant.create).mockReset();
   vi.mocked(prismaAny.tenant.update).mockReset();
   vi.mocked(prismaAny.order.count).mockReset();
+  vi.mocked(prismaAny.order.aggregate).mockReset();
+  vi.mocked(prismaAny.order.aggregate).mockResolvedValue({ _sum: { subtotal: 0 } });
   vi.mocked(prismaAny.product.count).mockReset();
   vi.mocked(prismaAny.link.count).mockReset();
+  vi.mocked(prismaAny.ledgerEntry.aggregate).mockReset();
+  vi.mocked(prismaAny.ledgerEntry.aggregate).mockResolvedValue({ _sum: { amount: 0 } });
   vi.mocked(prismaAny.authRateLimit.upsert).mockReset();
   vi.mocked(prismaAny.authRateLimit.upsert).mockResolvedValue({ count: 1 });
   vi.mocked(prismaAny.authAuditLog.create).mockReset();
@@ -94,18 +99,32 @@ describe("getTenant", () => {
 });
 
 describe("getDashboardData", () => {
-  it("loads tenant summary and counts with one server function", async () => {
+  it("loads tenant summary, order/sales metrics, and saldo with one server function", async () => {
     const mockTenant = { slug: "toko-test", name: "Toko Test" };
     vi.mocked(prismaAny.tenant.findUnique).mockResolvedValue(mockTenant);
-    vi.mocked(prismaAny.order.count).mockResolvedValue(2);
+    vi.mocked(prismaAny.order.count)
+      .mockResolvedValueOnce(2) // PAID (perlu dikirim)
+      .mockResolvedValueOnce(5) // PENDING_PAYMENT
+      .mockResolvedValueOnce(1); // COMPLETED
+    vi.mocked(prismaAny.order.aggregate)
+      .mockResolvedValueOnce({ _sum: { subtotal: 150000 } }) // current period
+      .mockResolvedValueOnce({ _sum: { subtotal: 100000 } }); // previous period
     vi.mocked(prismaAny.product.count).mockResolvedValue(4);
     vi.mocked(prismaAny.link.count).mockResolvedValue(3);
+    vi.mocked(prismaAny.ledgerEntry.aggregate)
+      .mockResolvedValueOnce({ _sum: { amount: 80000 } })
+      .mockResolvedValueOnce({ _sum: { amount: 0 } });
 
     await expect(getDashboardDataHandler({ context })).resolves.toEqual({
       tenant: { ...mockTenant, links: [], products: [], categories: [] },
       orderCount: 2,
       productCount: 4,
       linkCount: 3,
+      pendingPaymentCount: 5,
+      completedOrderCount: 1,
+      salesTotal: 150000,
+      salesDeltaPercent: 50,
+      availableBalance: 80000,
     });
 
     expect(prisma.tenant.findUnique).toHaveBeenCalledWith({
@@ -119,8 +138,28 @@ describe("getDashboardData", () => {
     expect(prisma.order.count).toHaveBeenCalledWith({
       where: { tenantId: "tenant-1", status: "PAID" },
     });
+    expect(prisma.order.count).toHaveBeenCalledWith({
+      where: { tenantId: "tenant-1", status: "PENDING_PAYMENT" },
+    });
+    expect(prisma.order.count).toHaveBeenCalledWith({
+      where: { tenantId: "tenant-1", status: "COMPLETED" },
+    });
     expect(prisma.product.count).toHaveBeenCalledWith({ where: { tenantId: "tenant-1" } });
     expect(prisma.link.count).toHaveBeenCalledWith({ where: { tenantId: "tenant-1" } });
+  });
+
+  it("returns null delta when there is no previous period sales", async () => {
+    const mockTenant = { slug: "toko-test", name: "Toko Test" };
+    vi.mocked(prismaAny.tenant.findUnique).mockResolvedValue(mockTenant);
+    vi.mocked(prismaAny.order.count).mockResolvedValue(0);
+    vi.mocked(prismaAny.order.aggregate)
+      .mockResolvedValueOnce({ _sum: { subtotal: 150000 } })
+      .mockResolvedValueOnce({ _sum: { subtotal: 0 } });
+
+    const result = await getDashboardDataHandler({ context });
+
+    expect(result.salesTotal).toBe(150000);
+    expect(result.salesDeltaPercent).toBeNull();
   });
 });
 
@@ -225,12 +264,19 @@ describe("getDashboardData without a resolved tenant", () => {
         orderCount: 0,
         productCount: 0,
         linkCount: 0,
+        pendingPaymentCount: 0,
+        completedOrderCount: 0,
+        salesTotal: 0,
+        salesDeltaPercent: null,
+        availableBalance: 0,
       },
     );
 
     expect(prisma.order.count).not.toHaveBeenCalled();
+    expect(prisma.order.aggregate).not.toHaveBeenCalled();
     expect(prisma.product.count).not.toHaveBeenCalled();
     expect(prisma.link.count).not.toHaveBeenCalled();
+    expect(prisma.ledgerEntry.aggregate).not.toHaveBeenCalled();
   });
 });
 

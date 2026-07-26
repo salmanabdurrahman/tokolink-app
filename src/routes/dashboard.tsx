@@ -24,6 +24,11 @@ export const Route = createFileRoute("/dashboard")({
         orderCount: 0,
         productCount: 0,
         linkCount: 0,
+        pendingPaymentCount: 0,
+        completedOrderCount: 0,
+        salesTotal: 0,
+        salesDeltaPercent: null,
+        availableBalance: 0,
         loaderError: !isExpectedLoaderError(error),
       };
     }

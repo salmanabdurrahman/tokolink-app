@@ -19,7 +19,13 @@ import {
 import { requireTenant } from "./tenant-context.server";
 import { invalidateCachedUser } from "./user-cache.server";
 import { withTiming } from "../lib/metrics.server";
+import { calculateAvailableBalance } from "./withdrawal.functions";
 import { z } from "zod";
+
+// Matches `INSIGHT_DAYS` in `sales-insight-card.tsx` so the sales delta shown
+// on the overview matches the AI insight card's period.
+const DASHBOARD_SALES_PERIOD_DAYS = 30;
+const DASHBOARD_PAID_STATUSES = ["PAID", "SHIPPED", "COMPLETED"] as const;
 
 export const getTenant = createServerFn({ method: "GET" })
   .validator(z.string())
@@ -50,11 +56,28 @@ export const getMyTenant = createServerFn({ method: "GET" })
 export const getDashboardData = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) =>
-    withTiming("get_dashboard_data", { queryCount: 4 }, async () => {
+    withTiming("get_dashboard_data", { queryCount: 8 }, async () => {
       const userId = context.user.id;
       const tenantId = context.tenant?.id;
+      const now = new Date();
+      const periodStart = new Date(
+        now.getTime() - DASHBOARD_SALES_PERIOD_DAYS * 24 * 60 * 60 * 1000,
+      );
+      const previousPeriodStart = new Date(
+        now.getTime() - 2 * DASHBOARD_SALES_PERIOD_DAYS * 24 * 60 * 60 * 1000,
+      );
 
-      const [tenant, orderCount, productCount, linkCount] = await Promise.all([
+      const [
+        tenant,
+        orderCount,
+        productCount,
+        linkCount,
+        pendingPaymentCount,
+        completedOrderCount,
+        currentSales,
+        previousSales,
+        availableBalance,
+      ] = await Promise.all([
         prisma.tenant.findUnique({
           where: { userId },
           select: tenantDashboardShellSelect,
@@ -62,9 +85,53 @@ export const getDashboardData = createServerFn({ method: "GET" })
         tenantId ? prisma.order.count({ where: { tenantId, status: "PAID" } }) : Promise.resolve(0),
         tenantId ? prisma.product.count({ where: { tenantId } }) : Promise.resolve(0),
         tenantId ? prisma.link.count({ where: { tenantId } }) : Promise.resolve(0),
+        tenantId
+          ? prisma.order.count({ where: { tenantId, status: "PENDING_PAYMENT" } })
+          : Promise.resolve(0),
+        tenantId
+          ? prisma.order.count({ where: { tenantId, status: "COMPLETED" } })
+          : Promise.resolve(0),
+        tenantId
+          ? prisma.order.aggregate({
+              where: {
+                tenantId,
+                status: { in: [...DASHBOARD_PAID_STATUSES] },
+                paidAt: { gte: periodStart },
+              },
+              _sum: { subtotal: true },
+            })
+          : Promise.resolve({ _sum: { subtotal: null } }),
+        tenantId
+          ? prisma.order.aggregate({
+              where: {
+                tenantId,
+                status: { in: [...DASHBOARD_PAID_STATUSES] },
+                paidAt: { gte: previousPeriodStart, lt: periodStart },
+              },
+              _sum: { subtotal: true },
+            })
+          : Promise.resolve({ _sum: { subtotal: null } }),
+        tenantId ? calculateAvailableBalance(prisma, tenantId, now) : Promise.resolve(0),
       ]);
 
-      return { tenant: withEmptyCatalog(tenant), orderCount, productCount, linkCount };
+      const currentSalesTotal = currentSales._sum.subtotal || 0;
+      const previousSalesTotal = previousSales._sum.subtotal || 0;
+      const salesDeltaPercent =
+        previousSalesTotal > 0
+          ? Math.round(((currentSalesTotal - previousSalesTotal) / previousSalesTotal) * 100)
+          : null;
+
+      return {
+        tenant: withEmptyCatalog(tenant),
+        orderCount,
+        productCount,
+        linkCount,
+        pendingPaymentCount,
+        completedOrderCount,
+        salesTotal: currentSalesTotal,
+        salesDeltaPercent,
+        availableBalance,
+      };
     }),
   );
 
