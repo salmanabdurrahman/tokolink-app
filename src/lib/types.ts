@@ -1,3 +1,7 @@
+import type { getTenantOrders } from "@/server/order.functions";
+
+export type TenantOrder = Awaited<ReturnType<typeof getTenantOrders>>[number];
+
 export type LinkItem = {
   id: string;
   label: string;

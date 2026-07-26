@@ -12,10 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
 import { updateTenantSchema } from "@/lib/schemas";
 import { formatWhatsAppNumber } from "@/lib/utils";
-import {
-  RajaOngkirLocationPicker,
-  type RajaOngkirLocationValue,
-} from "@/components/shipping/rajaongkir-location-picker";
+import type { RajaOngkirLocationValue } from "@/components/shipping/rajaongkir-location-picker";
+import { ShippingOriginPicker } from "@/components/dashboard/shipping-origin-picker";
 import { getMyTenantSettings } from "@/server/tenant.functions";
 import { isExpectedLoaderError, logLoaderError } from "@/lib/loader-error";
 
@@ -191,51 +189,13 @@ function SettingsPage() {
           )}
         </Field>
 
-        <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
-          <div>
-            <h2 className="font-display text-lg font-medium">Lokasi asal pengiriman</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Lengkapi lokasi toko supaya Tokolink bisa menghitung ongkir otomatis lewat RajaOngkir
-              saat pembeli checkout.
-            </p>
-          </div>
-          {!originAddress && !rajaOngkirOriginId && (
-            <div className="rounded-xl border border-dashed border-border bg-background p-4 text-sm text-muted-foreground">
-              Alamat dan lokasi asal belum lengkap. Checkout berbayar belum bisa menghitung ongkir
-              sebelum ini diisi.
-            </div>
-          )}
-          <Field label="Alamat lengkap toko">
-            <Input
-              value={originAddress}
-              onChange={(e) => setOriginAddress(e.target.value)}
-              placeholder="Contoh: Jl. Melati No. 1, dekat Pasar Karawang"
-            />
-          </Field>
-          <Field label="Wilayah asal pengiriman">
-            <RajaOngkirLocationPicker
-              value={
-                rajaOngkirOriginId
-                  ? {
-                      id: rajaOngkirOriginId,
-                      label: rajaOngkirOriginLabel,
-                      provinceName: "",
-                      cityName: "",
-                      districtName: "",
-                      subdistrictName: "",
-                      zipCode: "",
-                    }
-                  : null
-              }
-              onChange={handleOriginChange}
-              quickSearchLabel="Cari kecamatan atau kelurahan toko"
-              quickSearchPlaceholder="Ketik kecamatan/kelurahan toko"
-            />
-          </Field>
-          <p className="text-xs text-muted-foreground">
-            Kurir aktif secara default: JNE, J&T, SiCepat, Anteraja, POS, TIKI, dan Ninja.
-          </p>
-        </div>
+        <ShippingOriginPicker
+          originAddress={originAddress}
+          onOriginAddressChange={setOriginAddress}
+          rajaOngkirOriginId={rajaOngkirOriginId}
+          rajaOngkirOriginLabel={rajaOngkirOriginLabel}
+          onOriginChange={handleOriginChange}
+        />
 
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={saving || !isDirty}>
