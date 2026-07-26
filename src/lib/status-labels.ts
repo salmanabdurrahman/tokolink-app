@@ -22,3 +22,13 @@ export const withdrawalStatusLabels = {
   PAID: "Dibayar",
   REJECTED: "Ditolak",
 } as const;
+
+// Order matches the merchant funnel: visit -> klik produk -> checkout mulai
+// -> pembayaran selesai -> klik WhatsApp.
+export const analyticsFunnelLabels = {
+  storefront_view: "Kunjungan toko",
+  product_click: "Klik produk",
+  checkout_started: "Checkout dimulai",
+  payment_completed: "Pembayaran selesai",
+  whatsapp_click: "Klik WhatsApp",
+} as const;

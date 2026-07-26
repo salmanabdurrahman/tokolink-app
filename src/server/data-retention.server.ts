@@ -1,5 +1,6 @@
 import { prisma } from "../db";
 import {
+  ANALYTICS_DAILY_RETENTION_DAYS,
   AUTH_AUDIT_LOG_RETENTION_DAYS,
   AUTH_RATE_LIMIT_RETENTION_DAYS,
   CANCELED_ORDER_RETENTION_DAYS,
@@ -13,6 +14,7 @@ export type CleanupResult = {
   authAuditLogs: number;
   verificationCodes: number;
   canceledOrders: number;
+  analyticsDailyRows: number;
 };
 
 // Cron/manual retention sweep so AuthRateLimit, AuthAuditLog, VerificationCode,
@@ -25,28 +27,33 @@ export async function cleanupExpiredAuthData(
   const now = Date.now();
   const prismaAny = prismaClient as any;
 
-  const [authRateLimits, authAuditLogs, verificationCodes, canceledOrders] = await Promise.all([
-    prismaAny.authRateLimit.deleteMany({
-      where: { windowStart: { lt: new Date(now - AUTH_RATE_LIMIT_RETENTION_DAYS * DAY_MS) } },
-    }),
-    prismaAny.authAuditLog.deleteMany({
-      where: { createdAt: { lt: new Date(now - AUTH_AUDIT_LOG_RETENTION_DAYS * DAY_MS) } },
-    }),
-    prismaAny.verificationCode.deleteMany({
-      where: { expiresAt: { lt: new Date(now - VERIFICATION_CODE_GRACE_DAYS * DAY_MS) } },
-    }),
-    prismaAny.order.deleteMany({
-      where: {
-        status: "CANCELED",
-        canceledAt: { lt: new Date(now - CANCELED_ORDER_RETENTION_DAYS * DAY_MS) },
-      },
-    }),
-  ]);
+  const [authRateLimits, authAuditLogs, verificationCodes, canceledOrders, analyticsDailyRows] =
+    await Promise.all([
+      prismaAny.authRateLimit.deleteMany({
+        where: { windowStart: { lt: new Date(now - AUTH_RATE_LIMIT_RETENTION_DAYS * DAY_MS) } },
+      }),
+      prismaAny.authAuditLog.deleteMany({
+        where: { createdAt: { lt: new Date(now - AUTH_AUDIT_LOG_RETENTION_DAYS * DAY_MS) } },
+      }),
+      prismaAny.verificationCode.deleteMany({
+        where: { expiresAt: { lt: new Date(now - VERIFICATION_CODE_GRACE_DAYS * DAY_MS) } },
+      }),
+      prismaAny.order.deleteMany({
+        where: {
+          status: "CANCELED",
+          canceledAt: { lt: new Date(now - CANCELED_ORDER_RETENTION_DAYS * DAY_MS) },
+        },
+      }),
+      prismaAny.analyticsDaily.deleteMany({
+        where: { date: { lt: new Date(now - ANALYTICS_DAILY_RETENTION_DAYS * DAY_MS) } },
+      }),
+    ]);
 
   return {
     authRateLimits: authRateLimits.count,
     authAuditLogs: authAuditLogs.count,
     verificationCodes: verificationCodes.count,
     canceledOrders: canceledOrders.count,
+    analyticsDailyRows: analyticsDailyRows.count,
   };
 }

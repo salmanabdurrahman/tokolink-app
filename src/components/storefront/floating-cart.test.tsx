@@ -10,6 +10,7 @@ vi.mock("framer-motion", () => ({
   },
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
 
 import { useCart } from "../../lib/store";
 import { FloatingCart } from "./floating-cart";

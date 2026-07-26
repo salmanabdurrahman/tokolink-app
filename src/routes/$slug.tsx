@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/analytics";
+import { recordAnalyticsEvent } from "@/server/analytics.functions";
 import { getPublicUrl } from "@/lib/site-url";
 
 export const Route = createFileRoute("/$slug")({
@@ -19,6 +20,11 @@ export const Route = createFileRoute("/$slug")({
     try {
       const tenant = await getTenant({ data: params.slug });
       if (!tenant) throw notFound();
+      // Fire-and-forget: a real page view must never be delayed/blocked by
+      // analytics persistence.
+      recordAnalyticsEvent({ data: { tenantSlug: params.slug, event: "storefront_view" } }).catch(
+        () => {},
+      );
       return { tenant };
     } catch {
       throw notFound();
@@ -192,7 +198,7 @@ function Storefront() {
                 product={p}
                 delay={i * 0.04}
                 onSelect={() => {
-                  trackEvent("product_select", { tenantSlug: tenant.slug, productId: p.id });
+                  trackEvent("product_click", { tenantSlug: tenant.slug, productId: p.id });
                   setSelecting(p);
                 }}
               />

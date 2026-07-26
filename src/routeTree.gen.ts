@@ -22,6 +22,7 @@ import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settin
 import { Route as DashboardProductsRouteImport } from './routes/dashboard.products'
 import { Route as DashboardOrdersRouteImport } from './routes/dashboard.orders'
 import { Route as DashboardLinksRouteImport } from './routes/dashboard.links'
+import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
 import { Route as ApiHealthRouteImport } from './routes/api.health'
 import { Route as ApiCheckoutRouteImport } from './routes/api.checkout'
 import { Route as ApiShippingSubdistrictsRouteImport } from './routes/api.shipping.subdistricts'
@@ -98,6 +99,11 @@ const DashboardLinksRoute = DashboardLinksRouteImport.update({
   path: '/links',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
   path: '/api/health',
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/api/health': typeof ApiHealthRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/links': typeof DashboardLinksRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
   '/dashboard/products': typeof DashboardProductsRoute
@@ -182,6 +189,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/api/health': typeof ApiHealthRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/links': typeof DashboardLinksRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
   '/dashboard/products': typeof DashboardProductsRoute
@@ -208,6 +216,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/api/health': typeof ApiHealthRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/links': typeof DashboardLinksRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
   '/dashboard/products': typeof DashboardProductsRoute
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/checkout'
     | '/api/health'
+    | '/dashboard/analytics'
     | '/dashboard/links'
     | '/dashboard/orders'
     | '/dashboard/products'
@@ -259,6 +269,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/checkout'
     | '/api/health'
+    | '/dashboard/analytics'
     | '/dashboard/links'
     | '/dashboard/orders'
     | '/dashboard/products'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/checkout'
     | '/api/health'
+    | '/dashboard/analytics'
     | '/dashboard/links'
     | '/dashboard/orders'
     | '/dashboard/products'
@@ -414,6 +426,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLinksRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/analytics': {
+      id: '/dashboard/analytics'
+      path: '/analytics'
+      fullPath: '/dashboard/analytics'
+      preLoaderRoute: typeof DashboardAnalyticsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/api/health': {
       id: '/api/health'
       path: '/api/health'
@@ -488,6 +507,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardRouteChildren {
+  DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
   DashboardLinksRoute: typeof DashboardLinksRoute
   DashboardOrdersRoute: typeof DashboardOrdersRoute
   DashboardProductsRoute: typeof DashboardProductsRoute
@@ -497,6 +517,7 @@ interface DashboardRouteChildren {
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAnalyticsRoute: DashboardAnalyticsRoute,
   DashboardLinksRoute: DashboardLinksRoute,
   DashboardOrdersRoute: DashboardOrdersRoute,
   DashboardProductsRoute: DashboardProductsRoute,

@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../db";
 import { sendOrderReceiptEmail, sendTenantOrderNotificationEmail } from "./email";
 import { WITHDRAWAL_HOLD_DAYS } from "../lib/commerce-policy";
+import { incrementAnalyticsEvent } from "./analytics-events.server";
 
 function toPrismaJson(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value ?? null)) as Prisma.InputJsonValue;
@@ -105,6 +106,14 @@ export async function markOrderPaid(orderNumber: string, rawPayload: unknown, me
       paidOrder.orderNumber,
       paidOrder.total,
     ).catch((error) => console.error("[ORDER] Failed to send tenant notification", error));
+  }
+  // "tenant" in paidOrder is only true for the fullOrder branch (a real
+  // PENDING_PAYMENT -> PAID transition), not the early-return paths for
+  // already-paid/duplicate webhook retries, so this only counts once per order.
+  if ("tenant" in paidOrder) {
+    incrementAnalyticsEvent(paidOrder.tenantId, "payment_completed").catch((error) =>
+      console.error("[ORDER] Failed to record payment_completed analytics event", error),
+    );
   }
 
   return paidOrder;

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { useCart, buildWhatsAppUrl } from "@/lib/store";
+import { trackEvent } from "@/lib/analytics";
 import { formatIDR, formatWhatsAppNumber, isValidWhatsAppNumber } from "@/lib/utils";
 import { FallbackImage } from "@/components/fallback-image";
 import { toast } from "sonner";
@@ -70,6 +71,7 @@ export function FloatingCart({
       toast.error("Nomor WhatsApp toko belum tersedia");
       return;
     }
+    trackEvent("whatsapp_click", { tenantSlug });
     const url = buildWhatsAppUrl(
       formattedPhone,
       storeName,
@@ -132,6 +134,7 @@ export function FloatingCart({
       return;
     }
 
+    trackEvent("checkout_started", { tenantSlug });
     try {
       setLoading(true);
       const response = await fetch("/api/checkout", {

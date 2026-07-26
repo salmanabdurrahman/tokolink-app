@@ -7,6 +7,7 @@ function fakePrisma() {
     authAuditLog: { deleteMany: vi.fn().mockResolvedValue({ count: 5 }) },
     verificationCode: { deleteMany: vi.fn().mockResolvedValue({ count: 2 }) },
     order: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    analyticsDaily: { deleteMany: vi.fn().mockResolvedValue({ count: 4 }) },
   } as any;
 }
 
@@ -21,6 +22,7 @@ describe("cleanupExpiredAuthData", () => {
       authAuditLogs: 5,
       verificationCodes: 2,
       canceledOrders: 1,
+      analyticsDailyRows: 4,
     });
   });
 
@@ -50,6 +52,9 @@ describe("cleanupExpiredAuthData", () => {
     });
     expect(prisma.authAuditLog.deleteMany).toHaveBeenCalledWith({
       where: { createdAt: { lt: expect.any(Date) } },
+    });
+    expect(prisma.analyticsDaily.deleteMany).toHaveBeenCalledWith({
+      where: { date: { lt: expect.any(Date) } },
     });
   });
 });

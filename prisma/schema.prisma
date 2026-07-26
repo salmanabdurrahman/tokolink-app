@@ -154,10 +154,27 @@ model Tenant {
   orders             Order[]
   ledgerEntries      LedgerEntry[]
   withdrawalRequests WithdrawalRequest[]
+  analyticsDaily     AnalyticsDaily[]
 
   @@index([slug])
   @@index([createdAt])
   @@map("tenants")
+}
+
+model AnalyticsDaily {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  date      DateTime @db.Date
+  event     String
+  count     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, date, event])
+  @@index([tenantId, date])
+  @@map("analytics_daily")
 }
 
 model Product {

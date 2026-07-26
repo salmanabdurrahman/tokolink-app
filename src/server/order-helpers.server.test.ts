@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../db", () => ({ prisma: { $transaction: vi.fn() } }));
+vi.mock("../db", () => ({
+  prisma: { $transaction: vi.fn(), analyticsDaily: { upsert: vi.fn() } },
+}));
 vi.mock("./email", () => ({
   sendOrderReceiptEmail: vi.fn(async () => undefined),
   sendTenantOrderNotificationEmail: vi.fn(async () => undefined),
@@ -128,6 +130,33 @@ describe("markOrderPaid", () => {
 
     expect(tx.product.update).not.toHaveBeenCalled();
     expect(tx.product.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("records payment_completed analytics event on real transition", async () => {
+    const tx = makeTx();
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await markOrderPaid("TL1", { ok: true }, "qris");
+
+    expect(prismaAny.analyticsDaily.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          tenantId_date_event: expect.objectContaining({
+            tenantId: "tenant-1",
+            event: "payment_completed",
+          }),
+        },
+      }),
+    );
+  });
+
+  it("does not record payment_completed analytics event on duplicate/no-op transitions", async () => {
+    const tx = makeTx({ ...baseOrder, status: "PAID" });
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await markOrderPaid("TL1", { duplicate: true });
+
+    expect(prismaAny.analyticsDaily.upsert).not.toHaveBeenCalled();
   });
 
   it("does not fail order paid flow when notification emails fail (fire-and-forget)", async () => {

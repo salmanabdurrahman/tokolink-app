@@ -115,3 +115,12 @@ export const checkoutSchema = z.object({
   customer: checkoutCustomerSchema,
   shipping: checkoutShippingSchema,
 });
+
+// payment_completed is intentionally excluded: it is only recorded from the
+// trusted Pakasir webhook flow (already payment-verified), never from this
+// public client-facing endpoint, so it can't be spoofed to inflate revenue
+// funnel numbers.
+export const recordAnalyticsEventSchema = z.object({
+  tenantSlug: tenantSlugSchema,
+  event: z.enum(["storefront_view", "product_click", "checkout_started", "whatsapp_click"]),
+});

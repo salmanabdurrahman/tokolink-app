@@ -7,6 +7,7 @@ import {
   ShoppingBag,
   PackageCheck,
   WalletCards,
+  BarChart3,
   Settings,
   X,
   ChevronLeft,
@@ -28,6 +29,7 @@ const tabs: TabItem[] = [
   { to: "/dashboard/links", label: "Tautan", icon: Link2 },
   { to: "/dashboard/products", label: "Produk", icon: ShoppingBag },
   { to: "/dashboard/orders", label: "Order", icon: PackageCheck },
+  { to: "/dashboard/analytics", label: "Analitik", icon: BarChart3 },
   { to: "/dashboard/withdrawals", label: "Pencairan", icon: WalletCards },
   { to: "/dashboard/settings", label: "Pengaturan", icon: Settings },
 ];

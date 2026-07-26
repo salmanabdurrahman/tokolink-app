@@ -10,7 +10,8 @@ export type AuthAbuseEvent =
   | "shipping_destinations"
   | "shipping_costs"
   | "shipping_locations"
-  | "payment_webhook_lookup";
+  | "payment_webhook_lookup"
+  | "analytics_event";
 export type AuthAbuseOutcome = "success" | "blocked" | "failed";
 
 const RATE_LIMITS: Record<AuthAbuseEvent, { limit: number; windowMs: number }> = {
@@ -26,6 +27,10 @@ const RATE_LIMITS: Record<AuthAbuseEvent, { limit: number; windowMs: number }> =
   // re-selections), so this needs a higher ceiling than the free-text search.
   shipping_locations: { limit: 120, windowMs: 10 * 60 * 1000 },
   payment_webhook_lookup: { limit: 120, windowMs: 10 * 60 * 1000 },
+  // Storefront view/product click/checkout start/WhatsApp click can all fire
+  // several times per real browsing session; ceiling only needs to catch
+  // scripted abuse, not normal shopping behavior.
+  analytics_event: { limit: 120, windowMs: 10 * 60 * 1000 },
 };
 
 function sha256(value: string) {
