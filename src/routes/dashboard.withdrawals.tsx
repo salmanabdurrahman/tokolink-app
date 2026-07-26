@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { formatDateTimeIndonesia, formatPercentIndonesia } from "@/lib/formatters";
-import { formatIDR } from "@/lib/utils";
+import { formatIDR, getErrorMessage } from "@/lib/utils";
 import { withdrawalStatusLabels } from "@/lib/status-labels";
 import { isExpectedLoaderError, logLoaderError } from "@/lib/loader-error";
 
@@ -65,7 +65,7 @@ function WithdrawalsPage() {
       await router.invalidate();
       toast.success("Request pencairan dibuat");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal membuat request pencairan");
+      toast.error(getErrorMessage(error) || "Gagal membuat request pencairan");
     } finally {
       setSaving(false);
     }

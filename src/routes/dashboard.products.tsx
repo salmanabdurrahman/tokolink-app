@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { getMyTenantProducts } from "@/server/tenant.functions";
 import { isExpectedLoaderError, logLoaderError } from "@/lib/loader-error";
+import { getErrorMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/products")({
   staleTime: 15_000,
@@ -74,7 +75,7 @@ function ProductsPage() {
       await reorderProducts(next.map((product) => product.id));
       toast.success("Urutan produk disimpan");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menyimpan urutan produk");
+      toast.error(getErrorMessage(err) || "Gagal menyimpan urutan produk");
     }
   };
 
@@ -171,7 +172,7 @@ function ProductsPage() {
                 }
                 setShowForm(false);
               } catch (err) {
-                const message = err instanceof Error ? err.message : "Gagal menyimpan produk";
+                const message = getErrorMessage(err) || "Gagal menyimpan produk";
                 setError(message);
                 toast.error(message);
               }
@@ -191,7 +192,7 @@ function ProductsPage() {
                 toast.success(`Produk "${deletingProduct.name}" berhasil dihapus`);
                 setDeletingProduct(null);
               } catch (err) {
-                toast.error(err instanceof Error ? err.message : "Gagal menghapus produk");
+                toast.error(getErrorMessage(err) || "Gagal menghapus produk");
               }
             }}
           />

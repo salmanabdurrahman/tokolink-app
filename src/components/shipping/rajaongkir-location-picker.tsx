@@ -230,6 +230,10 @@ export function RajaOngkirLocationPicker({
   };
 
   const runQuickSearch = async () => {
+    if (searchQuery.trim().length < 3) {
+      toast.error("Ketik minimal 3 karakter lokasi");
+      return;
+    }
     try {
       setSearching(true);
       const response = await fetch("/api/shipping/destinations", {

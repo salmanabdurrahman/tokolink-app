@@ -13,10 +13,14 @@ export const Route = createFileRoute("/api/shipping/destinations")({
           const result = await searchRajaOngkirDestinations(destinationSearchSchema.parse(data));
           return Response.json(result);
         } catch (error) {
-          return Response.json(
-            { message: error instanceof Error ? error.message : "Gagal mencari lokasi" },
-            { status: 400 },
-          );
+          const { ZodError } = await import("zod");
+          const message =
+            error instanceof ZodError
+              ? error.issues[0]?.message || "Kata kunci pencarian tidak valid"
+              : error instanceof Error
+                ? error.message
+                : "Gagal mencari lokasi";
+          return Response.json({ message }, { status: 400 });
         }
       },
     },

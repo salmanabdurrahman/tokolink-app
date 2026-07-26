@@ -4,6 +4,7 @@ import type { ProductCategory } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { createCategorySchema } from "@/lib/schemas";
+import { getErrorMessage } from "@/lib/utils";
 
 interface CategoryManagerProps {
   categories: ProductCategory[];
@@ -54,7 +55,7 @@ export function CategoryManager({
       await onReorder(next.map((category) => category.id));
       toast.success("Urutan kategori disimpan");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menyimpan urutan kategori");
+      toast.error(getErrorMessage(err) || "Gagal menyimpan urutan kategori");
     }
   };
 
@@ -107,7 +108,7 @@ export function CategoryManager({
                     await onRemove(category.id);
                     toast.success(`Kategori "${category.name}" berhasil dihapus`);
                   } catch (err) {
-                    toast.error(err instanceof Error ? err.message : "Gagal menghapus kategori");
+                    toast.error(getErrorMessage(err) || "Gagal menghapus kategori");
                   }
                 }}
                 className="shrink-0 text-xs text-muted-foreground hover:text-destructive"

@@ -131,6 +131,31 @@ describe("API route contracts", () => {
     expect(createCheckoutOrderData).not.toHaveBeenCalled();
   });
 
+  it("api.checkout returns a readable message instead of raw Zod issue JSON on invalid customer data", async () => {
+    const response = await checkoutPost({
+      request: jsonRequest({
+        tenantSlug: "kopi-ibu",
+        items: [
+          { productId: "11111111-1111-4111-8111-111111111111", variantOptionIds: [], qty: 1 },
+        ],
+        customer: {
+          name: "",
+          whatsapp: "081234567890",
+          address: "-",
+        },
+        shipping: { courier: "jne", service: "REG", cost: 12000 },
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    const body = await json(response);
+    expect(typeof body.message).toBe("string");
+    expect(body.message).not.toContain('"validation"');
+    expect(body.message).not.toContain('"path"');
+    expect(body.message).toBe("Nama minimal 2 karakter");
+    expect(createCheckoutOrderData).not.toHaveBeenCalled();
+  });
+
   it("api.shipping.costs rate limits and returns shipping JSON", async () => {
     const items = [{ productId: "11111111-1111-4111-8111-111111111111", qty: 1 }];
     const response = await costsPost({
@@ -160,6 +185,18 @@ describe("API route contracts", () => {
       request: expect.any(Request),
     });
     expect(searchRajaOngkirDestinations).toHaveBeenCalledWith({ search: "jak", limit: 5 });
+  });
+
+  it("api.shipping.destinations returns a readable message instead of raw Zod issue JSON when search is too short", async () => {
+    const response = await destinationsPost({ request: jsonRequest({ search: "ja", limit: 5 }) });
+
+    expect(response.status).toBe(400);
+    const body = await json(response);
+    expect(typeof body.message).toBe("string");
+    expect(body.message).not.toContain('"validation"');
+    expect(body.message).not.toContain('"path"');
+    expect(body.message).toBe("Ketik minimal 3 karakter lokasi");
+    expect(searchRajaOngkirDestinations).not.toHaveBeenCalled();
   });
 
   it("api.shipping.provinces rate limits and returns province list", async () => {

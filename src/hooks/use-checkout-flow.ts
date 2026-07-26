@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { buildWhatsAppUrl } from "@/lib/store";
 import { trackEvent } from "@/lib/analytics";
+import { checkoutCustomerSchema } from "@/lib/schemas";
 import { formatWhatsAppNumber, isValidWhatsAppNumber } from "@/lib/utils";
 import type { CartItem } from "@/lib/types";
 import type { Destination, SelectedShipping } from "@/hooks/use-shipping-quote";
@@ -32,6 +33,7 @@ export function useCheckoutFlow({
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [customer, setCustomer] = useState({ name: "", email: "", whatsapp: "", address: "" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const formattedPhone = formatWhatsAppNumber(phone);
   const hasWhatsApp = isValidWhatsAppNumber(formattedPhone);
@@ -55,6 +57,18 @@ export function useCheckoutFlow({
   };
 
   const checkoutPakasir = async () => {
+    const parsedCustomer = checkoutCustomerSchema.safeParse(customer);
+    if (!parsedCustomer.success) {
+      const nextErrors: Record<string, string> = {};
+      parsedCustomer.error.issues.forEach((issue) => {
+        nextErrors[issue.path.join(".") || "form"] = issue.message;
+      });
+      setErrors(nextErrors);
+      toast.error(parsedCustomer.error.issues[0]?.message || "Lengkapi data pembeli dengan benar");
+      return;
+    }
+    setErrors({});
+
     if (!selectedDestination || !shipping.cost) {
       toast.error("Pilih tujuan dan layanan pengiriman dulu");
       return;
@@ -104,6 +118,7 @@ export function useCheckoutFlow({
     setNote,
     customer,
     setCustomer,
+    errors,
     loading,
     hasWhatsApp,
     checkoutWhatsApp,

@@ -31,6 +31,13 @@ const destination = {
 
 const shipping = { courier: "jne", service: "REG", etd: "1-2", cost: 12000 };
 
+const validCustomer = {
+  name: "Budi Santoso",
+  email: "",
+  whatsapp: "628123456789",
+  address: "Jl. Merdeka No. 1, Jakarta",
+};
+
 function setup(overrides: Partial<Parameters<typeof useCheckoutFlow>[0]> = {}) {
   const onOrderCreated = vi.fn();
   const { result } = renderHook(() =>
@@ -55,11 +62,30 @@ describe("useCheckoutFlow", () => {
     vi.stubGlobal("location", { assign: vi.fn() } as any);
   });
 
+  it("blocks checkout with per-field errors and a readable toast when customer data is invalid", async () => {
+    const { toast } = await import("sonner");
+    const { result } = setup();
+
+    await act(async () => {
+      await result.current.checkoutPakasir();
+    });
+
+    expect(toast.error).not.toHaveBeenCalledWith(expect.stringContaining('"validation"'));
+    expect(result.current.errors.name).toBeTruthy();
+    expect(result.current.errors.whatsapp).toBeTruthy();
+    expect(result.current.errors.address).toBeTruthy();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it("blocks checkout with a toast when no shipping option selected", async () => {
     const { toast } = await import("sonner");
     const { result } = setup({
       selectedDestination: null,
       shipping: { courier: "", service: "", etd: "", cost: 0 },
+    });
+
+    act(() => {
+      result.current.setCustomer(validCustomer);
     });
 
     await act(async () => {
@@ -79,6 +105,10 @@ describe("useCheckoutFlow", () => {
     );
     const { result, onOrderCreated } = setup();
 
+    act(() => {
+      result.current.setCustomer(validCustomer);
+    });
+
     await act(async () => {
       await result.current.checkoutPakasir();
     });
@@ -92,6 +122,10 @@ describe("useCheckoutFlow", () => {
     const { toast } = await import("sonner");
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ orderNumber: "TL1" })) as any);
     const { result } = setup();
+
+    act(() => {
+      result.current.setCustomer(validCustomer);
+    });
 
     await act(async () => {
       await result.current.checkoutPakasir();
@@ -109,6 +143,10 @@ describe("useCheckoutFlow", () => {
       ) as any,
     );
     const { result } = setup();
+
+    act(() => {
+      result.current.setCustomer(validCustomer);
+    });
 
     await act(async () => {
       await result.current.checkoutPakasir();

@@ -177,6 +177,9 @@ describe("FloatingCart", () => {
     render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     fireEvent.click(screen.getByRole("button", { name: "Cari cepat" }));
+    fireEvent.change(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), {
+      target: { value: "senayan" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Cari" }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Lokasi tidak ditemukan"));
@@ -195,6 +198,9 @@ describe("FloatingCart", () => {
     render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     fireEvent.click(screen.getByRole("button", { name: "Cari cepat" }));
+    fireEvent.change(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), {
+      target: { value: "senayan" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Cari" }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("network down"));
@@ -243,9 +249,28 @@ describe("FloatingCart", () => {
     render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
 
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.change(screen.getByPlaceholderText("Nama lengkap"), { target: { value: "Budi" } });
+    fireEvent.change(screen.getByPlaceholderText("WhatsApp, contoh 628123456789"), {
+      target: { value: "081234567890" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Alamat pengiriman"), {
+      target: { value: "Jl. Melati 1" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Bayar via Pakasir →" }));
 
     expect(toast.error).toHaveBeenCalledWith("Pilih tujuan dan layanan pengiriman dulu");
+    expect(fetch).not.toHaveBeenCalledWith("/api/checkout", expect.anything());
+  });
+
+  it("blocks checkout with a toast and shows field errors when customer data is invalid", async () => {
+    const { toast } = await import("sonner");
+    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Bayar via Pakasir →" }));
+
+    expect(toast.error).not.toHaveBeenCalledWith(expect.stringContaining('"validation"'));
+    expect(await screen.findByText("Nama minimal 2 karakter")).toBeInTheDocument();
     expect(fetch).not.toHaveBeenCalledWith("/api/checkout", expect.anything());
   });
 
@@ -281,6 +306,13 @@ describe("FloatingCart", () => {
 
     render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.change(screen.getByPlaceholderText("Nama lengkap"), { target: { value: "Budi" } });
+    fireEvent.change(screen.getByPlaceholderText("WhatsApp, contoh 628123456789"), {
+      target: { value: "081234567890" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Alamat pengiriman"), {
+      target: { value: "Jl. Melati 1" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Cari cepat" }));
     fireEvent.change(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), {
       target: { value: "senayan" },
@@ -325,6 +357,13 @@ describe("FloatingCart", () => {
 
     render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.change(screen.getByPlaceholderText("Nama lengkap"), { target: { value: "Budi" } });
+    fireEvent.change(screen.getByPlaceholderText("WhatsApp, contoh 628123456789"), {
+      target: { value: "081234567890" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Alamat pengiriman"), {
+      target: { value: "Jl. Melati 1" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Cari cepat" }));
     fireEvent.change(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), {
       target: { value: "senayan" },

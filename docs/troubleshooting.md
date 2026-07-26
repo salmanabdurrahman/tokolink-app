@@ -32,6 +32,25 @@ Use migrations for durable schema changes:
 bun run db:migrate
 ```
 
+## Checkout and shipping API routes
+
+### Toast shows raw Zod issue JSON instead of a readable message
+
+Symptom: an error toast shows something like `[{ "validation": "regex", "code": "invalid_string", ... }]` instead of an Indonesian sentence. Seen on checkout (invalid customer data) and on the RajaOngkir location picker's quick search (search text under 3 characters).
+
+Cause: an `src/routes/api.*.ts` route's `catch` block returned `error.message` straight from a thrown `ZodError` without formatting it. `ZodError` is `instanceof Error`, so it silently passes through generic `error instanceof Error ? error.message : ...` catch blocks. All routes that call `someSchema.parse(data)` inside the handler (`api.checkout.ts`, `api.shipping.costs.ts`, `api.shipping.destinations.ts`, `api.shipping.cities.ts`, `api.shipping.districts.ts`, `api.shipping.subdistricts.ts`) share this pattern, so a new route added the same way will reintroduce the bug.
+
+Fix pattern (apply to any new `api.*.ts` route with a `.parse(data)` call):
+
+- Validate obvious cases on the client first (e.g. `checkoutCustomerSchema.safeParse(...)` in `src/hooks/use-checkout-flow.ts`, or the `searchQuery.trim().length < 3` guard in `src/components/shipping/rajaongkir-location-picker.tsx`) and surface a readable error/per-field error, so the server almost never sees invalid data from normal usage.
+- On the server, special-case `ZodError` in the catch block and use `error.issues[0]?.message` (a human-readable string) instead of `error.message` (raw JSON array) as the fallback.
+
+The same failure shape also happens with `createServerFn().validator(zodSchema)` (dashboard forms, not just `api.*.ts` fetch routes): TanStack Start's `execValidator` does `throw new Error(JSON.stringify(result.issues, null, 2))` when the standard-schema validator reports issues (see `node_modules/@tanstack/start-client-core/dist/esm/createServerFn.js`). Any client call site that renders `error.message`/`err.message` straight into a toast without a client-side guard first will leak the same raw JSON if the user can submit input the schema rejects (e.g. a too-short resi number). Use the shared `getErrorMessage()` helper (`src/lib/utils.ts`, already used in `src/routes/onboarding.tsx` and `src/hooks/use-auth-form.ts`) instead of raw `error.message` in these catch blocks — it already unwraps this exact JSON-array shape into a `path - message` sentence.
+
+Swept and fixed across the dashboard: `src/routes/dashboard.orders.tsx` (`submitTracking`, plus a client-side min-length guard — its resi/courier inputs had no length check before hitting the server), `src/routes/dashboard.links.tsx` (`persistLink`'s inline label/url edit had no guard either — clearing the label field and blurring hit the server unvalidated), `src/routes/dashboard.products.tsx`, `src/routes/dashboard.withdrawals.tsx` (defense-in-depth; the submit button is already disabled below the minimum amount), and `src/components/dashboard/category-manager.tsx` / `src/components/dashboard/product-form.tsx` (AI copy generation can exceed the server's name/keyword length caps).
+
+Note: `src/components/dashboard/category-manager.tsx`'s `handleAdd` and inline category rename (`onRename`) call the store action without any `try`/`catch` at all, so a server-side failure there fails _silently_ (no toast, unhandled promise rejection) instead of leaking raw JSON. That is a separate bug (missing feedback, not raw-JSON exposure) and was left as-is — flag it if you want it fixed too.
+
 ## Supabase cookies/session
 
 ### Dashboard redirects to auth after login

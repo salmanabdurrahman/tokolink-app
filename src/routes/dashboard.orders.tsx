@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { isExpectedLoaderError, logLoaderError } from "@/lib/loader-error";
+import { getErrorMessage } from "@/lib/utils";
 import { OrderFilterBar } from "@/components/dashboard/order-filter-bar";
 import { OrderCard } from "@/components/dashboard/order-card";
 import { OrderDetail } from "@/components/dashboard/order-detail";
@@ -63,13 +64,21 @@ function OrdersPage() {
       await router.invalidate();
       toast.success(status === "COMPLETED" ? "Order ditandai selesai" : "Order dibatalkan");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal mengubah status order");
+      toast.error(getErrorMessage(error) || "Gagal mengubah status order");
     } finally {
       setSavingId("");
     }
   }
 
   async function submitTracking(order: TenantOrder, form: OrderTrackingFormValue) {
+    if (form.courier.trim().length < 2) {
+      toast.error("Kurir harus diisi");
+      return;
+    }
+    if (form.trackingNumber.trim().length < 4) {
+      toast.error("Nomor resi harus diisi");
+      return;
+    }
     try {
       setSavingId(order.id);
       const { updateOrderTracking } = await import("@/server/order.functions");
@@ -83,7 +92,7 @@ function OrdersPage() {
       await router.invalidate();
       toast.success("Resi pengiriman disimpan");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal menyimpan resi");
+      toast.error(getErrorMessage(error) || "Gagal menyimpan resi");
     } finally {
       setSavingId("");
     }

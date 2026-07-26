@@ -131,4 +131,27 @@ describe("RajaOngkirLocationPicker", () => {
       expect.objectContaining({ id: "dest-1", label: "Senayan, Jakarta Selatan" }),
     );
   });
+
+  it("blocks the quick search with a readable toast instead of hitting the API with a too-short query", async () => {
+    const { toast } = await import("sonner");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes("/api/shipping/provinces")) return Response.json([]);
+        throw new Error("should not call the API for a too-short query");
+      }),
+    );
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(<RajaOngkirLocationPicker value={null} onChange={onChange} />);
+
+    await user.click(screen.getByRole("button", { name: "Cari cepat" }));
+    await user.type(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), "ja");
+    await user.click(screen.getByRole("button", { name: "Cari" }));
+
+    expect(toast.error).toHaveBeenCalledWith("Ketik minimal 3 karakter lokasi");
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });

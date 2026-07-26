@@ -40,6 +40,8 @@ Security controls are layered across middleware, Server Functions, validation, p
 ## Payment and webhook validation
 
 - Pakasir API key stays server-only.
+- Checkout customer data (name, WhatsApp, address) is validated client-side with `checkoutCustomerSchema` (`src/lib/schemas.ts`) before the request is sent, showing per-field errors on `CustomerForm` instead of hitting the server with obviously invalid data.
+- The `/api/checkout` route still re-validates with the same Zod schema server-side (never trust the client) and formats a `ZodError` down to `error.issues[0].message` before returning it — never dump raw Zod issue JSON to the client.
 - Checkout totals are calculated server-side from DB product/variant data.
 - Checkout re-queries RajaOngkir on the server using tenant origin, buyer destination, calculated item weight, and selected courier.
 - Checkout accepts only a provider quote whose courier, service, and cost match the buyer selection; otherwise buyer must recalculate shipping.
@@ -54,6 +56,7 @@ Security controls are layered across middleware, Server Functions, validation, p
 - Storefront calls server functions for destination search, cost, and waybill checks.
 - Tenant origin, buyer destination, allowed courier, selected service, calculated weight, and provider cost are validated before checkout.
 - Errors are mapped to user-safe Indonesian messages.
+- The quick-search fallback in `RajaOngkirLocationPicker` (`src/components/shipping/rajaongkir-location-picker.tsx`) blocks search queries under 3 characters client-side before calling `/api/shipping/destinations`, and every `api.shipping.*.ts` route formats a thrown `ZodError` down to `error.issues[0].message` in its catch block — never dump raw Zod issue JSON to the client (see `docs/troubleshooting.md` for the failure pattern this guards against).
 
 ## AI feature safety
 

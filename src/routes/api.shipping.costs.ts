@@ -13,10 +13,14 @@ export const Route = createFileRoute("/api/shipping/costs")({
           const result = await getRajaOngkirShippingCosts(shippingCostSchema.parse(data));
           return Response.json(result);
         } catch (error) {
-          return Response.json(
-            { message: error instanceof Error ? error.message : "Ongkir belum tersedia" },
-            { status: 400 },
-          );
+          const { ZodError } = await import("zod");
+          const message =
+            error instanceof ZodError
+              ? error.issues[0]?.message || "Data checkout ongkir tidak valid"
+              : error instanceof Error
+                ? error.message
+                : "Ongkir belum tersedia";
+          return Response.json({ message }, { status: 400 });
         }
       },
     },

@@ -51,6 +51,7 @@ export function FloatingCart({
     setNote,
     customer,
     setCustomer,
+    errors,
     loading,
     hasWhatsApp,
     checkoutWhatsApp,
@@ -104,7 +105,7 @@ export function FloatingCart({
             ))}
           </ul>
 
-          <CustomerForm value={customer} onChange={setCustomer} />
+          <CustomerForm value={customer} onChange={setCustomer} errors={errors} />
 
           <ShippingPicker
             selectedDestination={selectedDestination}

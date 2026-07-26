@@ -12,6 +12,7 @@ import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { createProductSchema } from "@/lib/schemas";
+import { getErrorMessage } from "@/lib/utils";
 
 interface ProductCopyResult {
   description: string;
@@ -208,9 +209,7 @@ export function ProductForm({
                           "Draft deskripsi AI dibuat. Periksa dan sunting sebelum disimpan.",
                         );
                       } catch (err) {
-                        toast.error(
-                          err instanceof Error ? err.message : "Gagal membuat deskripsi AI",
-                        );
+                        toast.error(getErrorMessage(err) || "Gagal membuat deskripsi AI");
                       } finally {
                         setAiLoading(false);
                       }

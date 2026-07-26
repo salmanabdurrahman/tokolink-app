@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { isExpectedLoaderError, logLoaderError } from "@/lib/loader-error";
+import { getErrorMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/links")({
   staleTime: 15_000,
@@ -70,7 +71,7 @@ function LinksPage() {
       await add(data);
       toast.success(`Tautan "${data.label}" berhasil ditambahkan`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Gagal menambah tautan";
+      const message = getErrorMessage(err) || "Gagal menambah tautan";
       setError(message);
       toast.error(message);
     }
@@ -80,13 +81,18 @@ function LinksPage() {
     const current = links.find((link) => link.id === id);
     const draft = drafts[id];
     if (!current || !draft || (current.label === draft.label && current.url === draft.url)) return;
+    if (!draft.label.trim()) {
+      toast.error("Label harus diisi");
+      setDrafts((value) => ({ ...value, [id]: { label: current.label, url: current.url } }));
+      return;
+    }
     setSavingId(id);
     setError("");
     try {
       await update(id, draft);
       toast.success(`Tautan "${draft.label}" disimpan`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Gagal menyimpan tautan";
+      const message = getErrorMessage(err) || "Gagal menyimpan tautan";
       setError(message);
       toast.error(message);
       setDrafts((value) => ({ ...value, [id]: { label: current.label, url: current.url } }));
@@ -107,7 +113,7 @@ function LinksPage() {
       await reorderLinks(next.map((link) => link.id));
       toast.success("Urutan tautan disimpan");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menyimpan urutan tautan");
+      toast.error(getErrorMessage(err) || "Gagal menyimpan urutan tautan");
     }
   };
 
@@ -173,7 +179,7 @@ function LinksPage() {
                     await remove(l.id);
                     toast.success(`Tautan "${l.label}" berhasil dihapus`);
                   } catch (err) {
-                    toast.error(err instanceof Error ? err.message : "Gagal menghapus tautan");
+                    toast.error(getErrorMessage(err) || "Gagal menghapus tautan");
                   }
                 }}
                 className="text-xs text-muted-foreground hover:text-destructive shrink-0"
