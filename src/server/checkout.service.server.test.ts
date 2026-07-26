@@ -12,6 +12,7 @@ import { prisma } from "../db";
 import { calculateDomesticCost } from "./rajaongkir";
 import {
   buildCheckoutOrderItems,
+  cartRequiresShipping,
   createCheckoutOrderRecord,
   validateCheckoutShippingQuote,
   validateCheckoutTenant,
@@ -65,12 +66,14 @@ function makeCheckoutInput(overrides: Record<string, unknown> = {}) {
 
 describe("validateCheckoutTenant", () => {
   it("throws when tenant is null", () => {
-    expect(() => validateCheckoutTenant(null, makeCheckoutInput())).toThrow("Toko tidak ditemukan");
+    expect(() => validateCheckoutTenant(null, makeCheckoutInput(), true)).toThrow(
+      "Toko tidak ditemukan",
+    );
   });
 
   it("throws when tenant has no shipping origin", () => {
     expect(() =>
-      validateCheckoutTenant(makeTenant({ rajaOngkirOriginId: null }), makeCheckoutInput()),
+      validateCheckoutTenant(makeTenant({ rajaOngkirOriginId: null }), makeCheckoutInput(), true),
     ).toThrow("Toko belum mengatur origin pengiriman. Hubungi penjual.");
   });
 
@@ -81,24 +84,50 @@ describe("validateCheckoutTenant", () => {
         makeCheckoutInput({
           customer: { ...makeCheckoutInput().customer, rajaOngkirDestinationId: "" },
         }),
+        true,
       ),
     ).toThrow("Tujuan pengiriman harus dipilih");
   });
 
   it("throws when courier is not allowed for tenant", () => {
     expect(() =>
-      validateCheckoutTenant(makeTenant({ allowedCouriers: ["jnt"] }), makeCheckoutInput()),
+      validateCheckoutTenant(makeTenant({ allowedCouriers: ["jnt"] }), makeCheckoutInput(), true),
     ).toThrow("Kurir tidak tersedia untuk toko ini");
   });
 
   it("throws when some products are not found for tenant", () => {
-    expect(() => validateCheckoutTenant(makeTenant({ products: [] }), makeCheckoutInput())).toThrow(
-      "Sebagian produk tidak ditemukan",
-    );
+    expect(() =>
+      validateCheckoutTenant(makeTenant({ products: [] }), makeCheckoutInput(), true),
+    ).toThrow("Sebagian produk tidak ditemukan");
   });
 
   it("passes for a valid tenant/input pair", () => {
-    expect(() => validateCheckoutTenant(makeTenant(), makeCheckoutInput())).not.toThrow();
+    expect(() => validateCheckoutTenant(makeTenant(), makeCheckoutInput(), true)).not.toThrow();
+  });
+
+  it("skips shipping checks for a digital-only cart", () => {
+    const tenant = makeTenant({
+      rajaOngkirOriginId: "",
+      products: [
+        {
+          id: productId,
+          name: "E-book",
+          image: "",
+          basePrice: 10000,
+          weightGram: 1,
+          isDigital: true,
+          variantGroups: [],
+        },
+      ],
+    });
+    const input = makeCheckoutInput({
+      items: [{ productId, variantOptionIds: [], qty: 1 }],
+      customer: { ...makeCheckoutInput().customer, address: "", rajaOngkirDestinationId: "" },
+      shipping: undefined,
+    });
+
+    expect(cartRequiresShipping(tenant)).toBe(false);
+    expect(() => validateCheckoutTenant(tenant, input, false)).not.toThrow();
   });
 
   it("throws when requested qty exceeds tracked stock", () => {
@@ -119,7 +148,7 @@ describe("validateCheckoutTenant", () => {
       ],
     });
 
-    expect(() => validateCheckoutTenant(tenant, makeCheckoutInput())).toThrow(
+    expect(() => validateCheckoutTenant(tenant, makeCheckoutInput(), true)).toThrow(
       'Stok "Kopi Susu" tidak cukup. Sisa stok: 1',
     );
   });
@@ -142,7 +171,7 @@ describe("validateCheckoutTenant", () => {
       ],
     });
 
-    expect(() => validateCheckoutTenant(tenant, makeCheckoutInput())).not.toThrow();
+    expect(() => validateCheckoutTenant(tenant, makeCheckoutInput(), true)).not.toThrow();
   });
 });
 
@@ -179,6 +208,27 @@ describe("buildCheckoutOrderItems", () => {
         }),
       ),
     ).toThrow("Varian Kopi Susu tidak valid");
+  });
+
+  it("assigns zero shipping weight to a digital product", () => {
+    const items = buildCheckoutOrderItems(
+      makeTenant({
+        products: [
+          {
+            id: productId,
+            name: "E-book",
+            image: "",
+            basePrice: 10000,
+            weightGram: 500,
+            isDigital: true,
+            variantGroups: [],
+          },
+        ],
+      }),
+      makeCheckoutInput({ items: [{ productId, variantOptionIds: [], qty: 3 }] }),
+    );
+
+    expect(items[0]).toMatchObject({ weightGram: 0, totalWeightGram: 0 });
   });
 
   it("falls back to a minimum weight of 1 gram when product weight is unset", () => {

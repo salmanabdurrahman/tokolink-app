@@ -39,6 +39,8 @@ export const createProduct = createServerFn({ method: "POST" })
         description: data.description || "",
         basePrice: data.basePrice,
         image: data.image || "",
+        weightGram: data.isDigital ? 1 : (data.weightGram ?? 1),
+        isDigital: data.isDigital ?? false,
         sortOrder: nextSortOrder,
         trackStock: data.trackStock ?? false,
         stock: data.trackStock ? (data.stock ?? null) : null,
@@ -106,6 +108,8 @@ export const updateProduct = createServerFn({ method: "POST" })
           description: data.description,
           basePrice: data.basePrice,
           image: data.image,
+          weightGram: data.isDigital ? 1 : data.weightGram,
+          isDigital: data.isDigital,
           trackStock: data.trackStock,
           stock:
             data.trackStock === undefined

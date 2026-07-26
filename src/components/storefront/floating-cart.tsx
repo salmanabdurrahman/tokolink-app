@@ -33,6 +33,12 @@ export function FloatingCart({
     () => items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0),
     [items],
   );
+  // Shipping is only needed when the cart holds at least one physical product.
+  // A digital-only cart hides the shipping picker and skips ongkir/address.
+  const requiresShipping = useMemo(() => {
+    const digitalIds = new Set(products.filter((p) => p.isDigital).map((p) => p.id));
+    return items.some((item) => !digitalIds.has(item.productId));
+  }, [products, items]);
   const inc = useCart((s) => s.inc);
   const dec = useCart((s) => s.dec);
   const clear = useCart((s) => s.clear);
@@ -66,6 +72,7 @@ export function FloatingCart({
     whatsappTemplate,
     items,
     totalPrice,
+    requiresShipping,
     selectedDestination,
     shipping,
     onOrderCreated: clear,
@@ -114,16 +121,23 @@ export function FloatingCart({
             ))}
           </ul>
 
-          <CustomerForm value={customer} onChange={setCustomer} errors={errors} />
-
-          <ShippingPicker
-            selectedDestination={selectedDestination}
-            onDestinationChange={handleDestinationChange}
-            loadingShipping={loadingShipping}
-            shippingOptions={shippingOptions}
-            shipping={shipping}
-            onSelectShipping={selectShipping}
+          <CustomerForm
+            value={customer}
+            onChange={setCustomer}
+            errors={errors}
+            showAddress={requiresShipping}
           />
+
+          {requiresShipping && (
+            <ShippingPicker
+              selectedDestination={selectedDestination}
+              onDestinationChange={handleDestinationChange}
+              loadingShipping={loadingShipping}
+              shippingOptions={shippingOptions}
+              shipping={shipping}
+              onSelectShipping={selectShipping}
+            />
+          )}
 
           <div className="mt-4 space-y-1.5 shrink-0">
             <Label htmlFor="order-note">Catatan WhatsApp (opsional)</Label>
@@ -139,7 +153,8 @@ export function FloatingCart({
 
         <CheckoutActions
           totalPrice={totalPrice}
-          shippingCost={shipping.cost}
+          shippingCost={requiresShipping ? shipping.cost : 0}
+          requiresShipping={requiresShipping}
           loading={loading}
           hasWhatsApp={hasWhatsApp}
           onCheckoutPakasir={checkoutPakasir}

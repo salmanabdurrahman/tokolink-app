@@ -101,6 +101,43 @@ describe("FloatingCart", () => {
     );
   });
 
+  it("hides shipping and checks out a digital-only cart without a destination", async () => {
+    render(
+      <FloatingCart
+        products={[
+          {
+            id: "product-1",
+            basePrice: 10000,
+            isDigital: true,
+            options: [{ id: "small", priceDelta: 0 }],
+          },
+        ]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    // Shipping picker and address input are hidden for a digital-only cart.
+    expect(screen.queryByText("Alamat tujuan pengiriman")).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Alamat pengiriman")).not.toBeInTheDocument();
+    expect(screen.getByText("Total")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText("Nama lengkap"), { target: { value: "Budi" } });
+    fireEvent.change(screen.getByPlaceholderText("WhatsApp, contoh 628123456789"), {
+      target: { value: "081234567890" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Bayar via Pakasir →" }));
+
+    await waitFor(() => expect(window.location.assign).toHaveBeenCalledWith("https://pay.test"));
+    const checkoutCall = (fetch as any).mock.calls.find(
+      (call: any[]) => call[0] === "/api/checkout",
+    );
+    expect(checkoutCall).toBeTruthy();
+    expect(JSON.parse(checkoutCall[1].body).shipping).toBeUndefined();
+  });
+
   it("keeps customer input focused while typing", () => {
     render(
       <FloatingCart

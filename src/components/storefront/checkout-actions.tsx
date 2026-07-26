@@ -4,6 +4,7 @@ import { formatIDR } from "@/lib/utils";
 interface CheckoutActionsProps {
   totalPrice: number;
   shippingCost: number;
+  requiresShipping?: boolean;
   loading: boolean;
   hasWhatsApp: boolean;
   onCheckoutPakasir: () => void;
@@ -14,6 +15,7 @@ interface CheckoutActionsProps {
 export function CheckoutActions({
   totalPrice,
   shippingCost,
+  requiresShipping = true,
   loading,
   hasWhatsApp,
   onCheckoutPakasir,
@@ -23,7 +25,9 @@ export function CheckoutActions({
   return (
     <>
       <div className="mt-4 flex items-center justify-between border-t border-border pt-4 shrink-0">
-        <span className="text-sm text-muted-foreground">Total + ongkir</span>
+        <span className="text-sm text-muted-foreground">
+          {requiresShipping ? "Total + ongkir" : "Total"}
+        </span>
         <span className="font-display text-2xl font-medium">
           {formatIDR(totalPrice + (Number(shippingCost) || 0))}
         </span>

@@ -47,6 +47,7 @@ function setup(overrides: Partial<Parameters<typeof useCheckoutFlow>[0]> = {}) {
       phone: "081234567890",
       items,
       totalPrice: 10000,
+      requiresShipping: true,
       selectedDestination: destination,
       shipping,
       onOrderCreated,
@@ -153,6 +154,38 @@ describe("useCheckoutFlow", () => {
     });
 
     expect(toast.error).toHaveBeenCalledWith("Checkout gagal. Coba lagi.");
+  });
+
+  it("skips shipping requirement and address for a digital-only cart", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({ orderNumber: "TL1", paymentUrl: "https://pay.test" }),
+      ) as any,
+    );
+    const { result } = setup({
+      requiresShipping: false,
+      selectedDestination: null,
+      shipping: { courier: "", service: "", etd: "", cost: 0 },
+    });
+
+    act(() => {
+      result.current.setCustomer({
+        name: "Budi Santoso",
+        email: "",
+        whatsapp: "628123456789",
+        address: "",
+      });
+    });
+
+    await act(async () => {
+      await result.current.checkoutPakasir();
+    });
+
+    await waitFor(() => expect(window.location.assign).toHaveBeenCalledWith("https://pay.test"));
+    const body = JSON.parse((fetch as any).mock.calls[0][1].body);
+    expect(body.shipping).toBeUndefined();
+    expect(result.current.errors.address).toBeUndefined();
   });
 
   it("redirects to WhatsApp with the built order message", () => {

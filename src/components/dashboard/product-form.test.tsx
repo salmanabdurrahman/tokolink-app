@@ -86,6 +86,56 @@ describe("ProductForm", () => {
     expect(typeof submitted.basePrice).toBe("number");
   });
 
+  it("submits the digital flag when the digital toggle is checked", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const { container } = render(
+      <ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />,
+    );
+
+    fillRequiredFields();
+    fireEvent.click(screen.getByLabelText("Produk digital (tanpa pengiriman)"));
+    submitForm(container);
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0].isDigital).toBe(true);
+  });
+
+  it("defaults isDigital to false for a physical product", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const { container } = render(
+      <ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />,
+    );
+
+    fillRequiredFields();
+    submitForm(container);
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0].isDigital).toBe(false);
+  });
+
+  it("submits the entered product weight as a number", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const { container } = render(
+      <ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />,
+    );
+
+    fillRequiredFields();
+    fireEvent.change(screen.getByLabelText("Berat (gram)"), { target: { value: "750" } });
+    submitForm(container);
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0].weightGram).toBe(750);
+    expect(typeof onSubmit.mock.calls[0][0].weightGram).toBe("number");
+  });
+
+  it("hides the weight field for a digital product", () => {
+    render(<ProductForm initial={null} onClose={vi.fn()} onSubmit={vi.fn()} />);
+
+    expect(screen.getByLabelText("Berat (gram)")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Produk digital (tanpa pengiriman)"));
+    expect(screen.queryByLabelText("Berat (gram)")).not.toBeInTheDocument();
+  });
+
   it("falls back to the default product image when no image is provided", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     const { container } = render(

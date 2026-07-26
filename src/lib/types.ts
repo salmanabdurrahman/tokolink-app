@@ -35,6 +35,7 @@ export type Product = {
   basePrice: number;
   image: string;
   weightGram?: number;
+  isDigital?: boolean;
   sortOrder?: number;
   variantGroups?: ProductVariantGroup[];
   stock?: number | null;

@@ -55,6 +55,13 @@ const productBaseSchema = z.object({
   basePrice: z.number().int().min(0, "Harga dasar tidak boleh negatif"),
   image: z.string().url("URL gambar tidak valid").or(z.literal("")).default(""),
   variantGroups: z.array(productVariantGroupSchema).optional().default([]),
+  weightGram: z
+    .number()
+    .int()
+    .min(1, "Berat minimal 1 gram")
+    .max(1000000, "Berat maksimal 1.000.000 gram")
+    .default(1),
+  isDigital: z.boolean().default(false),
   trackStock: z.boolean().default(false),
   stock: z.number().int().min(0, "Stok tidak boleh negatif").nullable().optional(),
   categoryId: z.string().uuid().nullable().optional(),
@@ -87,19 +94,30 @@ export const checkoutItemSchema = z.object({
   qty: z.number().int().min(1, "Jumlah minimal 1").max(99, "Jumlah maksimal 99"),
 });
 
-export const checkoutCustomerSchema = z.object({
+// Server-authoritative customer schema: address is optional here because a
+// digital-only cart needs no shipping address. The address requirement for
+// physical carts is enforced server-side in validateCheckoutTenant once the
+// catalog reveals whether any item is physical (isDigital === false).
+const checkoutCustomerBaseSchema = z.object({
   name: z.string().min(2, "Nama minimal 2 karakter").max(80, "Nama maksimal 80 karakter"),
   email: z.string().email("Email tidak valid").or(z.literal("")).default(""),
   whatsapp: z
     .string()
     .regex(/^62\d{9,15}$/, "Nomor WhatsApp harus diawali dengan 62 (contoh: 628123456789)"),
-  address: z.string().min(5, "Alamat harus diisi").max(300, "Alamat maksimal 300 karakter"),
+  address: z.string().max(300, "Alamat maksimal 300 karakter").default(""),
   province: z.string().max(80).default(""),
   city: z.string().max(80).default(""),
   district: z.string().max(80).default(""),
   postalCode: z.string().max(10).default(""),
   rajaOngkirDestinationId: z.string().max(80).default(""),
   rajaOngkirDestinationLabel: z.string().max(160).default(""),
+});
+
+export const checkoutCustomerSchema = checkoutCustomerBaseSchema;
+
+// Client-side UX schema for carts that require shipping: address is mandatory.
+export const checkoutShippingCustomerSchema = checkoutCustomerBaseSchema.extend({
+  address: z.string().min(5, "Alamat harus diisi").max(300, "Alamat maksimal 300 karakter"),
 });
 
 export const checkoutShippingSchema = z.object({
@@ -113,7 +131,9 @@ export const checkoutSchema = z.object({
   tenantSlug: tenantSlugSchema,
   items: z.array(checkoutItemSchema).min(1, "Keranjang masih kosong"),
   customer: checkoutCustomerSchema,
-  shipping: checkoutShippingSchema,
+  // Optional: digital-only carts skip shipping entirely. Physical carts still
+  // require a valid quote, enforced server-side in validateCheckoutShippingQuote.
+  shipping: checkoutShippingSchema.optional(),
 });
 
 // payment_completed is intentionally excluded: it is only recorded from the

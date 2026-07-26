@@ -14,9 +14,15 @@ interface CustomerFormProps {
   value: CustomerFormValue;
   onChange: (value: CustomerFormValue) => void;
   errors?: Record<string, string>;
+  showAddress?: boolean;
 }
 
-export function CustomerForm({ value, onChange, errors = {} }: CustomerFormProps) {
+export function CustomerForm({
+  value,
+  onChange,
+  errors = {},
+  showAddress = true,
+}: CustomerFormProps) {
   return (
     <div className="mt-4 grid gap-3 shrink-0">
       <Label>Data pembeli</Label>
@@ -44,15 +50,17 @@ export function CustomerForm({ value, onChange, errors = {} }: CustomerFormProps
         />
         {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email}</p>}
       </div>
-      <div>
-        <Textarea
-          value={value.address}
-          onChange={(e) => onChange({ ...value, address: e.target.value })}
-          placeholder="Alamat pengiriman"
-          rows={2}
-        />
-        {errors.address && <p className="mt-1 text-xs text-destructive">{errors.address}</p>}
-      </div>
+      {showAddress && (
+        <div>
+          <Textarea
+            value={value.address}
+            onChange={(e) => onChange({ ...value, address: e.target.value })}
+            placeholder="Alamat pengiriman"
+            rows={2}
+          />
+          {errors.address && <p className="mt-1 text-xs text-destructive">{errors.address}</p>}
+        </div>
+      )}
     </div>
   );
 }

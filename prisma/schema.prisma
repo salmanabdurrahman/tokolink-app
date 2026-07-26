@@ -184,6 +184,7 @@ model Product {
   basePrice   Int      @map("base_price")
   image       String   @default("")
   weightGram  Int      @default(1) @map("weight_gram")
+  isDigital   Boolean  @default(false) @map("is_digital")
   sortOrder   Int      @default(0) @map("sort_order")
   stock       Int?     @map("stock")
   trackStock  Boolean  @default(false) @map("track_stock")

@@ -14,19 +14,31 @@ function normalizeShippingValue(value: string) {
   return value.trim().toLowerCase();
 }
 
+// A cart needs shipping only when it contains at least one physical product.
+// Digital-only carts skip origin/destination/courier/address validation.
+export function cartRequiresShipping(tenant: CheckoutTenant): boolean {
+  return tenant.products.some((product) => !product.isDigital);
+}
+
 export function validateCheckoutTenant(
   tenant: CheckoutTenant | null,
   data: CheckoutInput,
+  requiresShipping: boolean,
 ): asserts tenant is CheckoutTenant {
   if (!tenant) throw new Error("Toko tidak ditemukan");
-  if (!tenant.rajaOngkirOriginId) {
-    throw new Error("Toko belum mengatur origin pengiriman. Hubungi penjual.");
-  }
-  if (!data.customer.rajaOngkirDestinationId) {
-    throw new Error("Tujuan pengiriman harus dipilih");
-  }
-  if (!tenant.allowedCouriers.includes(data.shipping.courier)) {
-    throw new Error("Kurir tidak tersedia untuk toko ini");
+  if (requiresShipping) {
+    if (!tenant.rajaOngkirOriginId) {
+      throw new Error("Toko belum mengatur origin pengiriman. Hubungi penjual.");
+    }
+    if (!data.customer.rajaOngkirDestinationId) {
+      throw new Error("Tujuan pengiriman harus dipilih");
+    }
+    if (!data.customer.address || data.customer.address.trim().length < 5) {
+      throw new Error("Alamat pengiriman harus diisi");
+    }
+    if (!data.shipping || !tenant.allowedCouriers.includes(data.shipping.courier)) {
+      throw new Error("Kurir tidak tersedia untuk toko ini");
+    }
   }
   if (tenant.products.length !== new Set(data.items.map((item) => item.productId)).size) {
     throw new Error("Sebagian produk tidak ditemukan");
@@ -73,7 +85,8 @@ export function buildCheckoutOrderItems(tenant: CheckoutTenant, data: CheckoutIn
     const unitPrice =
       product.basePrice + selectedOptions.reduce((sum, option) => sum + option.priceDelta, 0);
     const totalPrice = unitPrice * item.qty;
-    const weightGram = product.weightGram || 1;
+    // Digital products carry no shipping weight so they never inflate ongkir.
+    const weightGram = product.isDigital ? 0 : product.weightGram || 1;
 
     return {
       productId: product.id,
@@ -100,6 +113,10 @@ export async function validateCheckoutShippingQuote(
   data: CheckoutInput,
   calculatedWeight: number,
 ) {
+  const requestedShipping = data.shipping;
+  if (!requestedShipping) {
+    throw new Error("Pilihan ongkir tidak valid. Silakan hitung ulang ongkir.");
+  }
   if (calculatedWeight < 1) throw new Error("Berat pengiriman tidak valid");
 
   // Reuse the exact courier set the storefront quoted with (allowedCouriers)
@@ -115,9 +132,11 @@ export async function validateCheckoutShippingQuote(
   });
   const matchedShipping = shippingOptions.find(
     (option: RajaOngkirCostOption) =>
-      normalizeShippingValue(option.courier) === normalizeShippingValue(data.shipping.courier) &&
-      normalizeShippingValue(option.service) === normalizeShippingValue(data.shipping.service) &&
-      option.cost === data.shipping.cost,
+      normalizeShippingValue(option.courier) ===
+        normalizeShippingValue(requestedShipping.courier) &&
+      normalizeShippingValue(option.service) ===
+        normalizeShippingValue(requestedShipping.service) &&
+      option.cost === requestedShipping.cost,
   );
   if (!matchedShipping) {
     throw new Error("Pilihan ongkir tidak valid. Silakan hitung ulang ongkir.");
@@ -190,7 +209,7 @@ export async function createCheckoutOrderRecord({
         platformFee,
         total,
         status: "PENDING_PAYMENT",
-        courier: data.shipping.courier,
+        courier: data.shipping?.courier || "",
         shippingService,
         shippingEtd,
         shippingWeightGram: calculatedWeight,

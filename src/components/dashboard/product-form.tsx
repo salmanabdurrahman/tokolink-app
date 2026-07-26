@@ -42,7 +42,9 @@ export function ProductForm({
   const [description, setDescription] = useState(initial?.description ?? "");
   const [basePrice, setBasePrice] = useState(initial?.basePrice ?? 0);
   const [image, setImage] = useState(initial?.image ?? "");
+  const [weightGram, setWeightGram] = useState(initial?.weightGram ?? 1);
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? "");
+  const [isDigital, setIsDigital] = useState(initial?.isDigital ?? false);
   const [trackStock, setTrackStock] = useState(initial?.trackStock ?? false);
   const [stock, setStock] = useState(initial?.stock ?? 0);
   const [variantGroups, setVariantGroups] = useState<ProductVariantGroup[]>(
@@ -62,7 +64,9 @@ export function ProductForm({
         description: initial?.description ?? "",
         basePrice: initial?.basePrice ?? 0,
         image: initial?.image ?? "",
+        weightGram: initial?.weightGram ?? 1,
         categoryId: initial?.categoryId ?? "",
+        isDigital: initial?.isDigital ?? false,
         trackStock: initial?.trackStock ?? false,
         stock: initial?.stock ?? 0,
         variantGroups: initial?.variantGroups ?? [],
@@ -76,12 +80,25 @@ export function ProductForm({
         description,
         basePrice,
         image,
+        weightGram,
         categoryId,
+        isDigital,
         trackStock,
         stock,
         variantGroups,
       }),
-    [basePrice, categoryId, description, image, name, stock, trackStock, variantGroups],
+    [
+      basePrice,
+      categoryId,
+      description,
+      image,
+      isDigital,
+      name,
+      stock,
+      trackStock,
+      variantGroups,
+      weightGram,
+    ],
   );
   const isDirty = initialSnapshot !== currentSnapshot;
 
@@ -142,6 +159,8 @@ export function ProductForm({
                 image:
                   image || "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80",
                 categoryId: categoryId || null,
+                weightGram: Number(weightGram),
+                isDigital,
                 trackStock,
                 stock: trackStock ? Number(stock) : null,
                 variantGroups: variantGroups.length > 0 ? variantGroups : undefined,
@@ -249,6 +268,40 @@ export function ProductForm({
                 ))}
               </Select>
             </Field>
+            <div className="space-y-3 rounded-xl border border-border p-4">
+              <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <input
+                  type="checkbox"
+                  checked={isDigital}
+                  onChange={(e) => setIsDigital(e.target.checked)}
+                  className="h-4 w-4 rounded border-border accent-foreground"
+                />
+                Produk digital (tanpa pengiriman)
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Aktifkan untuk produk non-fisik seperti e-book, voucher, atau jasa. Pembeli tidak
+                perlu mengisi alamat dan ongkir tidak dihitung saat checkout.
+              </p>
+              {!isDigital && (
+                <div className="space-y-1.5">
+                  <Field label="Berat (gram)">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={weightGram}
+                      onChange={(e) => setWeightGram(+e.target.value)}
+                      required
+                    />
+                    {errors.weightGram && (
+                      <p className="mt-1 text-xs text-destructive">{errors.weightGram}</p>
+                    )}
+                  </Field>
+                  <p className="text-xs text-muted-foreground">
+                    Dipakai untuk menghitung ongkir. Isi berat setelah dikemas.
+                  </p>
+                </div>
+              )}
+            </div>
             <div className="space-y-3 rounded-xl border border-border p-4">
               <label className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <input

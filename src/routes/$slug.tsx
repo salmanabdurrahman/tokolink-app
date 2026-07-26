@@ -88,6 +88,7 @@ function Storefront() {
       tenant.products.map((p) => ({
         id: p.id,
         basePrice: p.basePrice,
+        isDigital: p.isDigital ?? false,
         options: (p.variantGroups ?? []).flatMap((g) =>
           g.options.map((o) => ({ id: o.id ?? o.name, priceDelta: o.priceDelta })),
         ),

@@ -30,6 +30,8 @@ Core ownership:
 - Catalog/read query shapes live in `src/server/catalog.queries.server.ts` so route loaders and server services share include/select/order rules.
 - `Product.trackStock`/`Product.stock` are optional, opt-in per product: `stock` is `null` and untracked (always available) unless `trackStock` is enabled. Stock is checked at checkout time, decremented only on the `pending_payment -> paid` transition (`markOrderPaid` in `src/server/order-helpers.server.ts`), and clamped at 0. Stock is tracked per product only, not per variant option/combination.
 - `ProductCategory` groups products for storefront navigation; `Product.categoryId` is optional and set to `null` (not cascaded) when its category is deleted.
+- `Product.weightGram` (default `1`) is the per-item shipping weight set in the product form and used for RajaOngkir cost calculation and `OrderItem` weight snapshots. Digital products persist `weightGram = 1` but it is never used.
+- `Product.isDigital` (default `false`) marks a non-physical product (e-book, voucher, jasa). Digital products carry no shipping weight (treated as `0` gram at checkout), the weight field is hidden in the product form, and a cart of only digital items skips destination/ongkir/address entirely at checkout. A mixed cart still requires shipping for its physical items.
 
 Commerce flow:
 
@@ -61,7 +63,7 @@ Commerce flow:
 ## Checkout, payment, shipping, ledger
 
 1. Storefront cart sends checkout data to `/api/checkout`.
-2. Server validates cart, customer, tenant origin, destination, courier, service, and totals.
+2. Server validates cart, customer, tenant origin, destination, courier, service, and totals. Shipping validation is gated by `cartRequiresShipping(tenant)` (true when the cart holds any physical product); a digital-only cart skips origin/destination/courier/address checks and settles with `shippingCost = 0`.
 3. Server re-queries RajaOngkir and only accepts a shipping quote that matches destination, courier, service, cost, and calculated weight.
 4. Order is created as `pending_payment` with item/shipping/fee snapshots.
 5. Pakasir transaction is created and buyer receives payment URL.

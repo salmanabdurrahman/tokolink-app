@@ -44,11 +44,12 @@ Each merchant gets a public storefront at `tokolink-v2.vercel.app/{store-slug}`.
 - **Link-in-bio + product catalog** — combine external links and product cards in one mobile-first public page.
 - **Variant-aware catalog** — model product options such as size, color, grind type, or add-ons with price deltas.
 - **Optional stock tracking** — opt in per product to track/limit stock; checkout blocks oversell and the storefront shows a sold-out state.
+- **Physical or digital products** — set per-product shipping weight (gram) for accurate ongkir, or mark a product as digital (e-book, voucher, jasa) to skip shipping: digital items carry no weight and a digital-only cart hides the address/ongkir step at checkout.
 - **Product categories** — group products for storefront navigation and filtering.
 - **Commerce-ready data model** — store customers, orders, order item snapshots, Pakasir payment records, shipping fields, ledger entries, and withdrawal requests.
 - **Client-side cart** — keep checkout fast without forcing customers into account creation.
 - **WhatsApp order generator** — convert cart items, variants, quantities, notes, and total price into a structured `wa.me` message.
-- **Merchant dashboard** — manage store settings, links, products, categories, stock, images, and product variants.
+- **Merchant dashboard** — manage store settings, links, products, categories, stock, weight, digital/physical type, images, and product variants.
 - **SEO and social previews** — route-level metadata, canonical URLs, sitemap, robots.txt, JSON-LD, and dynamic OG images.
 - **Open-source foundation** — built with modern TypeScript, React, TanStack Start, Prisma, and Supabase Auth.
 
@@ -164,7 +165,7 @@ bun run db:generate
 bun run db:push
 ```
 
-Schema updates add auth abuse, media metadata, commerce order/payment/ledger tables, tenant shipping settings, and product weight. Run `bun run db:push` locally after pulling schema changes.
+Schema updates add auth abuse, media metadata, commerce order/payment/ledger tables, tenant shipping settings, product weight, and the `Product.isDigital` physical/digital flag. Run `bun run db:push` locally after pulling schema changes.
 
 Database workflow:
 

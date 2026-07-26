@@ -8,6 +8,7 @@ import type { CartItem } from "./types";
 export type CartReconcileProduct = {
   id: string;
   basePrice: number;
+  isDigital?: boolean;
   options: { id: string; priceDelta: number }[];
 };
 

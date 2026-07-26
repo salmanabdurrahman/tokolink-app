@@ -5,6 +5,7 @@ import { getCheckoutCatalogBySlug } from "./catalog.queries.server";
 import {
   PLATFORM_FEE_RATE,
   buildCheckoutOrderItems,
+  cartRequiresShipping,
   createCheckoutOrderRecord,
   validateCheckoutShippingQuote,
   validateCheckoutTenant,
@@ -28,14 +29,24 @@ export async function createCheckoutOrderData(data: CheckoutInput) {
       data.tenantSlug,
       data.items.map((item) => item.productId),
     );
-    validateCheckoutTenant(tenant, data);
+    if (!tenant) throw new Error("Toko tidak ditemukan");
+    const requiresShipping = cartRequiresShipping(tenant);
+    validateCheckoutTenant(tenant, data, requiresShipping);
 
     const orderItems = buildCheckoutOrderItems(tenant, data);
     const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
     const calculatedWeight = orderItems.reduce((sum, item) => sum + item.totalWeightGram, 0);
-    const matchedShipping = await validateCheckoutShippingQuote(tenant, data, calculatedWeight);
 
-    const shippingCost = matchedShipping.cost;
+    let shippingCost = 0;
+    let shippingService = "";
+    let shippingEtd = "";
+    if (requiresShipping) {
+      const matchedShipping = await validateCheckoutShippingQuote(tenant, data, calculatedWeight);
+      shippingCost = matchedShipping.cost;
+      shippingService = matchedShipping.service;
+      shippingEtd = matchedShipping.etd || data.shipping?.etd || "";
+    }
+
     const platformFee = Math.ceil(subtotal * PLATFORM_FEE_RATE);
     const total = subtotal + shippingCost;
     const orderNumber = makeOrderNumber();
@@ -52,8 +63,8 @@ export async function createCheckoutOrderData(data: CheckoutInput) {
       total,
       orderNumber,
       paymentUrl,
-      shippingService: matchedShipping.service,
-      shippingEtd: matchedShipping.etd || data.shipping.etd || "",
+      shippingService,
+      shippingEtd,
       calculatedWeight,
     });
 

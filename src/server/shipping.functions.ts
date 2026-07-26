@@ -113,11 +113,15 @@ export async function getRajaOngkirShippingCosts(data: z.infer<typeof shippingCo
   }
 
   const products = new Map(tenant.products.map((product) => [product.id, product]));
+  // Digital products carry no shipping weight, so exclude them from the ongkir
+  // calculation. A cart of only digital items shouldn't reach this endpoint.
   const weight = calculateShippingWeightGram(
-    data.items.map((item) => ({
-      weightGram: products.get(item.productId)?.weightGram,
-      qty: item.qty,
-    })),
+    data.items
+      .filter((item) => !products.get(item.productId)?.isDigital)
+      .map((item) => ({
+        weightGram: products.get(item.productId)?.weightGram,
+        qty: item.qty,
+      })),
   );
   const couriers = tenant.allowedCouriers.length ? tenant.allowedCouriers : [...DEFAULT_COURIERS];
 

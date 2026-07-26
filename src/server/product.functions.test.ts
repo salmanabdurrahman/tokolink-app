@@ -354,6 +354,65 @@ describe("createProduct", () => {
     });
   });
 
+  it("persists the digital product flag on create and forces weight to 1 gram", async () => {
+    vi.mocked(prismaAny.product.findFirst).mockResolvedValue(null);
+    vi.mocked(prismaAny.product.create).mockResolvedValue({
+      id: "new-prod",
+      name: "E-book",
+      basePrice: 50000,
+      sortOrder: 0,
+      isDigital: true,
+      variantGroups: [],
+    });
+
+    await createProductHandler({
+      data: { name: "E-book", basePrice: 50000, isDigital: true, weightGram: 500 },
+      context: tenantContext,
+    });
+
+    const callData = vi.mocked(prisma.product.create).mock.calls[0][0];
+    expect(callData).toMatchObject({ data: { isDigital: true, weightGram: 1 } });
+  });
+
+  it("persists the product weight on create", async () => {
+    vi.mocked(prismaAny.product.findFirst).mockResolvedValue(null);
+    vi.mocked(prismaAny.product.create).mockResolvedValue({
+      id: "new-prod",
+      name: "Beras",
+      basePrice: 60000,
+      sortOrder: 0,
+      weightGram: 5000,
+      variantGroups: [],
+    });
+
+    await createProductHandler({
+      data: { name: "Beras", basePrice: 60000, weightGram: 5000 },
+      context: tenantContext,
+    });
+
+    const callData = vi.mocked(prisma.product.create).mock.calls[0][0];
+    expect(callData).toMatchObject({ data: { weightGram: 5000 } });
+  });
+
+  it("falls back to 1 gram when weight is not provided", async () => {
+    vi.mocked(prismaAny.product.findFirst).mockResolvedValue(null);
+    vi.mocked(prismaAny.product.create).mockResolvedValue({
+      id: "new-prod",
+      name: "Kopi",
+      basePrice: 15000,
+      sortOrder: 0,
+      variantGroups: [],
+    });
+
+    await createProductHandler({
+      data: { name: "Kopi", basePrice: 15000 },
+      context: tenantContext,
+    });
+
+    const callData = vi.mocked(prisma.product.create).mock.calls[0][0];
+    expect(callData).toMatchObject({ data: { weightGram: 1 } });
+  });
+
   it("creates product with variants when provided", async () => {
     vi.mocked(prismaAny.product.findFirst).mockResolvedValue(null);
     vi.mocked(prismaAny.product.create).mockResolvedValue({

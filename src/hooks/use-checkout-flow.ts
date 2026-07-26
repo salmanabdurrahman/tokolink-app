@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { buildWhatsAppUrl } from "@/lib/store";
 import { trackEvent } from "@/lib/analytics";
-import { checkoutCustomerSchema } from "@/lib/schemas";
+import { checkoutCustomerSchema, checkoutShippingCustomerSchema } from "@/lib/schemas";
 import { formatWhatsAppNumber, isValidWhatsAppNumber } from "@/lib/utils";
 import type { CartItem } from "@/lib/types";
 import type { Destination, SelectedShipping } from "@/hooks/use-shipping-quote";
@@ -14,6 +14,7 @@ interface UseCheckoutFlowOptions {
   whatsappTemplate?: string;
   items: CartItem[];
   totalPrice: number;
+  requiresShipping: boolean;
   selectedDestination: Destination | null;
   shipping: SelectedShipping;
   onOrderCreated: () => void;
@@ -26,6 +27,7 @@ export function useCheckoutFlow({
   whatsappTemplate,
   items,
   totalPrice,
+  requiresShipping,
   selectedDestination,
   shipping,
   onOrderCreated,
@@ -57,7 +59,10 @@ export function useCheckoutFlow({
   };
 
   const checkoutPakasir = async () => {
-    const parsedCustomer = checkoutCustomerSchema.safeParse(customer);
+    const customerSchema = requiresShipping
+      ? checkoutShippingCustomerSchema
+      : checkoutCustomerSchema;
+    const parsedCustomer = customerSchema.safeParse(customer);
     if (!parsedCustomer.success) {
       const nextErrors: Record<string, string> = {};
       parsedCustomer.error.issues.forEach((issue) => {
@@ -69,7 +74,7 @@ export function useCheckoutFlow({
     }
     setErrors({});
 
-    if (!selectedDestination || !shipping.cost) {
+    if (requiresShipping && (!selectedDestination || !shipping.cost)) {
       toast.error("Pilih tujuan dan layanan pengiriman dulu");
       return;
     }
@@ -87,16 +92,19 @@ export function useCheckoutFlow({
             variantOptionIds: item.variantId ? item.variantId.split(",") : [],
             qty: item.qty,
           })),
-          customer: {
-            ...customer,
-            province: selectedDestination.provinceName,
-            city: selectedDestination.cityName,
-            district: selectedDestination.districtName || selectedDestination.subdistrictName,
-            postalCode: selectedDestination.zipCode,
-            rajaOngkirDestinationId: selectedDestination.id,
-            rajaOngkirDestinationLabel: selectedDestination.label,
-          },
-          shipping,
+          customer:
+            requiresShipping && selectedDestination
+              ? {
+                  ...customer,
+                  province: selectedDestination.provinceName,
+                  city: selectedDestination.cityName,
+                  district: selectedDestination.districtName || selectedDestination.subdistrictName,
+                  postalCode: selectedDestination.zipCode,
+                  rajaOngkirDestinationId: selectedDestination.id,
+                  rajaOngkirDestinationLabel: selectedDestination.label,
+                }
+              : customer,
+          shipping: requiresShipping ? shipping : undefined,
         }),
       });
       const result = await response.json();
