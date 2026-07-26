@@ -1,12 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const sendMock = vi.hoisted(() =>
-  vi.fn(
-    async (): Promise<{ data: { id: string } | null; error: { message: string } | null }> => ({
-      data: { id: "email-1" },
-      error: null,
-    }),
-  ),
+  vi.fn(async (): Promise<{ data: { id: string } | null; error: { message: string } | null }> => ({
+    data: { id: "email-1" },
+    error: null,
+  })),
 );
 
 vi.mock("resend", () => ({
