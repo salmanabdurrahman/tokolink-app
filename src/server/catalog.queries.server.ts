@@ -51,6 +51,26 @@ export const tenantIdentitySelect = {
   allowedCouriers: true,
 } as const;
 
+// Slim identity fields for dashboard shell chrome (sidebar/header/overview),
+// which only render `slug`/`name`/`whatsapp`. Avoids pulling origin/shipping
+// columns on the loader that fires on every dashboard navigation.
+export const tenantDashboardShellSelect = {
+  slug: true,
+  name: true,
+  whatsapp: true,
+} as const;
+
+// Identity fields needed by product/link management pages: display identity
+// without RajaOngkir origin/shipping columns, which those pages never read.
+export const tenantCatalogIdentitySelect = {
+  slug: true,
+  name: true,
+  tagline: true,
+  avatar: true,
+  whatsapp: true,
+  whatsappTemplate: true,
+} as const;
+
 export const linksOrderBy = { sortOrder: "asc" } as const;
 export const productsOrderBy = { sortOrder: "asc" } as const;
 export const variantGroupsOrderBy = { sortOrder: "asc" } as const;

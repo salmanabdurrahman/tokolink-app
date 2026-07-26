@@ -17,11 +17,20 @@ vi.mock("./storage", () => ({ storage: { deleteObject: vi.fn() } }));
 
 import { prisma } from "../db";
 import { clearStorefrontCatalogCache } from "./catalog.queries.server";
-import { createTenant, getDashboardData, getTenant, updateTenant } from "./tenant.functions";
+import {
+  createTenant,
+  getDashboardData,
+  getMyTenantLinks,
+  getMyTenantProducts,
+  getTenant,
+  updateTenant,
+} from "./tenant.functions";
 
 const prismaAny = prisma as any;
 const createTenantHandler = createTenant as any;
 const getDashboardDataHandler = getDashboardData as any;
+const getMyTenantProductsHandler = getMyTenantProducts as any;
+const getMyTenantLinksHandler = getMyTenantLinks as any;
 const getTenantHandler = getTenant as any;
 const updateTenantHandler = updateTenant as any;
 
@@ -100,11 +109,61 @@ describe("getDashboardData", () => {
       where: { userId: "user-1" },
       select: expect.objectContaining({ slug: true, name: true }),
     });
+    expect(prisma.tenant.findUnique).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+      select: expect.not.objectContaining({ originName: true, allowedCouriers: true }),
+    });
     expect(prisma.order.count).toHaveBeenCalledWith({
       where: { tenantId: "tenant-1", status: "PAID" },
     });
     expect(prisma.product.count).toHaveBeenCalledWith({ where: { tenantId: "tenant-1" } });
     expect(prisma.link.count).toHaveBeenCalledWith({ where: { tenantId: "tenant-1" } });
+  });
+});
+
+describe("getMyTenantProducts", () => {
+  it("selects catalog identity without origin/shipping columns", async () => {
+    const mockTenant = { slug: "toko-test", name: "Toko Test", products: [] };
+    vi.mocked(prismaAny.tenant.findUnique).mockResolvedValue(mockTenant);
+
+    await expect(getMyTenantProductsHandler({ context })).resolves.toEqual({
+      ...mockTenant,
+      links: [],
+    });
+
+    expect(prisma.tenant.findUnique).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+      select: expect.not.objectContaining({ originName: true, rajaOngkirOriginId: true }),
+    });
+  });
+
+  it("returns null when tenant not found", async () => {
+    vi.mocked(prismaAny.tenant.findUnique).mockResolvedValue(null);
+
+    await expect(getMyTenantProductsHandler({ context })).resolves.toBeNull();
+  });
+});
+
+describe("getMyTenantLinks", () => {
+  it("selects catalog identity without origin/shipping columns", async () => {
+    const mockTenant = { slug: "toko-test", name: "Toko Test", links: [] };
+    vi.mocked(prismaAny.tenant.findUnique).mockResolvedValue(mockTenant);
+
+    await expect(getMyTenantLinksHandler({ context })).resolves.toEqual({
+      ...mockTenant,
+      products: [],
+    });
+
+    expect(prisma.tenant.findUnique).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+      select: expect.not.objectContaining({ originAddress: true, allowedCouriers: true }),
+    });
+  });
+
+  it("returns null when tenant not found", async () => {
+    vi.mocked(prismaAny.tenant.findUnique).mockResolvedValue(null);
+
+    await expect(getMyTenantLinksHandler({ context })).resolves.toBeNull();
   });
 });
 

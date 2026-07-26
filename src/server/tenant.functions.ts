@@ -7,7 +7,9 @@ import { deleteTenantMediaByUrl } from "./media-cleanup";
 import {
   clearStorefrontCatalogCache,
   getStorefrontCatalogBySlug,
+  tenantCatalogIdentitySelect,
   tenantCatalogInclude,
+  tenantDashboardShellSelect,
   tenantIdentitySelect,
   tenantLinkInclude,
   tenantProductInclude,
@@ -50,7 +52,7 @@ export const getDashboardData = createServerFn({ method: "GET" })
     const [tenant, orderCount, productCount, linkCount] = await Promise.all([
       prisma.tenant.findUnique({
         where: { userId },
-        select: tenantIdentitySelect,
+        select: tenantDashboardShellSelect,
       }),
       tenantId ? prisma.order.count({ where: { tenantId, status: "PAID" } }) : Promise.resolve(0),
       tenantId ? prisma.product.count({ where: { tenantId } }) : Promise.resolve(0),
@@ -67,7 +69,7 @@ export const getMyTenantProducts = createServerFn({ method: "GET" })
     const tenant = await prisma.tenant.findUnique({
       where: { userId },
       select: {
-        ...tenantIdentitySelect,
+        ...tenantCatalogIdentitySelect,
         ...tenantProductInclude,
       },
     });
@@ -82,7 +84,7 @@ export const getMyTenantLinks = createServerFn({ method: "GET" })
     const tenant = await prisma.tenant.findUnique({
       where: { userId },
       select: {
-        ...tenantIdentitySelect,
+        ...tenantCatalogIdentitySelect,
         ...tenantLinkInclude,
       },
     });
