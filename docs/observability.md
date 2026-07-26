@@ -52,14 +52,14 @@ jq -r 'select(.message=="timing" and .event=="get_dashboard_data") | .durationMs
 
 `recordMetric(event, fields?)` logs a one-off business/cache event. Relevant to latency work:
 
-- `storefront_cache_hit` / `storefront_cache_miss` — `getStorefrontCatalogBySlug` in-memory catalog cache (`src/server/catalog.queries.server.ts`), 60s TTL per runtime instance. Low hit rate under real traffic means the per-instance cache isn't warm enough (short-lived serverless instances, or traffic spread across many instances) — see `docs/performance-baseline.md` cross-instance cache note in Phase 34.
+- `storefront_cache_hit` / `storefront_cache_miss` — `getStorefrontCatalogBySlug` in-memory catalog cache (`src/server/catalog.queries.server.ts`), 60s TTL per runtime instance. Low hit rate under real traffic means the per-instance cache isn't warm enough (short-lived serverless instances, or traffic spread across many instances) — see the cross-instance cache note in `docs/performance-baseline.md`.
 - `auth_verify_local` / `auth_verify_network` — which path `resolveSupabaseUserId` took. `local` verifies the JWT against cached JWKS with no network call; `network` falls back to `supabaseAdmin.auth.getUser` (GoTrue network round-trip), which is disabled in production. A `network` event in production logs would indicate a config problem (see `docs/security.md`).
 
 Full list of metric/timing event names lives in `src/lib/metrics.server.ts` (`MetricEvent`, `TimingEvent`).
 
-## Baseline methodology (Phase 30–33 auth/session/loader work)
+## Baseline methodology (auth/session/loader work)
 
-There is no recorded production baseline for these events yet (instrumentation added after the Phase 30–33 fixes shipped). To establish before/after numbers for a future change in this area:
+There is no recorded production baseline for these events yet (instrumentation added after the auth/session/loader latency fixes shipped). To establish before/after numbers for a future change in this area:
 
 1. Deploy the instrumented build to production (or a representative preview with real traffic).
 2. Let it run long enough to collect a meaningful sample per event (hundreds of requests minimum; hot dashboard/storefront/checkout paths should reach this within a day of normal traffic).
@@ -67,4 +67,4 @@ There is no recorded production baseline for these events yet (instrumentation a
 4. Record the numbers (with date + commit) in this file or `docs/performance-baseline.md` before making the next latency-sensitive change.
 5. After the change ships and has collected a comparable sample window, repeat step 3 and diff against the recorded baseline.
 
-This keeps "prove it, don't guess" (Phase 35 goal) actionable without requiring a metrics backend: the log lines are the source of truth, and percentiles/hit-rates are computed on demand from them.
+This keeps "prove it, don't guess" actionable without requiring a metrics backend: the log lines are the source of truth, and percentiles/hit-rates are computed on demand from them.

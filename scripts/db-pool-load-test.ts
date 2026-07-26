@@ -1,9 +1,9 @@
 import { prisma } from "../src/db";
 
-// Lightweight local load check for Phase 31: fire many concurrent queries
-// through the shared Prisma singleton/pool and confirm the Supabase pooler
-// does not reject with "too many connections" or similar pool exhaustion
-// errors. Run with real local credentials:
+// Lightweight local load check: fire many concurrent queries through the
+// shared Prisma singleton/pool and confirm the Supabase pooler does not
+// reject with "too many connections" or similar pool exhaustion errors.
+// Run with real local credentials:
 //   bun scripts/db-pool-load-test.ts [concurrency]
 
 function parseConcurrency(): number {

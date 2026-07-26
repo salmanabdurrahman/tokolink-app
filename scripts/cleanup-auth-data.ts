@@ -1,10 +1,10 @@
 import { prisma } from "../src/db";
 import { cleanupExpiredAuthData } from "../src/server/data-retention.server";
 
-// Retention sweep for Phase 37: delete expired auth-rate-limit buckets,
-// stale audit logs, expired verification codes, and old canceled orders so
-// these tables stay small and their lookup queries stay fast. Run manually
-// or on a schedule (cron/CI job):
+// Retention sweep: delete expired auth-rate-limit buckets, stale audit logs,
+// expired verification codes, and old canceled orders so these tables stay
+// small and their lookup queries stay fast. Run manually or on a schedule
+// (cron/CI job):
 //   bun scripts/cleanup-auth-data.ts
 
 async function main() {

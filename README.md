@@ -231,24 +231,27 @@ Never commit real `.env` files or production credentials.
 
 ## Available Scripts
 
-| Script                     | Description                                          |
-| -------------------------- | ---------------------------------------------------- |
-| `bun run dev`              | Start Vite development server                        |
-| `bun run build`            | Build production app                                 |
-| `bun run build:dev`        | Build in development mode                            |
-| `bun run preview`          | Preview built app                                    |
-| `bun run lint`             | Run ESLint and Prettier rule checks                  |
-| `bun run typecheck`        | Run TypeScript typecheck without emit                |
-| `bun run test`             | Run Vitest once                                      |
-| `bun run test:watch`       | Run Vitest in watch mode                             |
-| `bun run test:coverage`    | Run Vitest with coverage                             |
-| `bun run format`           | Format repository with Prettier                      |
-| `bun run db:generate`      | Generate Prisma client                               |
-| `bun run db:push`          | Push Prisma schema to database                       |
-| `bun run db:migrate`       | Create/apply local Prisma migration                  |
-| `bun run db:studio`        | Open Prisma Studio                                   |
-| `bun run db:seed`          | Run database seed script                             |
-| `bun run media:migrate:r2` | Dry-run legacy Blob media inventory for R2 migration |
+| Script                      | Description                                                                                                      |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `bun run dev`               | Start Vite development server                                                                                    |
+| `bun run build`             | Build production app                                                                                             |
+| `bun run build:dev`         | Build in development mode                                                                                        |
+| `bun run preview`           | Preview built app                                                                                                |
+| `bun run lint`              | Run ESLint and Prettier rule checks                                                                              |
+| `bun run typecheck`         | Run TypeScript typecheck without emit                                                                            |
+| `bun run test`              | Run Vitest once                                                                                                  |
+| `bun run test:watch`        | Run Vitest in watch mode                                                                                         |
+| `bun run test:coverage`     | Run Vitest with coverage                                                                                         |
+| `bun run check`             | Run lint, typecheck, test, and build in sequence                                                                 |
+| `bun run format`            | Format repository with Prettier                                                                                  |
+| `bun run db:generate`       | Generate Prisma client                                                                                           |
+| `bun run db:push`           | Push Prisma schema to database                                                                                   |
+| `bun run db:migrate`        | Create/apply local Prisma migration                                                                              |
+| `bun run db:studio`         | Open Prisma Studio                                                                                               |
+| `bun run db:seed`           | Run database seed script                                                                                         |
+| `bun run media:migrate:r2`  | Dry-run legacy Blob media inventory for R2 migration                                                             |
+| `bun run db:pool-load-test` | Local concurrent-query load check against the Supabase pooler                                                    |
+| `bun run data:cleanup-auth` | Retention sweep: delete expired auth-rate-limit buckets, audit logs, verification codes, and old canceled orders |
 
 ## Repository Structure
 
