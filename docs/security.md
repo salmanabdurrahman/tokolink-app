@@ -14,6 +14,7 @@ Security controls are layered across middleware, Server Functions, validation, p
 - Browser sessions come from Supabase Auth.
 - Protected writes use `authMiddleware`.
 - Middleware verifies the Supabase access token, loads the Prisma user, and attaches tenant context.
+- The access token is verified locally against the Supabase project's public JWKS (`SUPABASE_URL/auth/v1/.well-known/jwks.json`, asymmetric ES256/RS256 signing keys): signature, expiry, issuer, audience, key id, and algorithm are all checked, with no network round-trip to Supabase Auth. JWKS keys are cached in-memory with a short TTL. Falls back to `supabaseAdmin.auth.getUser` only outside production when the project URL cannot be resolved. Production always requires local verification.
 - Mutations never trust client-sent tenant/user IDs for ownership.
 - Tenant-owned records are read/updated/deleted with `tenantId` guards.
 

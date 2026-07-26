@@ -5,6 +5,10 @@ import { sendVerificationEmail, sendWelcomeEmail } from "./email";
 import crypto from "crypto";
 import { z } from "zod";
 import { parseCookie } from "../lib/cookies";
+import {
+  canVerifySupabaseAccessTokenLocally,
+  verifySupabaseAccessTokenLocally,
+} from "../lib/supabase-jwt.server";
 import { enforceAuthRateLimit, hashOtp, logAuthAbuse, normalizeEmail } from "./auth-abuse";
 import { recordMetric } from "../lib/metrics.server";
 
@@ -29,14 +33,23 @@ export const getSessionUser = createServerFn({ method: "GET" }).handler(async (c
   if (!token) return null;
 
   try {
-    const {
-      data: { user: supaUser },
-      error,
-    } = await supabaseAdmin.auth.getUser(token);
-    if (error || !supaUser) return null;
+    let supabaseId: string | null = null;
+
+    if (canVerifySupabaseAccessTokenLocally()) {
+      const verified = await verifySupabaseAccessTokenLocally(token);
+      supabaseId = verified?.supabaseId ?? null;
+    } else if (process.env.NODE_ENV !== "production") {
+      const {
+        data: { user: supaUser },
+        error,
+      } = await supabaseAdmin.auth.getUser(token);
+      supabaseId = !error && supaUser ? supaUser.id : null;
+    }
+
+    if (!supabaseId) return null;
 
     const user = await prisma.user.findUnique({
-      where: { supabaseId: supaUser.id },
+      where: { supabaseId },
       include: { tenant: true },
     });
     return user;
