@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getSession = vi.hoisted(() => vi.fn());
@@ -51,5 +51,55 @@ describe("useSession", () => {
     unmount();
 
     expect(unsubscribe).toHaveBeenCalled();
+  });
+
+  it("resets user and logs error when Prisma sync fails", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    syncSession.mockRejectedValueOnce(new Error("sync failed"));
+    getSession.mockResolvedValueOnce({
+      data: { session: { access_token: "token-fail", expires_in: 3600 } },
+      error: null,
+    });
+
+    renderHook(() => useSession());
+
+    await waitFor(() => expect(useAuth.getState().isLoading).toBe(false));
+    expect(useAuth.getState().user).toBeNull();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "Failed to sync session with Prisma:",
+      expect.any(Error),
+    );
+
+    consoleSpy.mockRestore();
+  });
+
+  it("reuses the in-flight sync promise when the same token fires twice via auth changes", async () => {
+    let resolveSync!: (user: unknown) => void;
+    syncSession.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSync = resolve;
+        }),
+    );
+
+    let authCallback: (event: string, session: unknown) => void = () => {};
+    onAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
+      authCallback = cb;
+      return { data: { subscription: { unsubscribe: vi.fn() } } };
+    });
+
+    renderHook(() => useSession());
+    await waitFor(() => expect(onAuthStateChange).toHaveBeenCalled());
+
+    const session = { access_token: "token-dup", expires_in: 3600 };
+    act(() => {
+      authCallback("SIGNED_IN", session);
+      authCallback("SIGNED_IN", session);
+    });
+
+    expect(syncSession).toHaveBeenCalledTimes(1);
+
+    resolveSync({ id: "user-dup" });
+    await waitFor(() => expect(useAuth.getState().user).toMatchObject({ id: "user-dup" }));
   });
 });

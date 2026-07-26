@@ -78,7 +78,9 @@ describe("FallbackImage", () => {
   });
 
   it("resets error state when src changes", () => {
-    const { rerender } = render(<FallbackImage src="https://cdn.example.com/broken.webp" alt="Kopi Susu" />);
+    const { rerender } = render(
+      <FallbackImage src="https://cdn.example.com/broken.webp" alt="Kopi Susu" />,
+    );
 
     fireEvent.error(screen.getByAltText("Kopi Susu"));
     expect(screen.getByText("KS")).toBeInTheDocument();

@@ -199,4 +199,202 @@ describe("useTenant", () => {
       "product-2",
     ]);
   });
+
+  it("applies updateSettings result directly when there is no previous tenant", async () => {
+    act(() => useTenant.getState().setTenant(null));
+    updateTenantMock.mockResolvedValue({ name: "Baru" });
+
+    await act(async () => {
+      await useTenant.getState().updateSettings({ name: "Baru" });
+    });
+
+    expect(useTenant.getState().tenant).toEqual({ name: "Baru" });
+  });
+
+  it("addLink is a no-op when there is no tenant", async () => {
+    act(() => useTenant.getState().setTenant(null));
+    addLinkMock.mockResolvedValue({
+      id: "link-x",
+      label: "X",
+      url: "https://x.test",
+      sortOrder: 0,
+    });
+
+    await act(async () => {
+      await useTenant.getState().addLink({ label: "X", url: "https://x.test", sortOrder: 0 });
+    });
+
+    expect(useTenant.getState().tenant).toBeNull();
+  });
+
+  it("updateLink is a no-op when there is no tenant", async () => {
+    act(() => useTenant.getState().setTenant(null));
+    updateLinkMock.mockResolvedValue({
+      id: "link-x",
+      label: "Y",
+      url: "https://x.test",
+      sortOrder: 0,
+    });
+
+    await act(async () => {
+      await useTenant.getState().updateLink("link-x", { label: "Y" });
+    });
+
+    expect(useTenant.getState().tenant).toBeNull();
+  });
+
+  it("removeLink is a no-op when there is no tenant", async () => {
+    act(() => useTenant.getState().setTenant(null));
+    deleteLinkMock.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await useTenant.getState().removeLink("link-x");
+    });
+
+    expect(useTenant.getState().tenant).toBeNull();
+  });
+
+  it("rolls back link removal when server delete fails", async () => {
+    deleteLinkMock.mockRejectedValue(new Error("delete failed"));
+    await expect(
+      act(async () => {
+        await useTenant.getState().removeLink("link-1");
+      }),
+    ).rejects.toThrow("delete failed");
+
+    expect(useTenant.getState().tenant?.links.map((link) => link.id)).toEqual(["link-1", "link-2"]);
+  });
+
+  it("reorderLinks is a no-op when there is no tenant", async () => {
+    act(() => useTenant.getState().setTenant(null));
+    reorderLinksMock.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await useTenant.getState().reorderLinks(["link-x"]);
+    });
+
+    expect(useTenant.getState().tenant).toBeNull();
+  });
+
+  it("reorderLinks skips ids that no longer exist", async () => {
+    reorderLinksMock.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await useTenant.getState().reorderLinks(["link-1", "missing-link"]);
+    });
+
+    expect(useTenant.getState().tenant?.links.map((link) => link.id)).toEqual(["link-1"]);
+  });
+
+  it("rolls back link reorder when server reorder fails", async () => {
+    reorderLinksMock.mockRejectedValue(new Error("reorder failed"));
+    await expect(
+      act(async () => {
+        await useTenant.getState().reorderLinks(["link-2", "link-1"]);
+      }),
+    ).rejects.toThrow("reorder failed");
+
+    expect(useTenant.getState().tenant?.links.map((link) => link.id)).toEqual(["link-1", "link-2"]);
+  });
+
+  it("addProduct is a no-op when there is no tenant", async () => {
+    act(() => useTenant.getState().setTenant(null));
+    createProductMock.mockResolvedValue({
+      id: "product-x",
+      name: "X",
+      description: "",
+      basePrice: 1000,
+      image: "",
+      sortOrder: 0,
+    });
+
+    await act(async () => {
+      await useTenant.getState().addProduct({
+        name: "X",
+        description: "",
+        basePrice: 1000,
+        image: "",
+        sortOrder: 0,
+      });
+    });
+
+    expect(useTenant.getState().tenant).toBeNull();
+  });
+
+  it("updateProduct is a no-op when there is no tenant", async () => {
+    act(() => useTenant.getState().setTenant(null));
+    updateProductMock.mockResolvedValue({
+      id: "product-x",
+      name: "Y",
+      description: "",
+      basePrice: 1000,
+      image: "",
+      sortOrder: 0,
+    });
+
+    await act(async () => {
+      await useTenant.getState().updateProduct("product-x", { name: "Y" });
+    });
+
+    expect(useTenant.getState().tenant).toBeNull();
+  });
+
+  it("rolls back product update when server update fails", async () => {
+    updateProductMock.mockRejectedValue(new Error("update failed"));
+    await expect(
+      act(async () => {
+        await useTenant.getState().updateProduct("product-1", { name: "Gagal" });
+      }),
+    ).rejects.toThrow("update failed");
+
+    expect(useTenant.getState().tenant?.products[0].name).toBe("Kopi Susu");
+  });
+
+  it("removeProduct is a no-op when there is no tenant", async () => {
+    act(() => useTenant.getState().setTenant(null));
+    deleteProductMock.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await useTenant.getState().removeProduct("product-x");
+    });
+
+    expect(useTenant.getState().tenant).toBeNull();
+  });
+
+  it("reorderProducts is a no-op when there is no tenant", async () => {
+    act(() => useTenant.getState().setTenant(null));
+    reorderProductsMock.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await useTenant.getState().reorderProducts(["product-x"]);
+    });
+
+    expect(useTenant.getState().tenant).toBeNull();
+  });
+
+  it("reorderProducts skips ids that no longer exist", async () => {
+    reorderProductsMock.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await useTenant.getState().reorderProducts(["product-1", "missing-product"]);
+    });
+
+    expect(useTenant.getState().tenant?.products.map((product) => product.id)).toEqual([
+      "product-1",
+    ]);
+  });
+
+  it("rolls back product reorder when server reorder fails", async () => {
+    reorderProductsMock.mockRejectedValue(new Error("reorder failed"));
+    await expect(
+      act(async () => {
+        await useTenant.getState().reorderProducts(["product-2", "product-1"]);
+      }),
+    ).rejects.toThrow("reorder failed");
+
+    expect(useTenant.getState().tenant?.products.map((product) => product.id)).toEqual([
+      "product-1",
+      "product-2",
+    ]);
+  });
 });

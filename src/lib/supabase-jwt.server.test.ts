@@ -204,5 +204,77 @@ describe("supabase-jwt.server", () => {
 
       await expect(verifySupabaseAccessTokenLocally("not-a-jwt")).resolves.toBeNull();
     });
+
+    it("rejects a token with no subject claim", async () => {
+      vi.stubEnv("VITE_SUPABASE_URL", projectUrl);
+      const { privateKey, publicJwk } = await makeSigner();
+      stubFetchWithJwks(projectUrl, [publicJwk]);
+      const token = await new SignJWT({})
+        .setProtectedHeader({ alg: "ES256", kid: KID })
+        .setIssuer(issuer)
+        .setAudience("authenticated")
+        .setIssuedAt()
+        .setExpirationTime("1h")
+        .sign(privateKey);
+
+      await expect(verifySupabaseAccessTokenLocally(token)).resolves.toBeNull();
+    });
+
+    it("returns null when the JWKS endpoint responds with a non-ok status", async () => {
+      vi.stubEnv("VITE_SUPABASE_URL", projectUrl);
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => new Response("server error", { status: 500 })),
+      );
+      const { privateKey } = await makeSigner();
+      const token = await signToken(privateKey, { iss: issuer });
+
+      await expect(verifySupabaseAccessTokenLocally(token)).resolves.toBeNull();
+    });
+
+    it("returns null when the JWKS response has no keys array", async () => {
+      vi.stubEnv("VITE_SUPABASE_URL", projectUrl);
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(
+          async () =>
+            new Response(JSON.stringify({}), {
+              status: 200,
+              headers: { "content-type": "application/json" },
+            }),
+        ),
+      );
+      const { privateKey } = await makeSigner();
+      const token = await signToken(privateKey, { iss: issuer });
+
+      await expect(verifySupabaseAccessTokenLocally(token)).resolves.toBeNull();
+    });
+
+    it("reuses cached JWKS keys within the TTL and avoids refetching", async () => {
+      vi.stubEnv("VITE_SUPABASE_URL", projectUrl);
+      const { privateKey, publicJwk } = await makeSigner();
+      const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === jwksUrlFor(projectUrl)) {
+          return new Response(JSON.stringify({ keys: [publicJwk] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+        return new Response("not found", { status: 404 });
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      const tokenOne = await signToken(privateKey, { sub: "supa-user-1", iss: issuer });
+      const tokenTwo = await signToken(privateKey, { sub: "supa-user-2", iss: issuer });
+
+      await expect(verifySupabaseAccessTokenLocally(tokenOne)).resolves.toEqual({
+        supabaseId: "supa-user-1",
+      });
+      await expect(verifySupabaseAccessTokenLocally(tokenTwo)).resolves.toEqual({
+        supabaseId: "supa-user-2",
+      });
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
   });
 });

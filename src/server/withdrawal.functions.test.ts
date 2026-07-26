@@ -182,4 +182,121 @@ describe("withdrawal functions", () => {
     });
     expect(sendWithdrawalStatusEmail).toHaveBeenCalledWith("seller@example.com", 60_000, "PAID");
   });
+
+  it("cancels ledger and clears processedAt when withdrawal status becomes processing", async () => {
+    const updated = {
+      id: "wd-1",
+      amount: 60_000,
+      status: "PROCESSING",
+      tenant: { user: { email: "seller@example.com" } },
+    };
+    const updateSpy = vi.fn().mockResolvedValue(updated);
+    const tx = {
+      withdrawalRequest: {
+        findUnique: vi.fn().mockResolvedValue({ id: "wd-1" }),
+        update: updateSpy,
+      },
+      ledgerEntry: { updateMany: vi.fn() },
+    };
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await expect(updateWithdrawalStatus("wd-1", "PROCESSING")).resolves.toMatchObject({
+      status: "PROCESSING",
+    });
+
+    expect(updateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ processedAt: null }) }),
+    );
+    expect(tx.ledgerEntry.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("cancels ledger when withdrawal status becomes rejected", async () => {
+    const updated = {
+      id: "wd-1",
+      amount: 60_000,
+      status: "REJECTED",
+      tenant: { user: { email: "seller@example.com" } },
+    };
+    const tx = {
+      withdrawalRequest: {
+        findUnique: vi.fn().mockResolvedValue({ id: "wd-1" }),
+        update: vi.fn().mockResolvedValue(updated),
+      },
+      ledgerEntry: { updateMany: vi.fn() },
+    };
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await expect(updateWithdrawalStatus("wd-1", "REJECTED")).resolves.toMatchObject({
+      status: "REJECTED",
+    });
+
+    expect(tx.ledgerEntry.updateMany).toHaveBeenCalledWith({
+      where: { withdrawalRequestId: "wd-1", type: "WITHDRAWAL" },
+      data: { status: "CANCELED" },
+    });
+  });
+
+  it("throws when withdrawal request does not exist", async () => {
+    const tx = {
+      withdrawalRequest: { findUnique: vi.fn().mockResolvedValue(null), update: vi.fn() },
+      ledgerEntry: { updateMany: vi.fn() },
+    };
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await expect(updateWithdrawalStatus("wd-missing", "PAID")).rejects.toThrow(
+      "Request pencairan tidak ditemukan",
+    );
+
+    expect(tx.withdrawalRequest.update).not.toHaveBeenCalled();
+  });
+
+  it("skips status email when tenant owner has no email", async () => {
+    const updated = {
+      id: "wd-1",
+      amount: 60_000,
+      status: "PAID",
+      tenant: { user: { email: null } },
+    };
+    const tx = {
+      withdrawalRequest: {
+        findUnique: vi.fn().mockResolvedValue({ id: "wd-1" }),
+        update: vi.fn().mockResolvedValue(updated),
+      },
+      ledgerEntry: { updateMany: vi.fn() },
+    };
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await expect(updateWithdrawalStatus("wd-1", "PAID")).resolves.toMatchObject({ status: "PAID" });
+
+    expect(sendWithdrawalStatusEmail).not.toHaveBeenCalled();
+  });
+
+  it("logs error when status email fails to send", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.mocked(sendWithdrawalStatusEmail).mockRejectedValueOnce(new Error("smtp down"));
+    const updated = {
+      id: "wd-1",
+      amount: 60_000,
+      status: "PAID",
+      tenant: { user: { email: "seller@example.com" } },
+    };
+    const tx = {
+      withdrawalRequest: {
+        findUnique: vi.fn().mockResolvedValue({ id: "wd-1" }),
+        update: vi.fn().mockResolvedValue(updated),
+      },
+      ledgerEntry: { updateMany: vi.fn() },
+    };
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await expect(updateWithdrawalStatus("wd-1", "PAID")).resolves.toMatchObject({ status: "PAID" });
+
+    await vi.waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "[WITHDRAWAL] Failed to send status email",
+        expect.any(Error),
+      );
+    });
+    consoleSpy.mockRestore();
+  });
 });

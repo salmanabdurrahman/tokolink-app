@@ -55,7 +55,9 @@ describe("ImageUpload", () => {
 
     await userEvent.upload(input, makeFile());
 
-    await waitFor(() => expect(onChange).toHaveBeenCalledWith("https://cdn.example.com/uploaded.webp"));
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith("https://cdn.example.com/uploaded.webp"),
+    );
     expect(validateImage).toHaveBeenCalled();
     expect(compressToWebP).toHaveBeenCalled();
     expect(uploadImage).toHaveBeenCalled();
@@ -94,17 +96,24 @@ describe("ImageUpload", () => {
 
     await userEvent.upload(input, makeFile());
 
-    expect(await screen.findByText("Format gambar harus JPEG, PNG, WebP, atau GIF")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Format gambar harus JPEG, PNG, WebP, atau GIF"),
+    ).toBeInTheDocument();
     expect(onChange).not.toHaveBeenCalled();
 
     const retryButton = screen.getByRole("button", { name: "Coba lagi" });
     vi.mocked(validateImage).mockResolvedValue({ valid: true });
     vi.mocked(compressToWebP).mockResolvedValue(new Blob(["webp"], { type: "image/webp" }));
-    vi.mocked(uploadImage).mockResolvedValue({ url: "https://cdn.example.com/retry.webp", key: "k" } as any);
+    vi.mocked(uploadImage).mockResolvedValue({
+      url: "https://cdn.example.com/retry.webp",
+      key: "k",
+    } as any);
 
     fireEvent.click(retryButton);
 
-    await waitFor(() => expect(onChange).toHaveBeenCalledWith("https://cdn.example.com/retry.webp"));
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith("https://cdn.example.com/retry.webp"),
+    );
   });
 
   it("shows server error message when upload fails", async () => {

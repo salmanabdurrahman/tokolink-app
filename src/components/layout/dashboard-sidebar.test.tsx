@@ -145,7 +145,9 @@ describe("DashboardSidebar", () => {
   it("does not render the collapse toggle button on mobile", () => {
     renderSidebar({ isMobile: true });
 
-    expect(screen.queryByRole("button", { name: /Kecilkan menu|Besarkan menu/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Kecilkan menu|Besarkan menu/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("closes the mobile menu when the close button is clicked", () => {

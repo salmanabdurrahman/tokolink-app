@@ -108,4 +108,220 @@ describe("FloatingCart", () => {
 
     expect(screen.getByText(/Nomor WhatsApp toko belum diisi/)).toBeInTheDocument();
   });
+
+  it("redirects to WhatsApp with the built order message", () => {
+    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Chat WhatsApp →" }));
+
+    expect(window.location.assign).toHaveBeenCalledWith(expect.stringContaining("https://wa.me/"));
+  });
+
+  it("decrements item qty via the minus button", () => {
+    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Kurangi Kopi Susu" }));
+
+    expect(useCart.getState().items).toHaveLength(0);
+  });
+
+  it("clears the cart when 'Kosongkan keranjang' is clicked", () => {
+    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Kosongkan keranjang" }));
+
+    expect(useCart.getState().items).toHaveLength(0);
+  });
+
+  it("closes the sheet via the close control", () => {
+    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    expect(screen.getByText("Keranjang")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Tutup panel" }));
+
+    expect(screen.queryByText("Keranjang")).not.toBeInTheDocument();
+  });
+
+  it("updates the order note field", () => {
+    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    const note = screen.getByPlaceholderText(/Titip di pos satpam/);
+    fireEvent.change(note, { target: { value: "Tolong bungkus rapi" } });
+
+    expect(note).toHaveValue("Tolong bungkus rapi");
+  });
+
+  it("updates the customer email field", () => {
+    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    const email = screen.getByPlaceholderText(/Email receipt/);
+    fireEvent.change(email, { target: { value: "budi@test.com" } });
+
+    expect(email).toHaveValue("budi@test.com");
+  });
+
+  it("shows an error toast when destination search returns no results", async () => {
+    const { toast } = await import("sonner");
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json([])) as any);
+
+    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Cari" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Lokasi tidak ditemukan"));
+  });
+
+  it("shows an error toast when destination search request fails", async () => {
+    const { toast } = await import("sonner");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("network down");
+      }) as any,
+    );
+
+    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Cari" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("network down"));
+  });
+
+  it("shows an error toast when shipping cost lookup fails", async () => {
+    const { toast } = await import("sonner");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (url.includes("destinations")) {
+          return Response.json([
+            {
+              id: "dest-1",
+              label: "Senayan, Jakarta Selatan",
+              provinceName: "DKI Jakarta",
+              cityName: "Jakarta Selatan",
+              districtName: "",
+              subdistrictName: "Senayan",
+              zipCode: "12110",
+            },
+          ]);
+        }
+        if (url.includes("costs")) {
+          return Response.json({ message: "Ongkir belum tersedia" }, { status: 400 });
+        }
+        return Response.json({});
+      }) as any,
+    );
+
+    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.change(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), {
+      target: { value: "senayan" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Cari" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Senayan, Jakarta Selatan" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Ongkir belum tersedia"));
+  });
+
+  it("blocks checkout with a toast when no shipping option selected", async () => {
+    const { toast } = await import("sonner");
+    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Bayar via Pakasir →" }));
+
+    expect(toast.error).toHaveBeenCalledWith("Pilih tujuan dan layanan pengiriman dulu");
+    expect(fetch).not.toHaveBeenCalledWith("/api/checkout", expect.anything());
+  });
+
+  it("shows an error toast when checkout response has no payment url", async () => {
+    const { toast } = await import("sonner");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (url.includes("destinations")) {
+          return Response.json([
+            {
+              id: "dest-1",
+              label: "Senayan, Jakarta Selatan",
+              provinceName: "DKI Jakarta",
+              cityName: "Jakarta Selatan",
+              districtName: "Kebayoran Baru",
+              subdistrictName: "Senayan",
+              zipCode: "12110",
+            },
+          ]);
+        }
+        if (url.includes("costs")) {
+          return Response.json({
+            options: [
+              { courier: "jne", service: "REG", description: "Regular", cost: 12000, etd: "1-2" },
+            ],
+          });
+        }
+        return Response.json({ orderNumber: "TL1" });
+      }) as any,
+    );
+
+    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.change(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), {
+      target: { value: "senayan" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Cari" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Senayan, Jakarta Selatan" }));
+    fireEvent.click(await screen.findByRole("button", { name: /jne REG/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Bayar via Pakasir →" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Link pembayaran tidak tersedia"));
+  });
+
+  it("shows an error toast when checkout request fails", async () => {
+    const { toast } = await import("sonner");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (url.includes("destinations")) {
+          return Response.json([
+            {
+              id: "dest-1",
+              label: "Senayan, Jakarta Selatan",
+              provinceName: "DKI Jakarta",
+              cityName: "Jakarta Selatan",
+              districtName: "Kebayoran Baru",
+              subdistrictName: "Senayan",
+              zipCode: "12110",
+            },
+          ]);
+        }
+        if (url.includes("costs")) {
+          return Response.json({
+            options: [
+              { courier: "jne", service: "REG", description: "Regular", cost: 12000, etd: "1-2" },
+            ],
+          });
+        }
+        return Response.json({ message: "Checkout gagal. Coba lagi." }, { status: 500 });
+      }) as any,
+    );
+
+    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
+    fireEvent.change(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), {
+      target: { value: "senayan" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Cari" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Senayan, Jakarta Selatan" }));
+    fireEvent.click(await screen.findByRole("button", { name: /jne REG/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Bayar via Pakasir →" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Checkout gagal. Coba lagi."));
+  });
 });

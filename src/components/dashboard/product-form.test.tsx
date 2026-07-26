@@ -72,7 +72,9 @@ describe("ProductForm", () => {
 
   it("converts basePrice to a number and submits parsed data", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
-    const { container } = render(<ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />);
+    const { container } = render(
+      <ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />,
+    );
 
     fillRequiredFields("Kopi Baru", "20000");
     submitForm(container);
@@ -86,7 +88,9 @@ describe("ProductForm", () => {
 
   it("falls back to the default product image when no image is provided", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
-    const { container } = render(<ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />);
+    const { container } = render(
+      <ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />,
+    );
 
     fillRequiredFields();
     submitForm(container);
@@ -99,7 +103,9 @@ describe("ProductForm", () => {
 
   it("shows a validation error and does not submit when name is missing", async () => {
     const onSubmit = vi.fn();
-    const { container } = render(<ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />);
+    const { container } = render(
+      <ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />,
+    );
 
     fireEvent.change(screen.getByLabelText("Harga dasar (Rp)"), { target: { value: "20000" } });
     submitForm(container);
@@ -110,7 +116,9 @@ describe("ProductForm", () => {
 
   it("does not submit when a variant group has no options", async () => {
     const onSubmit = vi.fn();
-    const { container } = render(<ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />);
+    const { container } = render(
+      <ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />,
+    );
 
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "+ Tipe varian" }));
@@ -124,7 +132,9 @@ describe("ProductForm", () => {
 
   it("adds a variant group with an option and submits it", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
-    const { container } = render(<ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />);
+    const { container } = render(
+      <ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />,
+    );
 
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "+ Tipe varian" }));
@@ -164,14 +174,14 @@ describe("ProductForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Hapus grup" }));
 
     expect(screen.queryByText("Ukuran")).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/Belum ada tipe varian/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Belum ada tipe varian/)).toBeInTheDocument();
   });
 
   it("uploads an image through ImageUpload and submits the resulting URL", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
-    const { container } = render(<ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />);
+    const { container } = render(
+      <ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />,
+    );
 
     fillRequiredFields();
 
@@ -196,7 +206,9 @@ describe("ProductForm", () => {
           resolveSubmit = resolve;
         }),
     );
-    const { container } = render(<ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />);
+    const { container } = render(
+      <ProductForm initial={null} onClose={vi.fn()} onSubmit={onSubmit} />,
+    );
 
     fillRequiredFields();
     submitForm(container);

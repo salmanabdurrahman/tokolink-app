@@ -58,6 +58,31 @@ describe("verifyTurnstile", () => {
     await expect(verifyTurnstile("token", "signup")).resolves.toBe(false);
   });
 
+  it("rejects when token is empty or the disabled sentinel value", async () => {
+    process.env.TURNSTILE_SECRET_KEY = "secret";
+
+    await expect(verifyTurnstile("", "signup")).resolves.toBe(false);
+    await expect(verifyTurnstile("disabled", "signup")).resolves.toBe(false);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects when the siteverify request responds with a non-ok status", async () => {
+    process.env.TURNSTILE_SECRET_KEY = "secret";
+    vi.mocked(fetch).mockResolvedValue({ ok: false, status: 500 } as Response);
+
+    await expect(verifyTurnstile("token", "signup")).resolves.toBe(false);
+  });
+
+  it("rejects failed verification when error-codes is omitted from the response", async () => {
+    process.env.TURNSTILE_SECRET_KEY = "secret";
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: false }),
+    } as Response);
+
+    await expect(verifyTurnstile("token", "signup")).resolves.toBe(false);
+  });
+
   it("bypasses missing secret outside production only", async () => {
     delete process.env.TURNSTILE_SECRET_KEY;
     process.env.NODE_ENV = "development";

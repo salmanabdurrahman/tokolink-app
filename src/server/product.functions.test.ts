@@ -10,13 +10,7 @@ vi.mock("../db", () => ({
       create: vi.fn(),
     },
     productVariantGroup: { deleteMany: vi.fn() },
-    link: {
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      create: vi.fn(),
-    },
+    media: { findFirst: vi.fn(), delete: vi.fn() },
     $transaction: vi.fn(async (callbackOrQueries) => {
       if (Array.isArray(callbackOrQueries)) return Promise.all(callbackOrQueries);
       return callbackOrQueries({
@@ -28,9 +22,9 @@ vi.mock("../db", () => ({
 }));
 
 vi.mock("./auth-middleware", () => ({ authMiddleware: vi.fn() }));
+vi.mock("./storage", () => ({ storage: { deleteObject: vi.fn() } }));
 
 import { prisma } from "../db";
-import { addLink, deleteLink, getLinks, reorderLinks, updateLink } from "./link.functions";
 import {
   createProduct,
   deleteProduct,
@@ -40,24 +34,20 @@ import {
 } from "./product.functions";
 
 const prismaAny = prisma as any;
-const addLinkHandler = addLink as any;
-const getLinksHandler = getLinks as any;
 const updateProductHandler = updateProduct as any;
 const deleteProductHandler = deleteProduct as any;
 const getProductsHandler = getProducts as any;
 const createProductHandler = createProduct as any;
-const updateLinkHandler = updateLink as any;
-const deleteLinkHandler = deleteLink as any;
-const reorderLinkHandler = reorderLinks as any;
 const reorderProductHandler = reorderProducts as any;
 
 const tenantContext = { tenant: { id: "tenant-1" } };
 const noTenantContext = { user: { id: "user-1" } };
 const otherId = "11111111-1111-4111-8111-111111111111";
 
-describe("product/link ownership guards", () => {
+describe("product ownership guards", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prismaAny.media.findFirst).mockResolvedValue(null);
   });
 
   it("rejects product update/delete when product belongs to another tenant", async () => {
@@ -76,25 +66,57 @@ describe("product/link ownership guards", () => {
     expect(prisma.product.update).not.toHaveBeenCalled();
     expect(prisma.product.delete).not.toHaveBeenCalled();
   });
+});
 
-  it("rejects link update/delete when link belongs to another tenant", async () => {
-    vi.mocked(prismaAny.link.findFirst).mockResolvedValue(null);
+describe("deleteProduct", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    await expect(
-      updateLinkHandler({ data: { id: otherId, data: { label: "IG" } }, context: tenantContext }),
-    ).rejects.toThrow("Tautan tidak ditemukan atau bukan milik toko Anda");
+  it("deletes tenant-owned product, clears cache, and removes its media", async () => {
+    const { storage } = await import("./storage");
+    vi.mocked(prismaAny.product.findFirst).mockResolvedValue({
+      id: otherId,
+      tenantId: "tenant-1",
+      image: "https://cdn.test/produk.png",
+    });
+    vi.mocked(prismaAny.product.delete).mockResolvedValue({ id: otherId });
+    vi.mocked(prismaAny.media.findFirst).mockResolvedValue({
+      id: "media-1",
+      key: "tenants/tenant-1/produk.png",
+    });
+    vi.mocked(prismaAny.media.delete).mockResolvedValue({ id: "media-1" });
 
-    await expect(deleteLinkHandler({ data: otherId, context: tenantContext })).rejects.toThrow(
-      "Tautan tidak ditemukan atau bukan milik toko Anda",
-    );
-    expect(prisma.link.update).not.toHaveBeenCalled();
-    expect(prisma.link.delete).not.toHaveBeenCalled();
+    await expect(deleteProductHandler({ data: otherId, context: tenantContext })).resolves.toEqual({
+      success: true,
+    });
+
+    expect(prisma.product.delete).toHaveBeenCalledWith({ where: { id: otherId } });
+    expect(storage.deleteObject).toHaveBeenCalledWith("tenants/tenant-1/produk.png");
+    expect(prisma.media.delete).toHaveBeenCalledWith({ where: { id: "media-1" } });
+  });
+
+  it("deletes tenant-owned product without touching media when it has no tracked image", async () => {
+    const { storage } = await import("./storage");
+    vi.mocked(prismaAny.product.findFirst).mockResolvedValue({
+      id: otherId,
+      tenantId: "tenant-1",
+      image: "",
+    });
+    vi.mocked(prismaAny.product.delete).mockResolvedValue({ id: otherId });
+
+    await expect(deleteProductHandler({ data: otherId, context: tenantContext })).resolves.toEqual({
+      success: true,
+    });
+
+    expect(storage.deleteObject).not.toHaveBeenCalled();
   });
 });
 
 describe("product update transaction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prismaAny.media.findFirst).mockResolvedValue(null);
   });
 
   it("replaces variants inside transaction", async () => {
@@ -131,6 +153,57 @@ describe("product update transaction", () => {
     );
   });
 
+  it("deletes the previous image when it changes", async () => {
+    const { storage } = await import("./storage");
+    const tx = {
+      product: {
+        update: vi.fn().mockResolvedValue({ id: otherId, image: "https://cdn.test/new.png" }),
+      },
+      productVariantGroup: { deleteMany: vi.fn() },
+    };
+    vi.mocked(prismaAny.product.findFirst).mockResolvedValue({
+      id: otherId,
+      tenantId: "tenant-1",
+      image: "https://cdn.test/old.png",
+    });
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+    vi.mocked(prismaAny.media.findFirst).mockResolvedValue({
+      id: "media-1",
+      key: "tenants/tenant-1/old.png",
+    });
+    vi.mocked(prismaAny.media.delete).mockResolvedValue({ id: "media-1" });
+
+    await updateProductHandler({
+      data: { id: otherId, data: { image: "https://cdn.test/new.png" } },
+      context: tenantContext,
+    });
+
+    expect(storage.deleteObject).toHaveBeenCalledWith("tenants/tenant-1/old.png");
+  });
+
+  it("keeps the existing image when update payload leaves it unchanged", async () => {
+    const { storage } = await import("./storage");
+    const tx = {
+      product: {
+        update: vi.fn().mockResolvedValue({ id: otherId, image: "https://cdn.test/old.png" }),
+      },
+      productVariantGroup: { deleteMany: vi.fn() },
+    };
+    vi.mocked(prismaAny.product.findFirst).mockResolvedValue({
+      id: otherId,
+      tenantId: "tenant-1",
+      image: "https://cdn.test/old.png",
+    });
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await updateProductHandler({
+      data: { id: otherId, data: { name: "Produk Baru" } },
+      context: tenantContext,
+    });
+
+    expect(storage.deleteObject).not.toHaveBeenCalled();
+  });
+
   it("propagates transaction failure so variant replacement rolls back", async () => {
     vi.mocked(prismaAny.product.findFirst).mockResolvedValue({ id: otherId, tenantId: "tenant-1" });
     vi.mocked(prismaAny.$transaction).mockRejectedValue(new Error("db failed"));
@@ -144,72 +217,7 @@ describe("product update transaction", () => {
   });
 });
 
-describe("addLink", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("throws without tenant context", async () => {
-    await expect(
-      addLinkHandler({
-        data: { label: "Instagram", url: "https://instagram.com/test" },
-        context: noTenantContext,
-      }),
-    ).rejects.toThrow("Toko tidak ditemukan untuk pengguna ini");
-  });
-
-  it("creates link with next sort order", async () => {
-    vi.mocked(prismaAny.link.findFirst).mockResolvedValue({ sortOrder: 5 });
-    vi.mocked(prismaAny.link.create).mockResolvedValue({
-      id: "link-1",
-      label: "Instagram",
-      url: "https://instagram.com/test",
-      icon: "instagram",
-      sortOrder: 6,
-      tenantId: "tenant-1",
-    });
-
-    const result = await addLinkHandler({
-      data: { label: "Instagram", url: "https://instagram.com/test", icon: "instagram" },
-      context: tenantContext,
-    });
-
-    expect(result).toMatchObject({ label: "Instagram", sortOrder: 6 });
-    expect(prisma.link.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        label: "Instagram",
-        url: "https://instagram.com/test",
-        sortOrder: 6,
-        tenantId: "tenant-1",
-      }),
-    });
-  });
-
-  it("starts sort order at 0 when no existing links", async () => {
-    vi.mocked(prismaAny.link.findFirst).mockResolvedValue(null);
-    vi.mocked(prismaAny.link.create).mockResolvedValue({
-      id: "link-1",
-      label: "First",
-      url: "https://example.com",
-      icon: null,
-      sortOrder: 0,
-      tenantId: "tenant-1",
-    });
-
-    await addLinkHandler({
-      data: { label: "First", url: "https://example.com" },
-      context: tenantContext,
-    });
-
-    expect(prisma.link.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ sortOrder: 0 }),
-      }),
-    );
-  });
-});
-
-describe("reorder product/link", () => {
+describe("reorder product", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -240,44 +248,14 @@ describe("reorder product/link", () => {
     });
   });
 
-  it("rejects reorder when some links are not tenant-owned", async () => {
+  it("rejects reorder when some products are not tenant-owned", async () => {
     const ids = ["11111111-1111-4111-8111-111111111111", "22222222-2222-4222-8222-222222222222"];
-    vi.mocked(prismaAny.link.findMany).mockResolvedValue([{ id: ids[0] }]);
+    vi.mocked(prismaAny.product.findMany).mockResolvedValue([{ id: ids[0] }]);
 
-    await expect(reorderLinkHandler({ data: ids, context: tenantContext })).rejects.toThrow(
-      "Tautan tidak ditemukan atau bukan milik toko Anda",
+    await expect(reorderProductHandler({ data: ids, context: tenantContext })).rejects.toThrow(
+      "Produk tidak ditemukan atau bukan milik toko Anda",
     );
-    expect(prisma.link.update).not.toHaveBeenCalled();
-  });
-});
-
-describe("getLinks", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("returns links ordered by sortOrder for tenant", async () => {
-    const mockLinks = [
-      { id: "l1", label: "Instagram", url: "https://ig.com", icon: null, sortOrder: 0 },
-      { id: "l2", label: "TikTok", url: "https://tiktok.com", icon: null, sortOrder: 1 },
-    ];
-    vi.mocked(prismaAny.link.findMany).mockResolvedValue(mockLinks);
-
-    const result = await getLinksHandler({ data: "tenant-1" });
-
-    expect(result).toEqual(mockLinks);
-    expect(prisma.link.findMany).toHaveBeenCalledWith({
-      where: { tenantId: "tenant-1" },
-      orderBy: { sortOrder: "asc" },
-    });
-  });
-
-  it("returns empty array for tenant with no links", async () => {
-    vi.mocked(prismaAny.link.findMany).mockResolvedValue([]);
-
-    const result = await getLinksHandler({ data: "tenant-empty" });
-
-    expect(result).toEqual([]);
+    expect(prisma.product.update).not.toHaveBeenCalled();
   });
 });
 

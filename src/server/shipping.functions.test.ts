@@ -10,8 +10,13 @@ vi.mock("./rajaongkir", () => ({
 }));
 
 import { prisma } from "../db";
-import { calculateDomesticCost } from "./rajaongkir";
-import { calculateShippingWeightGram, getRajaOngkirShippingCosts } from "./shipping.functions";
+import { calculateDomesticCost, searchDomesticDestination, trackWaybill } from "./rajaongkir";
+import {
+  calculateShippingWeightGram,
+  checkRajaOngkirWaybill,
+  getRajaOngkirShippingCosts,
+  searchRajaOngkirDestinations,
+} from "./shipping.functions";
 
 const prismaAny = prisma as any;
 const handler = getRajaOngkirShippingCosts as any;
@@ -103,5 +108,93 @@ describe("shipping functions", () => {
     vi.mocked(calculateDomesticCost).mockRejectedValueOnce(new Error("RajaOngkir timeout"));
 
     await expect(handler({ data: input })).rejects.toThrow("RajaOngkir timeout");
+  });
+
+  it("throws when tenant is not found", async () => {
+    vi.mocked(prismaAny.tenant.findUnique).mockResolvedValue(null);
+
+    await expect(handler({ data: input })).rejects.toThrow("Toko tidak ditemukan");
+    expect(calculateDomesticCost).not.toHaveBeenCalled();
+  });
+
+  it("throws when some products from cart are not found in tenant catalog", async () => {
+    mockTenant({ products: [{ id: input.items[0].productId, weightGram: 250 }] });
+
+    await expect(handler({ data: input })).rejects.toThrow("Sebagian produk tidak ditemukan");
+    expect(calculateDomesticCost).not.toHaveBeenCalled();
+  });
+});
+
+describe("searchRajaOngkirDestinations", () => {
+  const searchHandler = searchRajaOngkirDestinations as any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("fetches and caches destination search results", async () => {
+    const destinations = [
+      {
+        id: "dest-1",
+        label: "Menteng, Jakarta Pusat",
+        provinceName: "DKI Jakarta",
+        cityName: "Jakarta Pusat",
+        districtName: "Menteng",
+        subdistrictName: "Menteng",
+        zipCode: "10310",
+      },
+    ];
+    vi.mocked(searchDomesticDestination).mockResolvedValue(destinations);
+
+    const result = await searchHandler({ data: { search: "menteng", limit: 5 } });
+
+    expect(result).toEqual(destinations);
+    expect(searchDomesticDestination).toHaveBeenCalledWith("menteng", 5);
+  });
+
+  it("serves cached destination search results within TTL without refetching", async () => {
+    const destinations = [
+      {
+        id: "dest-2",
+        label: "Cache Hit",
+        provinceName: "",
+        cityName: "",
+        districtName: "",
+        subdistrictName: "",
+        zipCode: "",
+      },
+    ];
+    vi.mocked(searchDomesticDestination).mockResolvedValue(destinations);
+
+    await searchHandler({ data: { search: "cache-key", limit: 5 } });
+    await searchHandler({ data: { search: "cache-key", limit: 5 } });
+
+    expect(searchDomesticDestination).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("checkRajaOngkirWaybill", () => {
+  const waybillHandler = checkRajaOngkirWaybill as any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("delegates to trackWaybill with courier and tracking number", async () => {
+    const waybillResult = {
+      courier: "jne",
+      trackingNumber: "JNE123",
+      status: "DELIVERED",
+      delivered: true,
+      raw: {},
+    };
+    vi.mocked(trackWaybill).mockResolvedValue(waybillResult);
+
+    const result = await waybillHandler({
+      data: { courier: "jne", trackingNumber: "JNE123" },
+    });
+
+    expect(result).toEqual(waybillResult);
+    expect(trackWaybill).toHaveBeenCalledWith("jne", "JNE123");
   });
 });

@@ -19,8 +19,12 @@ vi.mock("./storage", () => ({
 }));
 
 vi.mock("./auth-middleware", () => ({ authMiddleware: vi.fn() }));
+vi.mock("./media-scan", () => ({
+  scanMediaBuffer: vi.fn(async () => ({ clean: true })),
+}));
 
 import { prisma } from "../db";
+import { scanMediaBuffer } from "./media-scan";
 import { createMediaKey, storage } from "./storage";
 import {
   getImageDimensions,
@@ -67,6 +71,27 @@ describe("getImageDimensions", () => {
     buffer.writeUInt32BE(800, 20);
 
     expect(getImageDimensions(buffer)).toEqual({ width: 1200, height: 800 });
+  });
+
+  it("reads lossy VP8 webp dimensions", () => {
+    const buffer = Buffer.alloc(30);
+    buffer[0] = 0x52;
+    buffer[1] = 0x49;
+    buffer[2] = 0x46;
+    buffer[3] = 0x46;
+    buffer[8] = 0x57;
+    buffer[9] = 0x45;
+    buffer[10] = 0x42;
+    buffer[11] = 0x50;
+    buffer.write("VP8 ", 12, "ascii");
+    buffer.writeUInt16LE(640, 26);
+    buffer.writeUInt16LE(480, 28);
+
+    expect(getImageDimensions(buffer)).toEqual({ width: 640, height: 480 });
+  });
+
+  it("returns null for buffers without a recognized image signature", () => {
+    expect(getImageDimensions(Buffer.from([0x00, 0x01, 0x02, 0x03]))).toBeNull();
   });
 });
 
@@ -154,5 +179,56 @@ describe("uploadImage", () => {
         context: tenantContext,
       }),
     ).rejects.toThrow("Ukuran gambar melebihi batas 5MB");
+  });
+
+  it("rejects image with dimensions exceeding pixel limit", async () => {
+    const pngBuffer = Buffer.alloc(24);
+    pngBuffer[0] = 0x89;
+    pngBuffer[1] = 0x50;
+    pngBuffer.writeUInt32BE(4000, 16);
+    pngBuffer.writeUInt32BE(4000, 20);
+    // Prefix with valid webp magic bytes so isValidImageBuffer passes, then
+    // pad so getImageDimensions still reads the PNG signature written above
+    // is irrelevant here; use a webp buffer whose declared dimensions exceed
+    // the pixel budget instead.
+    const oversizedDimsBuf = Buffer.from(webpBytes);
+    oversizedDimsBuf.write("VP8X", 12, "ascii");
+    oversizedDimsBuf.writeUIntLE(3999, 24, 3); // width - 1
+    oversizedDimsBuf.writeUIntLE(3999, 27, 3); // height - 1
+    const base64 = oversizedDimsBuf.toString("base64");
+
+    await expect(
+      uploadImageHandler({
+        data: { name: "huge.webp", base64 },
+        context: tenantContext,
+      }),
+    ).rejects.toThrow("Dimensi gambar terlalu besar");
+  });
+
+  it("rejects image that fails media security scan", async () => {
+    vi.mocked(scanMediaBuffer).mockResolvedValueOnce({ clean: false });
+
+    await expect(
+      uploadImageHandler({
+        data: { name: "logo.webp", base64: `data:image/webp;base64,${webpBase64}` },
+        context: tenantContext,
+      }),
+    ).rejects.toThrow("Gambar tidak lolos pemeriksaan keamanan");
+  });
+
+  it("skips media record creation when media model is unavailable", async () => {
+    const originalMedia = (prisma as any).media;
+    (prisma as any).media = undefined;
+
+    try {
+      const result = await uploadImageHandler({
+        data: { name: "logo.webp", base64: `data:image/webp;base64,${webpBase64}` },
+        context: tenantContext,
+      });
+
+      expect(result).toHaveProperty("url");
+    } finally {
+      (prisma as any).media = originalMedia;
+    }
   });
 });

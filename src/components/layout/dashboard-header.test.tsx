@@ -43,10 +43,7 @@ describe("DashboardHeader", () => {
     render(<DashboardHeader setIsMobileOpen={vi.fn()} tenant={tenant} />);
 
     expect(screen.getByText("toko-ibu-sari")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Toko ↗" })).toHaveAttribute(
-      "href",
-      "/toko-ibu-sari",
-    );
+    expect(screen.getByRole("link", { name: "Toko ↗" })).toHaveAttribute("href", "/toko-ibu-sari");
   });
 
   it("renders an empty slug when tenant is null", () => {

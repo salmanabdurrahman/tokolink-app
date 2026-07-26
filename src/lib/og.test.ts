@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { isSafeImageUrl, isSupportedOgImage } from "./og";
 
 const originalNodeEnv = process.env.NODE_ENV;
@@ -40,6 +40,37 @@ describe("OG image safety", () => {
     expect(isSupportedOgImage("https://tokolink-v2.vercel.app/avatar.jpeg")).toBe(true);
     expect(isSupportedOgImage("https://tokolink-v2.vercel.app/avatar.webp")).toBe(false);
     expect(isSupportedOgImage("https://evil.example/avatar.png")).toBe(false);
+  });
+
+  it("treats an invalid R2_PUBLIC_BASE_URL as not matching", () => {
+    process.env.R2_PUBLIC_BASE_URL = "not a valid url";
+
+    expect(isSafeImageUrl("https://media.example.com/avatar.png")).toBe(false);
+  });
+
+  it("treats a missing R2_PUBLIC_BASE_URL as not matching", () => {
+    delete process.env.R2_PUBLIC_BASE_URL;
+
+    expect(isSafeImageUrl("https://media.example.com/avatar.png")).toBe(false);
+  });
+
+  it("allows the configured public site hostname when different from the default", () => {
+    vi.stubEnv("VITE_PUBLIC_SITE_URL", "https://staging.tokolink.test");
+
+    expect(isSafeImageUrl("https://staging.tokolink.test/avatar.png")).toBe(true);
+
+    vi.unstubAllEnvs();
+  });
+
+  it("returns false when the supported-image check throws", () => {
+    const weirdUrl = {
+      toString: () => "https://tokolink-v2.vercel.app/avatar.png",
+      split: () => {
+        throw new Error("boom");
+      },
+    };
+
+    expect(isSupportedOgImage(weirdUrl as unknown as string)).toBe(false);
   });
 
   it("rejects null, undefined, empty, and invalid URLs", () => {

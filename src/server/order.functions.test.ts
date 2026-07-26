@@ -134,6 +134,108 @@ describe("tenant order dashboard functions", () => {
     expect(prisma.order.update).not.toHaveBeenCalled();
   });
 
+  it("updates tracking for a paid order and marks it shipped", async () => {
+    vi.mocked(prismaAny.order.findFirst).mockResolvedValue({
+      id: orderId,
+      tenantId: "tenant-1",
+      status: "PAID",
+      shippedAt: null,
+    });
+    vi.mocked(prismaAny.order.update).mockResolvedValue({ id: orderId, status: "SHIPPED" });
+
+    await expect(
+      updateOrderTrackingHandler({
+        data: { orderId, courier: "jne", trackingNumber: "TK12345" },
+        context: tenantContext,
+      }),
+    ).resolves.toMatchObject({ status: "SHIPPED" });
+
+    expect(prisma.order.update).toHaveBeenCalledWith({
+      where: { id: orderId },
+      data: {
+        courier: "jne",
+        trackingNumber: "TK12345",
+        status: "SHIPPED",
+        shippedAt: expect.any(Date),
+      },
+    });
+  });
+
+  it("keeps existing shippedAt when tracking is updated again for an already shipped order", async () => {
+    const shippedAt = new Date("2024-01-01T00:00:00.000Z");
+    vi.mocked(prismaAny.order.findFirst).mockResolvedValue({
+      id: orderId,
+      tenantId: "tenant-1",
+      status: "SHIPPED",
+      shippedAt,
+    });
+    vi.mocked(prismaAny.order.update).mockResolvedValue({ id: orderId, status: "SHIPPED" });
+
+    await expect(
+      updateOrderTrackingHandler({
+        data: { orderId, courier: "jne", trackingNumber: "TK99999" },
+        context: tenantContext,
+      }),
+    ).resolves.toMatchObject({ status: "SHIPPED" });
+
+    expect(prisma.order.update).toHaveBeenCalledWith({
+      where: { id: orderId },
+      data: expect.objectContaining({ shippedAt }),
+    });
+  });
+
+  it("rejects tracking update when order is not yet paid", async () => {
+    vi.mocked(prismaAny.order.findFirst).mockResolvedValue({
+      id: orderId,
+      tenantId: "tenant-1",
+      status: "PENDING_PAYMENT",
+      shippedAt: null,
+    });
+
+    await expect(
+      updateOrderTrackingHandler({
+        data: { orderId, courier: "jne", trackingNumber: "TK12345" },
+        context: tenantContext,
+      }),
+    ).rejects.toThrow("Resi hanya bisa diisi setelah order dibayar");
+
+    expect(prisma.order.update).not.toHaveBeenCalled();
+  });
+
+  it("rejects completing an order that has not been shipped", async () => {
+    vi.mocked(prismaAny.order.findFirst).mockResolvedValue({
+      id: orderId,
+      tenantId: "tenant-1",
+      status: "PAID",
+    });
+
+    await expect(
+      updateTenantOrderStatusHandler({
+        data: { orderId, status: "COMPLETED" },
+        context: tenantContext,
+      }),
+    ).rejects.toThrow("Order hanya bisa diselesaikan setelah dikirim");
+
+    expect(prisma.order.update).not.toHaveBeenCalled();
+  });
+
+  it("rejects canceling an order that is already paid", async () => {
+    vi.mocked(prismaAny.order.findFirst).mockResolvedValue({
+      id: orderId,
+      tenantId: "tenant-1",
+      status: "PAID",
+    });
+
+    await expect(
+      updateTenantOrderStatusHandler({
+        data: { orderId, status: "CANCELED" },
+        context: tenantContext,
+      }),
+    ).rejects.toThrow("Hanya order belum dibayar yang bisa dibatalkan");
+
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
   it("marks shipped order completed", async () => {
     vi.mocked(prismaAny.order.findFirst).mockResolvedValue({
       id: orderId,

@@ -7,7 +7,7 @@ vi.mock("./email", () => ({
 }));
 
 import { prisma } from "../db";
-import { markOrderPaid } from "./order-helpers.server";
+import { markOrderCanceled, markOrderPaid } from "./order-helpers.server";
 
 const prismaAny = prisma as any;
 const baseOrder = {
@@ -98,6 +98,82 @@ describe("markOrderPaid", () => {
 
     await expect(markOrderPaid("TL1", { ok: true }, "qris")).resolves.toMatchObject({
       status: "PAID",
+    });
+  });
+
+  it("throws when order is not found", async () => {
+    const tx = { order: { findUnique: vi.fn().mockResolvedValue(null) } };
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await expect(markOrderPaid("UNKNOWN", {})).rejects.toThrow("Order tidak ditemukan");
+  });
+
+  it("skips notification emails when paid order has no customer email or tenant user", async () => {
+    const tx = makeTx();
+    tx.order.findUniqueOrThrow = vi.fn().mockResolvedValue({
+      ...baseOrder,
+      status: "PAID",
+      items: [],
+      customerEmail: null,
+      tenant: { user: null },
+    });
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+    const { sendOrderReceiptEmail, sendTenantOrderNotificationEmail } = await import("./email");
+
+    await expect(markOrderPaid("TL1", { ok: true }, "qris")).resolves.toMatchObject({
+      status: "PAID",
+    });
+
+    expect(sendOrderReceiptEmail).not.toHaveBeenCalled();
+    expect(sendTenantOrderNotificationEmail).not.toHaveBeenCalled();
+  });
+});
+
+describe("markOrderCanceled", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("throws when order is not found", async () => {
+    const tx = { order: { findUnique: vi.fn().mockResolvedValue(null) } };
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await expect(markOrderCanceled("UNKNOWN", {})).rejects.toThrow("Order tidak ditemukan");
+  });
+
+  it("returns order as-is when order is not pending payment", async () => {
+    const order = { ...baseOrder, status: "PAID" };
+    const tx = {
+      order: { findUnique: vi.fn().mockResolvedValue(order) },
+      payment: { update: vi.fn() },
+    };
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await expect(markOrderCanceled("TL1", {})).resolves.toEqual(order);
+    expect(tx.payment.update).not.toHaveBeenCalled();
+  });
+
+  it("cancels pending payment order and marks payment canceled", async () => {
+    const order = { ...baseOrder, status: "PENDING_PAYMENT" };
+    const canceledOrder = { ...order, status: "CANCELED", canceledAt: new Date() };
+    const tx = {
+      order: {
+        findUnique: vi.fn().mockResolvedValue(order),
+        update: vi.fn().mockResolvedValue(canceledOrder),
+      },
+      payment: { update: vi.fn().mockResolvedValue({}) },
+    };
+    vi.mocked(prismaAny.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+    await expect(markOrderCanceled("TL1", { reason: "expired" })).resolves.toEqual(canceledOrder);
+
+    expect(tx.payment.update).toHaveBeenCalledWith({
+      where: { orderId: "order-1" },
+      data: expect.objectContaining({ status: "CANCELED" }),
+    });
+    expect(tx.order.update).toHaveBeenCalledWith({
+      where: { id: "order-1" },
+      data: expect.objectContaining({ status: "CANCELED" }),
     });
   });
 });
