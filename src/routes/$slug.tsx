@@ -83,6 +83,7 @@ function Storefront() {
       return [product.name, product.description].join(" ").toLowerCase().includes(normalized);
     });
   }, [activeCategoryId, query, tenant.products]);
+  const productIds = useMemo(() => tenant.products.map((p) => p.id), [tenant.products]);
 
   const copyStoreLink = async () => {
     trackEvent("storefront_share_click", { tenantSlug: tenant.slug });
@@ -219,6 +220,7 @@ function Storefront() {
         storeName={tenant.name}
         phone={tenant.whatsapp}
         whatsappTemplate={tenant.whatsappTemplate ?? ""}
+        productIds={productIds}
       />
     </div>
   );

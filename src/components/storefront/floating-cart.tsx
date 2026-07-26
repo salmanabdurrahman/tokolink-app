@@ -17,6 +17,7 @@ interface FloatingCartProps {
   storeName: string;
   phone: string;
   whatsappTemplate?: string;
+  productIds: string[];
 }
 
 export function FloatingCart({
@@ -24,6 +25,7 @@ export function FloatingCart({
   storeName,
   phone,
   whatsappTemplate,
+  productIds,
 }: FloatingCartProps) {
   const items = useCart((s) => s.items);
   const totalQty = useMemo(() => items.reduce((sum, item) => sum + item.qty, 0), [items]);
@@ -35,6 +37,7 @@ export function FloatingCart({
   const dec = useCart((s) => s.dec);
   const clear = useCart((s) => s.clear);
   const setTenantSlug = useCart((s) => s.setTenantSlug);
+  const reconcile = useCart((s) => s.reconcile);
   const [open, setOpen] = useState(false);
 
   const {
@@ -70,7 +73,8 @@ export function FloatingCart({
 
   useEffect(() => {
     setTenantSlug(tenantSlug);
-  }, [setTenantSlug, tenantSlug]);
+    reconcile(productIds);
+  }, [setTenantSlug, tenantSlug, reconcile, productIds]);
 
   if (totalQty === 0) return null;
 

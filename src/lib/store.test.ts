@@ -149,6 +149,30 @@ describe("useCart", () => {
     expect(result.current.items[0].qty).toBe(2);
   });
 
+  it("reconcile drops items whose product no longer exists", () => {
+    const { result } = renderHook(() => useCart());
+
+    act(() => result.current.add(items[0]));
+    act(() => result.current.add(items[1]));
+    expect(result.current.items).toHaveLength(2);
+
+    act(() => result.current.reconcile(["product-1"]));
+
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.items[0].productId).toBe("product-1");
+  });
+
+  it("reconcile keeps state identity when nothing removed", () => {
+    const { result } = renderHook(() => useCart());
+
+    act(() => result.current.add(items[0]));
+    const before = result.current.items;
+
+    act(() => result.current.reconcile(["product-1", "product-2"]));
+
+    expect(result.current.items).toBe(before);
+  });
+
   it("removes item when dec reaches zero", () => {
     const { result } = renderHook(() => useCart());
 

@@ -62,7 +62,14 @@ describe("FloatingCart", () => {
   });
 
   it("opens cart, updates qty, searches destination, selects shipping, and checks out", async () => {
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     fireEvent.click(screen.getByRole("button", { name: "Tambah Kopi Susu" }));
@@ -93,7 +100,14 @@ describe("FloatingCart", () => {
   });
 
   it("keeps customer input focused while typing", () => {
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     const nameInput = screen.getByPlaceholderText("Nama lengkap");
@@ -105,7 +119,14 @@ describe("FloatingCart", () => {
   });
 
   it("shows WhatsApp fallback when store phone missing", () => {
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone=""
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
 
@@ -113,7 +134,14 @@ describe("FloatingCart", () => {
   });
 
   it("redirects to WhatsApp with the built order message", () => {
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     fireEvent.click(screen.getByRole("button", { name: "Chat WhatsApp →" }));
@@ -122,7 +150,14 @@ describe("FloatingCart", () => {
   });
 
   it("decrements item qty via the minus button", () => {
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     fireEvent.click(screen.getByRole("button", { name: "Kurangi Kopi Susu" }));
@@ -131,7 +166,14 @@ describe("FloatingCart", () => {
   });
 
   it("clears the cart when 'Kosongkan keranjang' is clicked", () => {
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     fireEvent.click(screen.getByRole("button", { name: "Kosongkan keranjang" }));
@@ -140,7 +182,14 @@ describe("FloatingCart", () => {
   });
 
   it("closes the sheet via the close control", () => {
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     expect(screen.getByText("Keranjang")).toBeInTheDocument();
@@ -151,7 +200,14 @@ describe("FloatingCart", () => {
   });
 
   it("updates the order note field", () => {
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     const note = screen.getByPlaceholderText(/Titip di pos satpam/);
@@ -161,7 +217,14 @@ describe("FloatingCart", () => {
   });
 
   it("updates the customer email field", () => {
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     const email = screen.getByPlaceholderText(/Email receipt/);
@@ -174,7 +237,14 @@ describe("FloatingCart", () => {
     const { toast } = await import("sonner");
     vi.stubGlobal("fetch", vi.fn(async () => Response.json([])) as any);
 
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     fireEvent.click(screen.getByRole("button", { name: "Cari cepat" }));
     fireEvent.change(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), {
@@ -195,7 +265,14 @@ describe("FloatingCart", () => {
       }) as any,
     );
 
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     fireEvent.click(screen.getByRole("button", { name: "Cari cepat" }));
     fireEvent.change(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), {
@@ -232,7 +309,14 @@ describe("FloatingCart", () => {
       }) as any,
     );
 
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     fireEvent.click(screen.getByRole("button", { name: "Cari cepat" }));
     fireEvent.change(screen.getByPlaceholderText("Cari kecamatan/kelurahan"), {
@@ -246,7 +330,14 @@ describe("FloatingCart", () => {
 
   it("blocks checkout with a toast when no shipping option selected", async () => {
     const { toast } = await import("sonner");
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     fireEvent.change(screen.getByPlaceholderText("Nama lengkap"), { target: { value: "Budi" } });
@@ -264,7 +355,14 @@ describe("FloatingCart", () => {
 
   it("blocks checkout with a toast and shows field errors when customer data is invalid", async () => {
     const { toast } = await import("sonner");
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     fireEvent.click(screen.getByRole("button", { name: "Bayar via Pakasir →" }));
@@ -304,7 +402,14 @@ describe("FloatingCart", () => {
       }) as any,
     );
 
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     fireEvent.change(screen.getByPlaceholderText("Nama lengkap"), { target: { value: "Budi" } });
     fireEvent.change(screen.getByPlaceholderText("WhatsApp, contoh 628123456789"), {
@@ -355,7 +460,14 @@ describe("FloatingCart", () => {
       }) as any,
     );
 
-    render(<FloatingCart tenantSlug="kopi-ibu" storeName="Kopi Ibu" phone="081234567890" />);
+    render(
+      <FloatingCart
+        productIds={["product-1"]}
+        tenantSlug="kopi-ibu"
+        storeName="Kopi Ibu"
+        phone="081234567890"
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /1 item/ }));
     fireEvent.change(screen.getByPlaceholderText("Nama lengkap"), { target: { value: "Budi" } });
     fireEvent.change(screen.getByPlaceholderText("WhatsApp, contoh 628123456789"), {

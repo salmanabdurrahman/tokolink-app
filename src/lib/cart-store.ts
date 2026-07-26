@@ -10,6 +10,7 @@ export type CartState = {
   inc: (key: string) => void;
   dec: (key: string) => void;
   remove: (key: string) => void;
+  reconcile: (validProductIds: string[]) => void;
   clear: () => void;
   totalQty: () => number;
   totalPrice: () => number;
@@ -44,6 +45,12 @@ export const useCart = create<CartState>()(
             .filter((i) => i.qty > 0),
         })),
       remove: (key) => set((s) => ({ items: s.items.filter((i) => i.key !== key) })),
+      reconcile: (validProductIds) =>
+        set((s) => {
+          const valid = new Set(validProductIds);
+          const next = s.items.filter((i) => valid.has(i.productId));
+          return next.length === s.items.length ? s : { items: next };
+        }),
       clear: () => set({ items: [] }),
       totalQty: () => get().items.reduce((sum, i) => sum + i.qty, 0),
       totalPrice: () => get().items.reduce((sum, i) => sum + i.qty * i.unitPrice, 0),
