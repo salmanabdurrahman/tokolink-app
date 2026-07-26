@@ -282,16 +282,18 @@ tokolink-app/
 ├── public/                  # Static assets, favicon, manifest, OG assets
 ├── src/
 │   ├── components/          # UI components grouped by feature/surface
+│   │   ├── brand/           # Brand/logo components
 │   │   ├── dashboard/       # Dashboard-specific components
 │   │   ├── landing/         # Marketing landing-page sections
 │   │   ├── layout/          # Shared layout/navigation components
 │   │   ├── motion/          # Reusable motion helpers
+│   │   ├── shipping/        # Shipping/location picker components
 │   │   ├── storefront/      # Public storefront components
 │   │   └── ui/              # Local UI primitives
 │   ├── hooks/               # Client hooks for auth/session/device behavior
-│   ├── lib/                 # Utilities, schemas, stores, Supabase clients, OG helpers
+│   ├── lib/                 # Utilities, schemas, stores, formatters, Supabase clients, OG helpers
 │   ├── routes/              # TanStack Router file routes and API routes
-│   ├── server/              # Server Functions, auth middleware, email, upload, Turnstile
+│   ├── server/              # Server Functions (*.functions.ts), service/query modules (*.server.ts), auth middleware, provider clients
 │   ├── test/                # Test setup and reusable factories
 │   ├── db.ts                # Prisma client singleton
 │   ├── router.tsx           # Router setup
@@ -393,6 +395,7 @@ Before deploying:
 ## Documentation
 
 - [Architecture](docs/architecture.md) — auth, storage, DB, Server Functions, checkout, payment, shipping, and ledger flow.
+- [Observability](docs/observability.md) — structured logs, request IDs, health checks, and metric helpers.
 - [Security](docs/security.md) — CSRF posture, Turnstile, upload validation, OTP limits, webhook validation, and reconciliation.
 - [Testing](docs/testing.md) — test layers, mocks, factories, coverage, and CI gate.
 - [Troubleshooting](docs/troubleshooting.md) — Prisma, Supabase cookies, R2 public URL, Turnstile localhost, Pakasir webhook, RajaOngkir, and email issues.
