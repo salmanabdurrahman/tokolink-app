@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { useCart } from "@/lib/store";
 import { formatIDR } from "@/lib/utils";
 import type { Product, ProductVariantOption } from "@/lib/types";
@@ -84,11 +85,12 @@ export function VariantSheet({ product, onClose }: VariantSheetProps) {
                       onClick={() =>
                         setSelectedOptions((prev) => ({ ...prev, [groupKey]: option }))
                       }
-                      className={`rounded-full border px-4 py-2 text-sm font-medium transition duration-200 active:scale-[0.97] cursor-pointer ${
+                      className={cn(
+                        "rounded-full border px-4 py-2 text-sm font-medium transition duration-200 active:scale-[0.97] cursor-pointer",
                         isSelected
                           ? "border-foreground bg-foreground text-background"
-                          : "border-border hover:border-foreground"
-                      }`}
+                          : "border-border hover:border-foreground",
+                      )}
                     >
                       {option.name}
                       {option.priceDelta > 0 && (

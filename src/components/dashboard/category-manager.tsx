@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { ProductCategory } from "@/lib/types";
 import { Input } from "@/components/ui/input";
@@ -89,7 +90,10 @@ export function CategoryManager({
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => moveCategory(category.id)}
               onDragEnd={() => setDraggingId(null)}
-              className={`flex items-center gap-3 py-2 ${draggingId === category.id ? "opacity-60" : ""}`}
+              className={cn(
+                "flex items-center gap-3 py-2",
+                draggingId === category.id && "opacity-60",
+              )}
             >
               <Input
                 defaultValue={category.name}

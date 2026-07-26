@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Select } from "@/components/ui/select";
@@ -89,9 +90,10 @@ function AnalyticsPage() {
         </div>
       ) : (
         <div
-          className={`grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-5 ${
-            loading ? "opacity-60" : ""
-          }`}
+          className={cn(
+            "grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-5",
+            loading && "opacity-60",
+          )}
         >
           {FUNNEL_ORDER.map((event) => {
             const value = totals[event] ?? 0;

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useTenant } from "@/lib/store";
 import { useLoadedTenant } from "@/hooks/use-loaded-tenant";
@@ -146,7 +147,10 @@ function LinksPage() {
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => moveLink(l.id)}
               onDragEnd={() => setDraggingId(null)}
-              className={`grid grid-cols-1 items-center gap-3 py-4 sm:grid-cols-[1fr_2fr_auto] ${draggingId === l.id ? "opacity-60" : ""}`}
+              className={cn(
+                "grid grid-cols-1 items-center gap-3 py-4 sm:grid-cols-[1fr_2fr_auto]",
+                draggingId === l.id && "opacity-60",
+              )}
             >
               <Input
                 value={drafts[l.id]?.label ?? l.label}

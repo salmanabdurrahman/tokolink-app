@@ -1,4 +1,5 @@
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import { formatIDR } from "@/lib/utils";
 import { RajaOngkirLocationPicker } from "@/components/shipping/rajaongkir-location-picker";
 import type { Destination, SelectedShipping, ShippingOption } from "@/hooks/use-shipping-quote";
@@ -39,7 +40,12 @@ export function ShippingPicker({
               key={`${option.courier}-${option.service}-${option.cost}`}
               type="button"
               onClick={() => onSelectShipping(option)}
-              className={`rounded-xl border p-3 text-left text-sm transition duration-200 ${shipping.courier === option.courier && shipping.service === option.service ? "border-foreground bg-surface" : "border-border hover:bg-surface"}`}
+              className={cn(
+                "rounded-xl border p-3 text-left text-sm transition duration-200",
+                shipping.courier === option.courier && shipping.service === option.service
+                  ? "border-foreground bg-surface"
+                  : "border-border hover:bg-surface",
+              )}
             >
               <span className="font-medium uppercase">
                 {option.courier} {option.service}

@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 interface TokolinkLogoProps {
   size?: number;
 
@@ -11,7 +13,7 @@ export function TokolinkLogo({
   className = "",
 }: TokolinkLogoProps) {
   return (
-    <span className={`inline-flex items-center gap-2.5 ${className}`}>
+    <span className={cn("inline-flex items-center gap-2.5", className)}>
       <svg
         width={size}
         height={size}

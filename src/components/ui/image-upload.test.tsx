@@ -28,7 +28,7 @@ describe("ImageUpload", () => {
     render(<ImageUpload onChange={vi.fn()} />);
 
     expect(screen.getByText("Drag & drop gambar di sini")).toBeInTheDocument();
-    expect(screen.getByText("JPEG, PNG, WebP atau GIF up to 5MB")).toBeInTheDocument();
+    expect(screen.getByText("JPEG, PNG, WebP atau GIF hingga 5MB")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Pilih gambar" })).toBeInTheDocument();
   });
 

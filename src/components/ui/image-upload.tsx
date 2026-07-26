@@ -147,7 +147,7 @@ export function ImageUpload({ value, onChange, className }: ImageUploadProps) {
             <div className="space-y-2">
               <div className="space-y-1">
                 <p className="text-sm font-medium">Drag & drop gambar di sini</p>
-                <p className="text-xs text-muted-foreground">JPEG, PNG, WebP atau GIF up to 5MB</p>
+                <p className="text-xs text-muted-foreground">JPEG, PNG, WebP atau GIF hingga 5MB</p>
               </div>
               <Button
                 type="button"

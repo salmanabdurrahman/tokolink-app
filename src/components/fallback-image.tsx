@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 import { ImageIcon } from "lucide-react";
 
 interface FallbackImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -55,7 +56,10 @@ export function FallbackImage({
   if (isError || !src) {
     return (
       <div
-        className={`flex items-center justify-center bg-muted/30 border border-border/50 text-muted-foreground select-none ${className}`}
+        className={cn(
+          "flex items-center justify-center bg-muted/30 border border-border/50 text-muted-foreground select-none",
+          className,
+        )}
       >
         {initials ? (
           <span className="font-display font-semibold text-lg tracking-tight">{initials}</span>
@@ -75,7 +79,11 @@ export function FallbackImage({
       decoding={decoding}
       onLoad={() => setIsLoaded(true)}
       onError={() => setIsError(true)}
-      className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"} ${className}`}
+      className={cn(
+        "transition-opacity duration-300",
+        isLoaded ? "opacity-100" : "opacity-0",
+        className,
+      )}
       {...props}
     />
   );

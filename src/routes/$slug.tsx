@@ -1,4 +1,5 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 import { AnimatePresence } from "framer-motion";
 import { useMemo, useState } from "react";
 import type { Product } from "@/lib/types";
@@ -160,11 +161,12 @@ function Storefront() {
               <button
                 type="button"
                 onClick={() => setActiveCategoryId(null)}
-                className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition duration-200 ${
+                className={cn(
+                  "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition duration-200",
                   activeCategoryId === null
                     ? "border-foreground bg-foreground text-background"
-                    : "border-border text-muted-foreground hover:border-foreground"
-                }`}
+                    : "border-border text-muted-foreground hover:border-foreground",
+                )}
               >
                 Semua
               </button>
@@ -173,11 +175,12 @@ function Storefront() {
                   key={category.id}
                   type="button"
                   onClick={() => setActiveCategoryId(category.id)}
-                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition duration-200 ${
+                  className={cn(
+                    "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition duration-200",
                     activeCategoryId === category.id
                       ? "border-foreground bg-foreground text-background"
-                      : "border-border text-muted-foreground hover:border-foreground"
-                  }`}
+                      : "border-border text-muted-foreground hover:border-foreground",
+                  )}
                 >
                   {category.name}
                 </button>

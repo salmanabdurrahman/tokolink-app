@@ -30,9 +30,9 @@ export function UsecasesSection() {
               key={u.tag}
               delay={i * 0.05}
               whileHover="hover"
-              className="group flex flex-col aspect-square bg-background p-6 transition duration-300 hover:bg-accent cursor-pointer"
+              className="group flex flex-col aspect-square bg-background p-6 transition duration-200 hover:bg-accent cursor-pointer"
             >
-              <div className="h-12 w-12 flex items-center justify-center bg-muted/40 rounded-2xl group-hover:bg-background/25 transition-colors duration-300">
+              <div className="h-12 w-12 flex items-center justify-center bg-muted/40 rounded-2xl group-hover:bg-background/25 transition-colors duration-200">
                 {u.icon}
               </div>
               <div className="font-display mt-auto pt-12 text-2xl font-medium">{u.tag}</div>

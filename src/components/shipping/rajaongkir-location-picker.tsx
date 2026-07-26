@@ -5,6 +5,7 @@ import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 export type RajaOngkirLocationValue = {
   id: string;
@@ -258,14 +259,20 @@ export function RajaOngkirLocationPicker({
         <button
           type="button"
           onClick={() => setMode("cascade")}
-          className={`rounded-full px-3 py-1.5 font-medium transition duration-200 ${mode === "cascade" ? "bg-foreground text-background" : "text-muted-foreground"}`}
+          className={cn(
+            "rounded-full px-3 py-1.5 font-medium transition duration-200",
+            mode === "cascade" ? "bg-foreground text-background" : "text-muted-foreground",
+          )}
         >
           Pilih dari daftar
         </button>
         <button
           type="button"
           onClick={() => setMode("search")}
-          className={`rounded-full px-3 py-1.5 font-medium transition duration-200 ${mode === "search" ? "bg-foreground text-background" : "text-muted-foreground"}`}
+          className={cn(
+            "rounded-full px-3 py-1.5 font-medium transition duration-200",
+            mode === "search" ? "bg-foreground text-background" : "text-muted-foreground",
+          )}
         >
           Cari cepat
         </button>

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { TokolinkLogo } from "@/components/brand/logo";
+import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Link2,
@@ -85,11 +86,12 @@ export function DashboardSidebar({
             <Link
               key={t.to}
               to={t.to}
-              className={`relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition duration-200 select-none group ${
+              className={cn(
+                "relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition duration-200 select-none group",
                 active
                   ? "text-foreground font-semibold"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+                  : "text-muted-foreground hover:text-foreground",
+              )}
             >
               {active && (
                 <motion.div
@@ -104,7 +106,12 @@ export function DashboardSidebar({
                 className="shrink-0"
               >
                 <Icon
-                  className={`h-5 w-5 ${active ? "text-accent" : "text-muted-foreground group-hover:text-foreground transition-colors"}`}
+                  className={cn(
+                    "h-5 w-5",
+                    active
+                      ? "text-accent"
+                      : "text-muted-foreground group-hover:text-foreground transition-colors duration-200",
+                  )}
                 />
               </motion.div>
 
