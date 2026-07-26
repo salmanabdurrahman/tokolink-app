@@ -41,6 +41,7 @@ Commerce flow:
 - `Payment` stores Pakasir transaction state and safe provider payload.
 - `LedgerEntry` is source of truth for tenant balance.
 - `WithdrawalRequest` stores payout requests and processing status.
+- `AnalyticsDaily` stores per-tenant, per-day funnel counters (storefront view, product click, checkout start, WhatsApp click, payment completed) aggregated from `incrementAnalyticsEvent`.
 
 ## Storage
 
@@ -89,6 +90,7 @@ Examples:
 - Dashboard product/link/order writes: route UI → authenticated Server Function → tenant helper/ownership guard → Prisma.
 - Media upload: dashboard UI → `uploadImage` Server Function → upload validation → R2 storage adapter → Prisma media metadata.
 - AI draft generation: dashboard UI → authenticated Server Function (`src/server/ai.functions.ts`) → rate limit → `src/server/ai.server.ts` (OpenAI-compatible chat completion) → Zod-validated JSON output. Product copy sends only name/keyword/category; sales insight sends only aggregated tenant numbers (no customer PII). AI failures fall back to raw metrics or a clear error, never block the underlying mutation/read.
+- Funnel analytics: storefront UI → public rate-limited `recordAnalyticsEvent` Server Function → `incrementAnalyticsEvent` → `AnalyticsDaily` upsert; `payment_completed` is written only from the trusted Pakasir webhook flow. Dashboard analytics (`src/routes/dashboard.analytics.tsx`) reads these aggregates via `src/server/analytics.functions.ts`.
 
 ## Policy, config, labels, formatters
 

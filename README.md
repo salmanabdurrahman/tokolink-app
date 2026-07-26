@@ -50,6 +50,9 @@ Each merchant gets a public storefront at `tokolink-v2.vercel.app/{store-slug}`.
 - **Client-side cart** — keep checkout fast without forcing customers into account creation.
 - **WhatsApp order generator** — convert cart items, variants, quantities, notes, and total price into a structured `wa.me` message.
 - **Merchant dashboard** — manage store settings, links, products, categories, stock, weight, digital/physical type, images, and product variants.
+- **Orders, ledger, and withdrawals** — track paid orders, fulfilment status, tenant balance from ledger entries, and manual payout requests from the dashboard.
+- **Funnel analytics** — record storefront views, product clicks, checkout starts, WhatsApp clicks, and completed payments, then review them on the dashboard analytics page.
+- **Optional AI assist** — generate Indonesian product copy/variant suggestions and aggregated sales insight through an OpenAI-compatible provider, with rate limits and graceful fallback when disabled.
 - **SEO and social previews** — route-level metadata, canonical URLs, sitemap, robots.txt, JSON-LD, and dynamic OG images.
 - **Open-source foundation** — built with modern TypeScript, React, TanStack Start, Prisma, and Supabase Auth.
 

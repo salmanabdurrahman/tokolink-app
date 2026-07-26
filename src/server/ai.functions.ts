@@ -7,7 +7,7 @@ import { createJsonChatCompletion } from "./ai.server";
 import { requireTenant } from "./tenant-context.server";
 import { calculateAvailableBalance } from "./withdrawal.functions";
 
-// --- Phase 45: AI product copy generator -----------------------------------
+// --- AI product copy generator ---------------------------------------------
 
 export const generateProductCopySchema = z.object({
   name: z.string().min(1, "Nama produk harus diisi").max(100),
@@ -60,7 +60,7 @@ export const generateProductCopy = createServerFn({ method: "POST" })
     return parsed.data;
   });
 
-// --- Phase 46: AI sales insight ---------------------------------------------
+// --- AI sales insight -------------------------------------------------------
 
 const SALES_INSIGHT_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const salesInsightCache = new Map<string, { expiresAt: number; summary: string }>();

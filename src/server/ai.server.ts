@@ -1,5 +1,5 @@
-// Server-only OpenAI-compatible chat completion client. Shared by Phase 45
-// (AI product copy) and Phase 46 (AI sales insight) so there is one place
+// Server-only OpenAI-compatible chat completion client. Shared by the AI
+// product copy and AI sales insight features so there is one place
 // that owns the provider call, timeout, and error mapping.
 type AiConfig = {
   apiKey: string;
