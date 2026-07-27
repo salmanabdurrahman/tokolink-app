@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { lazy, Suspense, type ReactNode } from "react";
+import { lazy, Suspense, useCallback, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
@@ -143,7 +143,9 @@ import { useSession } from "../hooks/use-session";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  useSession();
+  const router = useRouter();
+  const invalidateAfterSessionSync = useCallback(() => router.invalidate(), [router]);
+  useSession({ onSessionSynced: invalidateAfterSessionSync });
 
   return (
     <QueryClientProvider client={queryClient}>

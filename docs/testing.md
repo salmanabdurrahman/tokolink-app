@@ -85,8 +85,9 @@ Provider clients should be tested with mocked `fetch`/SDK calls:
 
 Use hook/store tests for client-side state boundaries:
 
-- session sync and auth redirects
+- session sync, auth redirects, and route invalidation after OAuth/session sync
 - dashboard tenant hydration via `useLoadedTenant(...)`
+- tenant-backed dashboard pages render loading/error fallbacks instead of blank `null` states while loader data is temporarily unavailable
 - split auth/tenant/cart store actions
 - cart persistence and WhatsApp helper output
 

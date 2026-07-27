@@ -62,6 +62,20 @@ Check:
 - Browser has `sb-access-token` cookie after login.
 - `syncSession` can create/update Prisma `User` row.
 
+### Google OAuth lands on dashboard but content is blank
+
+Symptom: Google sign-in returns to `/dashboard`, sidebar renders, but overview content is empty. Email/password login still works.
+
+Cause: OAuth redirects directly to `/dashboard`, so the dashboard route loader can run before the browser writes the `sb-access-token` cookie. The protected loader then falls back to `tenant: null`; the dashboard layout renders, while the overview page returns `null` because it has no tenant data.
+
+Fix pattern: keep `useSession()` as the single browser session bridge. After it writes `sb-access-token` and `syncSession` creates/updates the Prisma `User`, the root route should invalidate TanStack Router loaders so protected dashboard loaders re-run with the fresh cookie. Dashboard overview should render the same loading fallback used by other tenant-backed dashboard pages while tenant data is temporarily unavailable; it must not `return null` for this state.
+
+Regression check:
+
+```bash
+bun run test -- src/hooks/use-session.test.tsx src/test/routes/dashboard-index.test.tsx
+```
+
 ### Protected Server Function says unauthorized
 
 Check token expiry and cookie presence. Local browser sessions may need logout/login after env changes.

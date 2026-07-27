@@ -4,7 +4,9 @@ import { useAuth } from "../lib/store";
 import { syncSession } from "../server/auth.functions";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
-export function useSession() {
+export function useSession({
+  onSessionSynced,
+}: { onSessionSynced?: () => void | Promise<void> } = {}) {
   const { setUser, setLoading } = useAuth();
   const lastTokenRef = useRef<string | null>(null);
   const syncPromiseRef = useRef<Promise<void> | null>(null);
@@ -23,8 +25,13 @@ export function useSession() {
         lastTokenRef.current = token;
         setLoading(true);
         const syncPromise = syncSession({})
-          .then((dbUser) => {
+          .then(async (dbUser) => {
             setUser(dbUser);
+            try {
+              await onSessionSynced?.();
+            } catch (err) {
+              console.error("Failed to refresh routes after session sync:", err);
+            }
           })
           .catch((err) => {
             console.error("Failed to sync session with Prisma:", err);
@@ -61,5 +68,5 @@ export function useSession() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [setUser, setLoading]);
+  }, [setUser, setLoading, onSessionSynced]);
 }

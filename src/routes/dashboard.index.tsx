@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { SalesInsightCard } from "@/components/dashboard/sales-insight-card";
+import { Spinner } from "@/components/ui/spinner";
 import { getPublicHostname, getPublicUrl } from "@/lib/site-url";
 import { formatCurrency } from "@/lib/formatters";
 import { MIN_WITHDRAWAL_AMOUNT } from "@/lib/commerce-policy";
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/dashboard/")({
   component: Overview,
 });
 
-function Overview() {
+export function Overview() {
   const {
     tenant,
     productCount,
@@ -25,7 +26,13 @@ function Overview() {
     availableBalance,
   } = DashboardRoute.useLoaderData();
 
-  if (!tenant) return null;
+  if (!tenant) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Spinner size="md" />
+      </div>
+    );
+  }
 
   const publicHostname = getPublicHostname();
   const storeUrl = getPublicUrl(`/${tenant.slug}`);

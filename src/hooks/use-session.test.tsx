@@ -43,6 +43,50 @@ describe("useSession", () => {
     expect(document.cookie).toContain("sb-access-token=token-1");
   });
 
+  it("refreshes routes after Prisma user sync", async () => {
+    const onSessionSynced = vi.fn();
+    getSession.mockResolvedValueOnce({
+      data: { session: { access_token: "token-1", expires_in: 3600 } },
+      error: null,
+    });
+
+    renderHook(() => useSession({ onSessionSynced }));
+
+    await waitFor(() => expect(onSessionSynced).toHaveBeenCalledTimes(1));
+    expect(useAuth.getState().user).toMatchObject({ id: "user-1" });
+  });
+
+  it("does not refresh routes when session is missing", async () => {
+    const onSessionSynced = vi.fn();
+
+    renderHook(() => useSession({ onSessionSynced }));
+
+    await waitFor(() => expect(useAuth.getState().isLoading).toBe(false));
+    expect(onSessionSynced).not.toHaveBeenCalled();
+  });
+
+  it("keeps synced user when route refresh fails", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const refreshError = new Error("refresh failed");
+    const onSessionSynced = vi.fn().mockRejectedValueOnce(refreshError);
+    getSession.mockResolvedValueOnce({
+      data: { session: { access_token: "token-1", expires_in: 3600 } },
+      error: null,
+    });
+
+    renderHook(() => useSession({ onSessionSynced }));
+
+    await waitFor(() => expect(onSessionSynced).toHaveBeenCalledTimes(1));
+    expect(useAuth.getState().user).toMatchObject({ id: "user-1" });
+    expect(useAuth.getState().isLoading).toBe(false);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "Failed to refresh routes after session sync:",
+      refreshError,
+    );
+
+    consoleSpy.mockRestore();
+  });
+
   it("subscribes then unsubscribes from auth changes", () => {
     const unsubscribe = vi.fn();
     onAuthStateChange.mockReturnValueOnce({ data: { subscription: { unsubscribe } } });
@@ -55,16 +99,18 @@ describe("useSession", () => {
 
   it("resets user and logs error when Prisma sync fails", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const onSessionSynced = vi.fn();
     syncSession.mockRejectedValueOnce(new Error("sync failed"));
     getSession.mockResolvedValueOnce({
       data: { session: { access_token: "token-fail", expires_in: 3600 } },
       error: null,
     });
 
-    renderHook(() => useSession());
+    renderHook(() => useSession({ onSessionSynced }));
 
     await waitFor(() => expect(useAuth.getState().isLoading).toBe(false));
     expect(useAuth.getState().user).toBeNull();
+    expect(onSessionSynced).not.toHaveBeenCalled();
     expect(consoleSpy).toHaveBeenCalledWith(
       "Failed to sync session with Prisma:",
       expect.any(Error),

@@ -14,7 +14,7 @@ Tokolink is a TanStack Start app with React routes, Server Functions, Prisma/Pos
 
 - Browser auth uses `src/lib/supabase.ts`.
 - Server/admin auth uses `src/lib/supabase.server.ts`.
-- `useSession()` syncs Supabase sessions into Prisma `User` rows via `syncSession`.
+- `useSession()` syncs Supabase sessions into Prisma `User` rows via `syncSession`, writes the browser `sb-access-token` cookie, then asks the root router to invalidate loaders so protected routes re-read with the fresh cookie after OAuth redirects.
 - Protected Server Functions use `authMiddleware`, which reads `sb-access-token`, verifies Supabase auth, loads Prisma user, and attaches tenant context.
 - Turnstile verifier/helpers are present; auth/onboarding/checkout currently depend on server-side rate limits until client token wiring is enabled end-to-end.
 - OTP codes are hashed before storage and protected by server-side rate limits/cooldowns.
