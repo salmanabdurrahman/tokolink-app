@@ -1,0 +1,102 @@
+# ==============================================================================
+# Keep Supabase Alive — daily ping to prevent free-tier auto-pause
+# ==============================================================================
+#
+# Supabase may pause Free Plan projects with low activity in a 7-day period.
+# A daily request must reach the database, not just the app shell, so the
+# activity signal is unambiguous.
+#
+# Endpoint:   GET ${APP_URL}/api/health
+# Why:        src/routes/api.health.ts runs `SELECT 1` against the Prisma
+#             client (DATABASE_URL is the Supabase Postgres pooler), so a
+#             200 response means PostgREST → Postgres was actually touched.
+#             Read-only, idempotent, tiny, and already documented in
+#             README.md ("curl https://tokolink-v2.vercel.app/api/health").
+#
+# One-time setup:
+#   1. Open GitHub repo → Settings → Secrets and variables → Actions
+#   2. Optional repository secret:
+#        APP_URL  → production app base URL without trailing slash
+#                   (default: https://tokolink-v2.vercel.app)
+#   3. No SUPABASE_SERVICE_ROLE_KEY needed here: the ping goes through the
+#      app's public health route, so no admin key leaves Vercel. This also
+#      keeps the GitHub secret scan (ci.yml) clean of duplicate credentials.
+#
+# Why not PostgREST directly:
+#   This project keeps all data in Prisma-managed tables, which are not
+#   published to the PostgREST schema, so a direct /rest/v1/<table> ping
+#   would 404 (or need an extra exposed view). The app's own health route
+#   is the supported, documented liveness signal for this stack.
+#
+# Schedule: 06:00 UTC daily → 1 database read/day, ~30 reads/month.
+# Free-tier pause window is 7 days, so 1/day gives 6 days of safety margin.
+# ==============================================================================
+
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Daily at 06:00 UTC. Single cron keeps cost minimal and is enough
+    # to stay well inside the 7-day inactivity window.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    # Manual run from the Actions tab for ad-hoc testing.
+
+concurrency:
+  group: keep-supabase-alive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    name: Ping health endpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Ping app health endpoint (SELECT 1 via Prisma)
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+        run: |
+          set -euo pipefail
+
+          # Default to the documented production URL when the secret is unset.
+          base_url="${APP_URL:-https://tokolink-v2.vercel.app}"
+          base_url="${base_url%/}"
+
+          if ! [[ "${base_url}" =~ ^https://[A-Za-z0-9.-]+$ ]]; then
+            # Escape '::' (\:\:) so a crafted value cannot inject GitHub
+            # Actions workflow commands through the error message.
+            escaped="${base_url//::/\\:\\:}"
+            echo "::error::APP_URL must be an https URL (no trailing slash), got '${escaped}'."
+            exit 1
+          fi
+
+          endpoint="${base_url}/api/health"
+
+          echo "Pinging ${endpoint} (runs SELECT 1 against Supabase Postgres)"
+
+          # -w writes only the status code to stdout (via -o redirect).
+          # 30s timeout is generous; the query is a single SELECT 1.
+          http_status=$(
+            curl --silent --show-error \
+                 --output /tmp/supabase-ping-response.json \
+                 --write-out "%{http_code}" \
+                 --max-time 30 \
+                 "${endpoint}"
+          )
+
+          echo "HTTP status: ${http_status}"
+
+          # Accept 200 with ok:true only. 503 (db error / missing env) and
+          # any 4xx/5xx fail loudly so GitHub sends the default failure
+          # email notification. Response bodies are escaped before printing
+          # (\:\: for '::') so a non-Tokolink server can never inject
+          # GitHub Actions workflow commands via curl output.
+          if [ "${http_status}" -eq 200 ] && grep -q '"ok":true' /tmp/supabase-ping-response.json; then
+            echo "Supabase database ping OK at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            sed 's/::/\\:\\:/g' /tmp/supabase-ping-response.json
+          else
+            echo "::error::Supabase database ping failed with HTTP ${http_status}"
+            sed 's/::/\\:\\:/g' /tmp/supabase-ping-response.json
+            exit 1
+          fi
